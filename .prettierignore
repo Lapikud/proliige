@@ -1,0 +1,9 @@
+.next
+node_modules
+coverage
+logs
+serverlogs
+migrations/meta
+pnpm-lock.yaml
+public/brand
+*.tsbuildinfo
