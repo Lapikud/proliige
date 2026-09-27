@@ -48,6 +48,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Lint and typecheck need the route types (PageProps, RouteContext) that Next generates into .next.
+      - name: Generate Next types
+        run: pnpm exec next typegen
+
       - name: Check formatting
         run: pnpm format:check
 
