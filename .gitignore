@@ -21,3 +21,5 @@ next-env.d.ts
 *.pem
 .vercel
 .claude/settings.local.json
+
+.idea

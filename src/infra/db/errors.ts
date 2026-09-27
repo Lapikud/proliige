@@ -18,6 +18,10 @@ export function isUniqueViolation(error: unknown): boolean {
   return driverError(error)?.code === "23505";
 }
 
+export function isForeignKeyViolation(error: unknown): boolean {
+  return driverError(error)?.code === "23503";
+}
+
 export function violatedConstraint(error: unknown): string | null {
   const driver = driverError(error);
   if (driver === null) {

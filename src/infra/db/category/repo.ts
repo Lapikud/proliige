@@ -3,7 +3,7 @@ import type { CategoryRepository } from "~/core/ports/category";
 import { conflict, notFound } from "~/domain/errors";
 import type { Category } from "~/domain/task";
 import type { Database } from "../client";
-import { isUniqueViolation } from "../errors";
+import { isForeignKeyViolation, isUniqueViolation } from "../errors";
 import { categories } from "./model";
 import { onlyRow } from "../rows";
 
@@ -60,6 +60,26 @@ export function createCategoryRepository(db: Database): CategoryRepository {
       } catch (error) {
         if (isUniqueViolation(error)) {
           throw conflict("A category with that name already exists.");
+        }
+        throw error;
+      }
+    },
+
+    async delete(id) {
+      try {
+        const [row] = await db
+          .delete(categories)
+          .where(eq(categories.id, id))
+          .returning({ id: categories.id });
+
+        if (row === undefined) {
+          throw notFound("That category does not exist.");
+        }
+      } catch (error) {
+        if (isForeignKeyViolation(error)) {
+          throw conflict(
+            "This category still has tasks, including archived ones. Move them to another category first.",
+          );
         }
         throw error;
       }

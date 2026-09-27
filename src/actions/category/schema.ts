@@ -12,4 +12,6 @@ export const updateCategorySchema = z.object({
   category: categorySchema,
 });
 
+export const deleteCategorySchema = z.object({ categoryId: z.string().min(1) });
+
 export type CategoryValues = z.infer<typeof categorySchema>;

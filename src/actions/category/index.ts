@@ -2,9 +2,9 @@
 
 import { categoryService } from "~/infra";
 import { action } from "~/lib/action";
-import { createCategorySchema, updateCategorySchema } from "./schema";
+import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from "./schema";
 
-const revalidate = ["/admin/categories", "/admin/tasks"];
+const revalidate = ["/admin/categories", "/admin/tasks", "/"];
 
 export const createCategoryAction = action(
   createCategorySchema,
@@ -18,6 +18,14 @@ export const updateCategoryAction = action(
   updateCategorySchema,
   async (user, { categoryId, category }) => {
     await categoryService.updateCategory(user, categoryId, category);
+  },
+  { revalidate },
+);
+
+export const deleteCategoryAction = action(
+  deleteCategorySchema,
+  async (user, { categoryId }) => {
+    await categoryService.deleteCategory(user, categoryId);
   },
   { revalidate },
 );

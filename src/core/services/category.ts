@@ -25,6 +25,10 @@ export function createCategoryService({ categories }: Deps) {
       (_user, categoryId: string, input: CategoryInput) =>
         categories.update(categoryId, toNewCategory(input)),
     ),
+
+    deleteCategory: guard(userCanManageCategories, (_user, categoryId: string) =>
+      categories.delete(categoryId),
+    ),
   };
 }
 

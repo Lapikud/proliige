@@ -11,4 +11,5 @@ export interface CategoryRepository {
       slug: string;
     },
   ): Promise<Category>;
+  delete(id: string): Promise<void>;
 }
