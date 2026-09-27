@@ -60,5 +60,11 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Test the deploy script
+        run: scripts/ci/deploy-test.sh
+
       - name: Build
         run: pnpm build
+
+      - name: Smoke test the built app
+        run: scripts/ci/smoke.sh

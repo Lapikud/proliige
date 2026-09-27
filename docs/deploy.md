@@ -1,6 +1,6 @@
 # Deploying
 
-[`ci.yml`](../.github/workflows/ci.yml) runs on every pull request: format check, lint, typecheck, tests against a throwaway PostgreSQL, and a production build. [`deploy.yml`](../.github/workflows/deploy.yml) runs on every push to `main`: it runs the same checks, then [`remote.sh`](../scripts/deploy/remote.sh) SSHes into the LXC container and runs [`deploy.sh`](../scripts/deploy/deploy.sh).
+[`ci.yml`](../.github/workflows/ci.yml) runs on every pull request: format check, lint, typecheck, tests against a throwaway PostgreSQL, a test of `deploy.sh` against a scratch folder ([`deploy-test.sh`](../scripts/ci/deploy-test.sh)), a production build, and a smoke test that starts the build and requests the main pages ([`smoke.sh`](../scripts/ci/smoke.sh)). [`deploy.yml`](../.github/workflows/deploy.yml) runs on every push to `main`: it runs the same checks, then [`remote.sh`](../scripts/deploy/remote.sh) SSHes into the LXC container and runs [`deploy.sh`](../scripts/deploy/deploy.sh).
 
 ## What a deploy does
 
