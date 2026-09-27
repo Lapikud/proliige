@@ -191,6 +191,11 @@ describe("task and category management is admin-only", () => {
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
+    await expect(categoryService.deleteCategory(alice, category.id)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+
+    expect(await categories.findById(category.id)).not.toBeNull();
   });
 
   it("refuses all management to a visitor", async () => {
@@ -234,6 +239,33 @@ describe("task and category management is admin-only", () => {
       name: "Deep cleaning",
       slug: "deep-cleaning",
     });
+  });
+
+  it("lets an admin delete a category without tasks", async () => {
+    const { admin } = await seed();
+    const empty = await categoryService.createCategory(admin, { name: "Empty" });
+
+    await categoryService.deleteCategory(admin, empty.id);
+
+    expect(await categories.findById(empty.id)).toBeNull();
+  });
+
+  it("refuses to delete a category that still has archived tasks", async () => {
+    const { admin, category, task } = await seed();
+    await taskService.archiveTask(admin, task.id, true);
+
+    await expect(categoryService.deleteCategory(admin, category.id)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    expect(await categories.findById(category.id)).not.toBeNull();
+  });
+
+  it("reports deleting an unknown category as not found", async () => {
+    const { admin } = await seed();
+
+    await expect(
+      categoryService.deleteCategory(admin, "00000000-0000-0000-0000-000000000000"),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
 
