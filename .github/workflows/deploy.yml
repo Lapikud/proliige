@@ -1,0 +1,32 @@
+name: Deploy to production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  # git.lapikud.ee runs the actual deploy (.gitea/workflows/deploy.yml) from inside the network.
+  mirror:
+    name: Push main to Gitea
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    concurrency:
+      group: mirror
+      cancel-in-progress: false
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to Gitea
+        env:
+          GITEA_REMOTE: ${{ secrets.GITEA_REMOTE }}
+        run: git push "$GITEA_REMOTE" HEAD:main

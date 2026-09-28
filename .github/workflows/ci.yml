@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+jobs:
+  check:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tester
+          POSTGRES_PASSWORD: tester
+          POSTGRES_DB: tester
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tester"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://tester:tester@localhost:5432/tester
+      TEST_DATABASE_URL: postgres://tester:tester@localhost:5432/tester_test
+      SESSION_SECRET: ci-session-secret-that-is-at-least-32-characters
+      FREEIPA_SERVER: ipa.ci.invalid
+      STORAGE_DRIVER: memory
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Lint and typecheck need the route types (PageProps, RouteContext) that Next generates into .next.
+      - name: Generate Next types
+        run: pnpm exec next typegen
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check types
+        run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Test the deploy script
+        run: scripts/ci/deploy-test.sh
+
+      - name: Build
+        run: pnpm build
+
+      - name: Smoke test the built app
+        run: scripts/ci/smoke.sh
