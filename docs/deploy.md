@@ -1,33 +1,40 @@
 # Deploying
 
-[`ci.yml`](../.github/workflows/ci.yml) runs on every pull request: format check, lint, typecheck, tests against a throwaway PostgreSQL, a test of `deploy.sh` against a scratch folder ([`deploy-test.sh`](../scripts/ci/deploy-test.sh)), a production build, and a smoke test that starts the build and requests the main pages ([`smoke.sh`](../scripts/ci/smoke.sh)). [`deploy.yml`](../.github/workflows/deploy.yml) runs on every push to `main`: it runs the same checks, then [`remote.sh`](../scripts/deploy/remote.sh) SSHes into the LXC container and runs [`deploy.sh`](../scripts/deploy/deploy.sh).
+[`ci.yml`](../.github/workflows/ci.yml) runs on every pull request: format check, lint, typecheck, tests against a throwaway PostgreSQL, a test of `deploy.sh` against a scratch folder ([`deploy-test.sh`](../scripts/ci/deploy-test.sh)), a production build, and a smoke test that starts the build and requests the main pages ([`smoke.sh`](../scripts/ci/smoke.sh)).
+
+The LXC container can't be reached from the internet, so GitHub never connects to it. Instead:
+
+1. On every push to `main`, [`deploy.yml`](../.github/workflows/deploy.yml) runs the same checks and, if they pass, pushes `main` to `git.lapikud.ee`.
+2. That push starts [`.gitea/workflows/deploy.yml`](../.gitea/workflows/deploy.yml) on a Gitea runner inside the container, which runs [`deploy.sh`](../scripts/deploy/deploy.sh).
+
+GitHub stays the place for code, issues and pull requests; the Gitea repo only receives `main` after it has passed CI.
 
 ## What a deploy does
 
 Everything lives in `/opt/proliige`:
 
 ```
-.env            production settings, written from the ENV_FILE secret
+.env            production settings, kept only on the server
 repo/           clone of main; deploy.sh runs from here
 releases/<id>/  one built copy of the app per deploy
 current         symlink to the release systemd runs
 ```
 
-`deploy.sh` writes the `.env` it receives on stdin, resets `repo/` to `origin/main`, and builds a new release next to the live one, so the site keeps working during the build. It then runs migrations, points `current` at the new release, restarts the service and waits for it to answer on `localhost:3000`. The site is down only for the restart.
+`deploy.sh` resets `repo/` to `origin/main` and builds a new release next to the live one, so the site keeps working during the build. It then runs migrations, points `current` at the new release, restarts the service and waits for it to answer on `localhost:3000`. The site is down only for the restart.
 
 If anything fails before the switch, the live release keeps running and the half-built one is deleted. If the new release doesn't come up, `current` goes back to the previous release and the service restarts. The last three releases are kept.
 
 Things to keep in mind:
 
 - **Migrations can't be undone.** A rollback only changes the code, and migrations run while the old release is still live, so each migration must also work with the code before it. To drop or rename a column, stop using it in one deploy and remove it in the next.
-- **It deploys `main` as it is when the deploy starts.** Deploys run one at a time, so a push that lands during a deploy is picked up by the next one.
+- **It deploys `main` as it is when the deploy starts.** Deploys wait for each other, so a push that lands during a deploy is picked up by the next one.
 - **The build runs on the container.** `next build` needs about 2 GB of memory, so give the LXC at least that.
 
 ## Setting up the LXC container
 
 As root, once. PostgreSQL and Garage already run there as `postgresql.service` and `garage.service`.
 
-1. Install Node 22.12+, git and curl, then `corepack enable` so `pnpm` is on the system `PATH`. The forced ssh command runs without a login shell.
+1. Install Node 22.12+, git and curl, then `corepack enable` so `pnpm` is on the system `PATH`. The runner doesn't use a login shell.
 2. Create the user and the layout, and let it read the service's logs so a failed deploy shows them:
 
    ```sh
@@ -38,9 +45,9 @@ As root, once. PostgreSQL and Garage already run there as `postgresql.service` a
    sudo -u proliige ln -s /opt/proliige /home/proliige/repo
    ```
 
-   `/home/proliige/repo` is only a shortcut to `/opt/proliige`, so the clone itself is at `~/repo/repo`. The service, sudoers and `authorized_keys` use the real `/opt/proliige` paths.
+   `/home/proliige/repo` is only a shortcut to `/opt/proliige`, so the clone itself is at `~/repo/repo`. The service, sudoers and runner use the real `/opt/proliige` paths.
 
-3. Put the production settings, based on `.env.example`, in `/opt/proliige/.env` (owned by `proliige`, `chmod 600`) and in the `ENV_FILE` secret (see below). `SITE_URL` must be the public address. From then on, each deploy overwrites the file with the secret.
+3. Put the production settings, based on `.env.example`, in `/opt/proliige/.env`, owned by `proliige` and `chmod 600`. `SITE_URL` must be the public address. Deploys never change this file; edit it on the server and restart the service.
 4. Point the existing `proliige.service` unit at the releases and let `proliige` restart it without a password. `deploy.sh` expects the unit to be called `proliige`, run from `WorkingDirectory=/opt/proliige/current`, load `EnvironmentFile=/opt/proliige/.env` and listen on port 3000 (`next start -p 3000`):
 
    ```sh
@@ -50,36 +57,36 @@ As root, once. PostgreSQL and Garage already run there as `postgresql.service` a
    chmod 440 /etc/sudoers.d/proliige
    ```
 
-5. Make a deploy key and pin it to the deploy script, so the key can do nothing else:
+5. Deploy once by hand to check everything works: `sudo -u proliige /opt/proliige/repo/scripts/deploy/deploy.sh`.
+6. Point the reverse proxy at `localhost:3000`.
+7. Install [act_runner](https://docs.gitea.com/usage/actions/act-runner) and register it with the Gitea repo (see below), running as `proliige` in host mode with the `proliige` label:
 
    ```sh
-   ssh-keygen -t ed25519 -N '' -C proliige-deploy -f deploy_key
-   install -d -m 700 -o proliige -g proliige ~proliige/.ssh
-   echo "command=\"/opt/proliige/repo/scripts/deploy/deploy.sh\",restrict $(cat deploy_key.pub)" >> ~proliige/.ssh/authorized_keys
-   chown proliige: ~proliige/.ssh/authorized_keys
-   chmod 600 ~proliige/.ssh/authorized_keys
+   sudo -u proliige act_runner register --no-interactive \
+     --instance https://git.lapikud.ee --token <registration token> \
+     --name proliige-lxc --labels proliige:host
    ```
 
-6. Deploy once by hand to check everything works: `sudo -u proliige /opt/proliige/repo/scripts/deploy/deploy.sh`.
-7. Point the reverse proxy at `localhost:3000`.
+   Run `act_runner daemon` as `proliige` from a systemd unit so it starts with the container. Host mode runs jobs directly on the container, which `deploy.sh` needs; the label makes sure only this runner picks up the deploy.
 
 ### Moving over from the old setup
 
-The app used to be checked out directly in `/opt/proliige`, with the service running from there. To switch to releases, keep `/opt/proliige/.env`, move everything else out of the way (to `/opt/proliige.old`, say), then follow steps 2 to 6. The site is down from `systemctl daemon-reload` until the first deploy finishes. Delete `/opt/proliige.old` once the new setup works.
+The app used to be checked out directly in `/opt/proliige`, with the service running from there. To switch to releases, keep `/opt/proliige/.env`, move everything else out of the way (to `/opt/proliige.old`, say), then follow steps 2 to 5. The site is down from `systemctl daemon-reload` until the first deploy finishes. Delete `/opt/proliige.old` once the new setup works.
+
+## Gitea settings
+
+1. Create an empty `proliige` repo on `git.lapikud.ee`, with Actions turned on. Turn off its issues and pull requests so nobody uses them instead of GitHub's.
+2. Under the repo's Settings → Actions → Runners, create a runner registration token and use it in step 7 above. A runner registered to the repo only runs that repo's workflows.
+3. Create an access token with the `write:repository` scope for the account that will push, ideally a bot account that can write to this repo only.
+
+Anyone who can push to the Gitea repo can run code on the container as `proliige`, so keep write access to that account.
 
 ## GitHub settings
 
-Create an environment named `production` (Settings → Environments) and give it these secrets:
+Create an environment named `production` (Settings → Environments) and give it one secret:
 
-| Secret               | Value                                                                |
-| -------------------- | -------------------------------------------------------------------- |
-| `DEPLOY_HOST`        | Address GitHub's runners can reach the container at                  |
-| `DEPLOY_PORT`        | SSH port, if not 22                                                  |
-| `DEPLOY_USER`        | `proliige`                                                           |
-| `DEPLOY_SSH_KEY`     | Contents of `deploy_key` (the private half); then delete the file    |
-| `DEPLOY_KNOWN_HOSTS` | Output of `ssh-keyscan -p <port> <host>`, checked against the server |
-| `ENV_FILE`           | The whole production `.env`                                          |
+| Secret         | Value                                                        |
+| -------------- | ------------------------------------------------------------ |
+| `GITEA_REMOTE` | `https://<user>:<token>@git.lapikud.ee/<owner>/proliige.git` |
 
 The environment can also require an approval or limit deploys to `main`.
-
-To deploy from your own machine, run `scripts/deploy/remote.sh` with the same variables set.

@@ -157,8 +157,8 @@ Photos can grow large, so every Sunday at 03:00 (Europe/Tallinn) a background jo
 
 ## Deploying
 
-Every push to `main` is checked again and, if it passes, deployed to the club's LXC container. The container builds the new version next to the running one, applies migrations, switches over and restarts the app. If the new version doesn't come up, it goes back to the previous one.
+Every push to `main` is checked again and, if it passes, pushed to `git.lapikud.ee`, where a runner inside the club's LXC container deploys it. The container builds the new version next to the running one, applies migrations, switches over and restarts the app. If the new version doesn't come up, it goes back to the previous one.
 
 A rollback only undoes code, and migrations run while the previous version is still live, so every migration must also work with the code before it. To remove or rename a column, stop using it in one pull request and drop it in the next.
 
-[docs/deploy.md](docs/deploy.md) explains how deploys work, how to set up the server and which GitHub secrets it needs.
+[docs/deploy.md](docs/deploy.md) explains how deploys work and how to set up the server, Gitea and GitHub.
