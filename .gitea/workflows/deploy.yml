@@ -10,5 +10,9 @@ jobs:
     # Only the act_runner inside the proliige container has this label.
     runs-on: proliige
     steps:
+      # Runs the deploy script from the pushed commit, so changes to it apply to this deploy.
+      - name: Check out code
+        uses: actions/checkout@v4
+
       - name: Run deploy script
-        run: /opt/proliige/repo/scripts/deploy/deploy.sh
+        run: scripts/deploy/deploy.sh

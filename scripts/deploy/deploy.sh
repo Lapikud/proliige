@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Layout under the root:
 #   .env            production settings, kept only on the server
-#   repo/           clone of main; this script runs from here
+#   repo/           clone of the Gitea mirror, which only receives main after CI passes
 #   releases/<id>/  one built copy of the app per deploy
 #   current         symlink to the release systemd runs
 root="${PROLIIGE_ROOT:-/opt/proliige}"
@@ -155,5 +155,5 @@ prune_releases() {
     done
 }
 
-# update_code rewrites this file; exiting on the same line stops bash reading the new version.
+# Run from repo/ by hand, update_code rewrites this file; exiting on the same line stops bash reading the new version.
 main "$@"; exit
