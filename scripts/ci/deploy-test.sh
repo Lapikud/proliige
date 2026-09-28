@@ -12,9 +12,9 @@ main() {
   make_stubs
   make_root
 
+  test_missing_env_fails
   test_first_deploy
   test_keeps_three_releases
-  test_empty_stdin_keeps_env
   test_failed_health_rolls_back
   test_failed_build_changes_nothing
 
@@ -56,11 +56,19 @@ deploy() {
     bash "$deploy_script" > "$work/out.log" 2>&1
 }
 
-test_first_deploy() {
-  echo "A=1" | deploy || fail "first deploy failed"
+test_missing_env_fails() {
+  if deploy; then
+    fail "deploy passed without a .env"
+  fi
 
-  expect_equal "$(cat "$work/root/.env")" "A=1" ".env from stdin"
-  expect_equal "$(stat -c %a "$work/root/.env")" "600" ".env mode"
+  [[ ! -e "$work/root/releases" ]] || fail "built a release without a .env"
+  pass "missing .env fails"
+}
+
+test_first_deploy() {
+  echo "A=1" > "$work/root/.env"
+  deploy || fail "first deploy failed"
+
   [[ -f "$work/root/current/package.json" ]] || fail "current has no app"
   expect_equal "$(readlink "$work/root/current/.env")" "$work/root/.env" "release links .env"
   expect_equal "$(release_count)" "1" "releases after first deploy"
@@ -70,7 +78,7 @@ test_first_deploy() {
 test_keeps_three_releases() {
   local _
   for _ in 1 2 3; do
-    deploy < /dev/null || fail "deploy failed"
+    deploy || fail "deploy failed"
   done
 
   expect_equal "$(release_count)" "3" "releases after four deploys"
@@ -78,19 +86,12 @@ test_keeps_three_releases() {
   pass "keeps three releases"
 }
 
-test_empty_stdin_keeps_env() {
-  deploy < /dev/null || fail "deploy failed"
-
-  expect_equal "$(cat "$work/root/.env")" "A=1" ".env after empty stdin"
-  pass "empty stdin keeps .env"
-}
-
 test_failed_health_rolls_back() {
   local before
   before=$(readlink "$work/root/current")
   : > "$work/sudo.log"
 
-  if deploy FAIL_HEALTH=1 < /dev/null; then
+  if deploy FAIL_HEALTH=1; then
     fail "deploy passed with a failing health check"
   fi
 
@@ -105,7 +106,7 @@ test_failed_build_changes_nothing() {
   before=$(readlink "$work/root/current")
   : > "$work/sudo.log"
 
-  if deploy FAIL_BUILD=1 < /dev/null; then
+  if deploy FAIL_BUILD=1; then
     fail "deploy passed with a failing build"
   fi
 

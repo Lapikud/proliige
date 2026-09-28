@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Layout under the root:
-#   .env            production settings, written from the ENV_FILE secret
+#   .env            production settings, kept only on the server
 #   repo/           clone of main; this script runs from here
 #   releases/<id>/  one built copy of the app per deploy
 #   current         symlink to the release systemd runs
@@ -17,7 +17,8 @@ export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 main() {
   cd "$root"
 
-  update_env
+  lock
+  require_env
   update_code
 
   local previous
@@ -39,24 +40,17 @@ main() {
   prune_releases
 }
 
-update_env() {
-  if [[ -t 0 ]]; then
-    return
+# Deploys queue up instead of building over each other.
+lock() {
+  exec 9> .deploy.lock
+  flock 9
+}
+
+require_env() {
+  if [[ ! -f .env ]]; then
+    echo "env: $root/.env is missing" >&2
+    exit 1
   fi
-
-  local incoming
-  incoming=$(mktemp .env.XXXXXX)
-  cat > "$incoming"
-
-  if [[ ! -s "$incoming" ]]; then
-    rm "$incoming"
-    return
-  fi
-
-  chmod 600 "$incoming"
-  mv "$incoming" .env
-
-  echo "env: updated .env"
 }
 
 update_code() {
