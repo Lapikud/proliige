@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import type { FC } from "react";
+import { CategoryFilter } from "~/components/feed/categoryFilter";
 import { FeedList } from "~/components/feed/list";
 import { toCommentView, toFeedEntryView } from "~/components/feed/model";
-import { CategoryFilter } from "~/components/feed/categoryFilter";
-import { LeaderboardStories } from "~/components/leaderboard/stories";
 import { LeaderboardPanel } from "~/components/leaderboard/panel";
 import { leaderboardPeriod, PeriodToggle } from "~/components/leaderboard/periodToggle";
+import { LeaderboardStories } from "~/components/leaderboard/stories";
 import { encodeFeedCursor } from "~/domain/feed";
 import { userCanReactToProofs } from "~/domain/rules";
 import { categoryService, commentService, feedService, leaderboardService } from "~/infra";
@@ -62,7 +62,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
 
       <section
         aria-label="Feed"
-        className="mx-auto flex w-full max-w-xl flex-col gap-5 lg:col-span-8"
+        className="mx-auto flex w-full max-w-xl min-w-0 flex-col gap-5 lg:col-span-8"
       >
         <div className="flex flex-col gap-3 lg:hidden">
           <PeriodToggle current={period} {...(keepCategory ? { keep: keepCategory } : {})} />
