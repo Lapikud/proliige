@@ -9,25 +9,24 @@ jobs:
     name: CI
     uses: ./.github/workflows/ci.yml
 
-  deploy:
-    name: Deploy to LXC
+  # git.lapikud.ee runs the actual deploy (.gitea/workflows/deploy.yml) from inside the network.
+  mirror:
+    name: Push main to Gitea
     needs: check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     environment: production
     concurrency:
-      group: deploy
+      group: mirror
       cancel-in-progress: false
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Run deploy script over SSH
+        with:
+          fetch-depth: 0
+
+      - name: Push to Gitea
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-        run: scripts/deploy/remote.sh
+          GITEA_REMOTE: ${{ secrets.GITEA_REMOTE }}
+        run: git push "$GITEA_REMOTE" HEAD:main
