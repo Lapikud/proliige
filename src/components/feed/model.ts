@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { FeedComment, FeedEntry } from "~/domain/feed";
 import { userCanDeleteComment } from "~/domain/rules";
 import type { User } from "~/domain/user";
@@ -6,15 +7,21 @@ export type FeedEntryView = Omit<FeedEntry, "approvedAt"> & {
   approvedAt: string;
 };
 
-export interface CommentView {
-  id: string;
-  authorId: string;
-  authorName: string;
-  body: string;
-  createdAt: string;
-  deleted: boolean;
-  deletable: boolean;
-}
+export const commentViewSchema = z.object({
+  id: z.string(),
+  authorId: z.string(),
+  authorName: z.string(),
+  body: z.string(),
+  createdAt: z.string(),
+  deleted: z.boolean(),
+  deletable: z.boolean(),
+});
+
+export type CommentView = z.infer<typeof commentViewSchema>;
+
+export const commentsResponseSchema = z.object({
+  comments: z.array(commentViewSchema),
+});
 
 export const toFeedEntryView = (entry: FeedEntry): FeedEntryView => ({
   ...entry,

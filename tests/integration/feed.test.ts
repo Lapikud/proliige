@@ -210,6 +210,37 @@ describe("likes", () => {
 });
 
 describe("comments", () => {
+  it("lists comments on an approved proof for a visitor", async () => {
+    const { proof, bob } = await seedApprovedProof();
+    const { comments } = service();
+    await comments.addComment(bob, {
+      proofId: proof.id,
+      body: "Nice work!",
+    });
+
+    await expect(comments.listComments(null, proof.id)).resolves.toMatchObject([
+      { body: "Nice work!" },
+    ]);
+  });
+
+  it("does not expose comments on pending or missing proofs", async () => {
+    const { task, alice } = await seedApprovedProof();
+    const pending = await proofs.createPendingProof({
+      taskId: task.id,
+      userId: alice.id,
+      photos: [],
+      now: new Date(),
+    });
+    const { comments } = service();
+
+    await expect(comments.listComments(null, pending.id)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(comments.listComments(null, crypto.randomUUID())).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
   it("accepts a plain-text comment and notifies the proof owner", async () => {
     const { proof, bob, alice } = await seedApprovedProof();
     const { comments, notifications } = service();

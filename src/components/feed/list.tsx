@@ -4,12 +4,11 @@ import { type FC, useCallback, useEffect, useRef, useState, useTransition } from
 import { Button } from "../ui/button";
 import { EmptyState, ErrorState } from "../ui/feedback";
 import { FeedCard } from "./card";
-import type { CommentView, FeedEntryView } from "./model";
+import type { FeedEntryView } from "./model";
 
 interface Props {
   initialEntries: Array<FeedEntryView>;
   initialCursor: string | null;
-  commentsByProof: Record<string, Array<CommentView>>;
   canReact: boolean;
   categoryId: string | null;
   categoryName: string | null;
@@ -23,7 +22,6 @@ interface FeedPage {
 export const FeedList: FC<Props> = ({
   initialEntries,
   initialCursor,
-  commentsByProof,
   canReact,
   categoryId,
   categoryName,
@@ -102,11 +100,7 @@ export const FeedList: FC<Props> = ({
       <ul className="flex list-none flex-col gap-4 p-0">
         {entries.map((entry) => (
           <li key={entry.proofId}>
-            <FeedCard
-              entry={entry}
-              initialComments={commentsByProof[entry.proofId] ?? []}
-              canReact={canReact}
-            />
+            <FeedCard entry={entry} canReact={canReact} />
           </li>
         ))}
       </ul>

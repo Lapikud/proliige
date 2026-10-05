@@ -2,39 +2,25 @@
 
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { type FC, useState } from "react";
+import type { FC } from "react";
 import { formatRelative } from "~/lib/utils";
+import { UserAvatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { UserAvatar } from "../ui/avatar";
 import { Card } from "../ui/card";
-import { CommentForm } from "./commentForm";
-import { CommentList } from "./commentList";
+import { CommentSection } from "./commentSection";
 import { LikeButton } from "./likeButton";
+import type { FeedEntryView } from "./model";
 import { PhotoCarousel } from "./photoCarousel";
-import type { CommentView, FeedEntryView } from "./model";
+import { useFeedComments } from "./useFeedComments";
 
 interface Props {
   entry: FeedEntryView;
-  initialComments: Array<CommentView>;
   canReact: boolean;
 }
 
-const removed = (comment: CommentView): CommentView => ({
-  ...comment,
-  deleted: true,
-  deletable: false,
-  body: "[comment removed]",
-});
-
-export const FeedCard: FC<Props> = ({ entry, initialComments, canReact }) => {
-  const [comments, setComments] = useState(initialComments);
-  const [open, setOpen] = useState(false);
-  const visibleCount = comments.filter((comment) => !comment.deleted).length;
-
-  const markDeleted = (commentId: string) => {
-    setComments((current) => current.map((c) => (c.id === commentId ? removed(c) : c)));
-  };
+export const FeedCard: FC<Props> = ({ entry, canReact }) => {
+  const commentSection = useFeedComments(entry.proofId, entry.commentCount);
 
   return (
     <Card className="overflow-hidden">
@@ -69,15 +55,9 @@ export const FeedCard: FC<Props> = ({ entry, initialComments, canReact }) => {
           count={entry.likeCount}
           disabled={!canReact}
         />
-        <Button
-          variant="ghost"
-          aria-expanded={open}
-          onClick={() => {
-            setOpen(!open);
-          }}
-        >
+        <Button variant="ghost" aria-expanded={commentSection.open} onClick={commentSection.toggle}>
           <MessageCircle aria-hidden="true" className="size-5!" />
-          <span className="tabular-nums">{visibleCount}</span>
+          <span className="tabular-nums">{commentSection.count}</span>
           <span className="sr-only">comments</span>
         </Button>
       </div>
@@ -87,30 +67,11 @@ export const FeedCard: FC<Props> = ({ entry, initialComments, canReact }) => {
         <span className="font-bold text-brand-ink">{entry.taskTitle}</span>.
       </p>
 
-      {open && (
+      {commentSection.open && (
         <div className="flex flex-col gap-3 border-t border-border bg-muted px-4 py-4">
-          <CommentList comments={comments} onDeleted={markDeleted} />
-          {canReact ? (
-            <CommentForm
-              proofId={entry.proofId}
-              onPosted={(comment) => {
-                setComments((current) => [...current, comment]);
-              }}
-            />
-          ) : (
-            <SignInPrompt />
-          )}
+          <CommentSection proofId={entry.proofId} canReact={canReact} section={commentSection} />
         </div>
       )}
     </Card>
   );
 };
-
-const SignInPrompt: FC = () => (
-  <p className="text-sm text-muted-foreground">
-    <Link href="/login" className="text-brand-ink underline">
-      Sign in
-    </Link>{" "}
-    to like or comment.
-  </p>
-);
