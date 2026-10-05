@@ -1,10 +1,10 @@
-import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { FC } from "react";
 import { Document } from "~/components/document";
 import { Navbar } from "~/components/navbar";
 import { site } from "~/config/site";
 import { env } from "~/env.config";
+import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(env.SITE_URL),
@@ -46,7 +46,10 @@ const RootLayout: FC<LayoutProps<"/">> = ({ children }) => (
       Skip to content
     </a>
     <Navbar />
-    <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
+    <main
+      id="main"
+      className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 sm:px-6 sm:pt-10 md:pb-10"
+    >
       {children}
     </main>
   </Document>
