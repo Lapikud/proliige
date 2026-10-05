@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import type { FC } from "react";
 import { CategoryFilter } from "~/components/feed/categoryFilter";
 import { FeedList } from "~/components/feed/list";
-import { toCommentView, toFeedEntryView } from "~/components/feed/model";
+import { toFeedEntryView } from "~/components/feed/model";
 import { LeaderboardPanel } from "~/components/leaderboard/panel";
 import { leaderboardPeriod, PeriodToggle } from "~/components/leaderboard/periodToggle";
 import { LeaderboardStories } from "~/components/leaderboard/stories";
 import { encodeFeedCursor } from "~/domain/feed";
 import { userCanReactToProofs } from "~/domain/rules";
-import { categoryService, commentService, feedService, leaderboardService } from "~/infra";
+import { categoryService, feedService, leaderboardService } from "~/infra";
 import { getUser } from "~/lib/user";
 import { startOfMonthInTallinn } from "~/lib/utils";
 
@@ -33,17 +33,6 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
     }),
     categoryService.listFeedCategories(user),
   ]);
-  const comments = await Promise.all(
-    page.entries.map(
-      async ({ proofId }) =>
-        [
-          proofId,
-          (await commentService.listComments(user, proofId)).map((comment) =>
-            toCommentView(comment, user),
-          ),
-        ] as const,
-    ),
-  );
 
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
@@ -77,7 +66,6 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           key={categoryId ?? "all"}
           initialEntries={page.entries.map(toFeedEntryView)}
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
-          commentsByProof={Object.fromEntries(comments)}
           canReact={userCanReactToProofs(user)}
           categoryId={categoryId}
           categoryName={categories.find((category) => category.id === categoryId)?.name ?? null}

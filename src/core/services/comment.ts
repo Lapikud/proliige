@@ -1,5 +1,4 @@
 import { feedConfig } from "~/config/feed";
-import { forbidden, notFound, rateLimited, validation } from "~/domain/errors";
 import {
   describeCommentFailure,
   isRateLimited,
@@ -7,6 +6,7 @@ import {
   rateLimitRetryAt,
   validateCommentBody,
 } from "~/domain/comment";
+import { forbidden, notFound, rateLimited, validation } from "~/domain/errors";
 import { userCanDeleteComment, userCanReactToProofs, userCanViewFeed } from "~/domain/rules";
 import { guard } from "../guard";
 import type { ClockPort } from "../ports/clock";
@@ -24,9 +24,11 @@ interface Deps {
 
 export function createCommentService({ comments, proofs, notifications, clock }: Deps) {
   return {
-    listComments: guard(userCanViewFeed, (_user, proofId: string) =>
-      comments.listComments(proofId),
-    ),
+    listComments: guard(userCanViewFeed, async (_user, proofId: string) => {
+      await requireApprovedProof(proofs, proofId);
+
+      return comments.listComments(proofId);
+    }),
 
     addComment: guard(
       userCanReactToProofs,
