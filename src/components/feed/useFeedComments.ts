@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { CommentView } from "./model";
+import { commentsResponseSchema, type CommentView } from "./model";
 
 type LoadStatus = "idle" | "loading" | "loaded" | "error";
 
@@ -26,7 +26,7 @@ export function useFeedComments(proofId: string, initialCount: number) {
         throw new Error("Could not load comments.");
       }
 
-      const result = (await response.json()) as { comments: Array<CommentView> };
+      const result = commentsResponseSchema.parse(await response.json());
       setComments(result.comments);
       statusRef.current = "loaded";
       setStatus("loaded");
