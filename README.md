@@ -35,7 +35,7 @@ pnpm dev               # http://localhost:3000
 | `pnpm db:migrate`                | Apply migrations                                     |
 | `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS    |
 
-Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck && pnpm test`.
+Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks, plus a build, on every pull request.
 
 ## Glossary
 
@@ -154,3 +154,11 @@ Server errors are written as JSON to stdout and, in development, to `logs/app.lo
 ### Weekly photo backups
 
 Photos can grow large, so every Sunday at 03:00 (Europe/Tallinn) a background job copies new proof photos from Garage to Nextcloud over WebDAV, under `NEXTCLOUD_BACKUP_PATH` with the same paths as in the bucket. Each photo is copied once; the `photo_backups` table records what is already there. Set `NEXTCLOUD_WEBDAV_URL`, `NEXTCLOUD_USERNAME` and `NEXTCLOUD_PASSWORD` to turn it on.
+
+## Deploying
+
+Every push to `main` is checked again and, if it passes, pushed to `git.lapikud.ee`, where a runner inside the club's LXC container deploys it. The container builds the new version next to the running one, applies migrations, switches over and restarts the app. If the new version doesn't come up, it goes back to the previous one.
+
+A rollback only undoes code, and migrations run while the previous version is still live, so every migration must also work with the code before it. To remove or rename a column, stop using it in one pull request and drop it in the next.
+
+[docs/deploy.md](docs/deploy.md) explains how deploys work and how to set up the server, Gitea and GitHub.
