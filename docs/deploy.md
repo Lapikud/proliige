@@ -113,3 +113,5 @@ Create an environment named `production` (Settings → Environments) and give it
 | `GITEA_REMOTE` | `https://<user>:<token>@git.lapikud.ee/<owner>/proliige.git` |
 
 The environment can also require an approval or limit deploys to `main`.
+
+Pretty much done by Rene.
