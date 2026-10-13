@@ -49,10 +49,16 @@ export const Navbar: FC = async () => {
                   />
                   {user.displayName}
                 </span>
-                <UserAvatar
-                  name={user.displayName}
-                  className="size-8 bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-foreground lg:hidden"
-                />
+                <Link
+                  href={`/users/${user.id}`}
+                  aria-label="View your profile"
+                  className="rounded-full lg:hidden"
+                >
+                  <UserAvatar
+                    name={user.displayName}
+                    className="size-8 bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2 ring-offset-foreground"
+                  />
+                </Link>
                 <SignOutButton className="hidden text-white hover:bg-white/10 md:inline-flex" />
               </>
             ) : (

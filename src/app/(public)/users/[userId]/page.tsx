@@ -90,6 +90,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
               <CompletedTasks entries={completed.entries} />
             </CardContent>
           </Card>
+          <SignOutButton variant="danger" />
         </div>
       </div>
     </Page>
