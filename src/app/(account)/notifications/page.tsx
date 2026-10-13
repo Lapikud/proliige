@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import type { FC } from "react";
-import { DesktopNotifications } from "~/components/notifications/desktop";
 import { MarkAllReadButton } from "~/components/notifications/markAllReadButton";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { EmptyState } from "~/components/ui/feedback";
 import { Page } from "~/components/ui/page";
-import { env } from "~/env.config";
 import { notificationService } from "~/infra";
 import { cn, formatDateTime } from "~/lib/utils";
 import { userCanReadNotifications, userCanReviewProofs, userCanSubmitProof } from "~/domain/rules";
@@ -26,7 +24,6 @@ const NotificationsPage: FC = async () => {
       description={unread === 0 ? "You are all caught up." : `${unread} unread.`}
       actions={unread > 0 && <MarkAllReadButton />}
     >
-      <DesktopNotifications vapidPublicKey={env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
       {items.length === 0 && <EmptyState title="Nothing yet" description={whatYouWillHear(user)} />}
       <ul className="flex list-none flex-col gap-2 p-0">
         {items.map((item) => (

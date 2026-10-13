@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { FC, ReactNode } from "react";
 import { z } from "zod";
+import { SignOutButton } from "~/components/auth/signOutButton";
+import { DesktopNotifications } from "~/components/notifications/desktop";
 import { CompletedTasks } from "~/components/profile/completedTasks";
 import { type PointsBar, PointsChart } from "~/components/profile/pointsChart";
 import { UserPicker } from "~/components/profile/userPicker";
 import { UserAvatar } from "~/components/ui/avatar";
 import { Card, CardContent } from "~/components/ui/card";
 import { Page } from "~/components/ui/page";
+import { env } from "~/env.config";
 import type { LeaderboardRow } from "~/domain/points";
 import { feedService, leaderboardService, userService } from "~/infra";
 import { getUser } from "~/lib/user";
@@ -48,6 +53,8 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
   ]);
   const rank = ranking.findIndex((row) => row.user.id === userId) + 1;
   const standing = ranking[rank - 1];
+  const isOwnProfile = viewer?.id === profile.id;
+  const ipaUrl = new URL(`https://${env.FREEIPA_SERVER}`);
   const people =
     rank > 0 ? ranking.map((row) => row.user) : [...ranking.map((row) => row.user), profile];
 
@@ -63,7 +70,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
         <div className="flex flex-col gap-6 lg:col-span-7">
           <dl className="grid grid-cols-3 gap-3">
             <Stat label="Rank" highlight>
-              {rank > 0 ? `#${String(rank)}` : "–"}
+              {rank > 0 ? `#${String(rank)}` : "-"}
               <span className="text-xs font-normal"> of {ranking.length}</span>
             </Stat>
             <Stat label="Points">{standing?.totalPoints ?? 0}</Stat>
@@ -90,7 +97,27 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
               <CompletedTasks entries={completed.entries} />
             </CardContent>
           </Card>
-          <SignOutButton variant="danger" />
+          {isOwnProfile && (
+            <Card>
+              <CardContent className="flex flex-col items-start gap-4">
+                <h2 className="text-base font-black">Settings</h2>
+                <section className="w-full">
+                  <h3 className="mb-2 text-sm font-bold">Notifications</h3>
+                  <DesktopNotifications vapidPublicKey={env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
+                </section>
+                <Link
+                  href={ipaUrl.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-foreground underline underline-offset-4"
+                >
+                  FreeIPA server
+                  <ExternalLink aria-hidden="true" className="size-4" />
+                </Link>
+                <SignOutButton variant="danger" />
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </Page>
