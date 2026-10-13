@@ -2,7 +2,6 @@ import {
   userCanBrowseTasks,
   userCanManageCategories,
   userCanManageTasks,
-  userCanReadNotifications,
   userCanReviewProofs,
   userCanSubmitProof,
 } from "~/domain/rules";
@@ -12,7 +11,7 @@ export interface NavItem {
   href: string;
   label: string;
   shortLabel?: string;
-  icon: "feed" | "tasks" | "proofs" | "review" | "manage" | "categories" | "alerts" | "signIn";
+  icon: "feed" | "tasks" | "proofs" | "review" | "manage" | "categories" | "profile" | "signIn";
   count?: number;
   only?: "desktop" | "mobile";
 }
@@ -52,10 +51,10 @@ export function navItemsFor(user: User | null, reviewRequests = 0): Array<NavIte
       icon: "categories",
       only: "desktop",
     },
-    userCanReadNotifications(user) && {
-      href: "/notifications",
-      label: "Alerts",
-      icon: "alerts",
+    user !== null && {
+      href: `/users/${user.id}`,
+      label: "Profile",
+      icon: "profile",
       only: "mobile",
     },
     user === null && {

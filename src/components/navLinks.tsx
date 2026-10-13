@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   FileCheck,
   GitPullRequest,
   House,
@@ -10,6 +9,7 @@ import {
   type LucideIcon,
   Settings2,
   Tags,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,7 +24,7 @@ const icons = {
   review: GitPullRequest,
   manage: Settings2,
   categories: Tags,
-  alerts: Bell,
+  profile: UserRound,
   signIn: LogIn,
 } satisfies Record<NavItem["icon"], LucideIcon>;
 
@@ -102,7 +102,7 @@ export const TabBar: FC<{ items: ReadonlyArray<NavItem> }> = ({ items }) => {
                 current && "bg-primary",
               )}
             >
-              <Icon aria-hidden="true" className="size-[22px]" />
+              <Icon aria-hidden="true" className="size-6" />
               {item.count !== undefined && item.count > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-4 rounded-full bg-foreground px-1 text-center font-mono text-[10px] leading-4 text-primary">
                   {item.count}
