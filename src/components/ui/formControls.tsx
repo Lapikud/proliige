@@ -2,7 +2,7 @@ import type { ComponentProps, FC } from "react";
 import { cn } from "~/lib/utils";
 
 const field =
-  "w-full rounded-xl border border-border bg-card px-3 text-base sm:text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive";
+  "w-full rounded-xl border border-input bg-card px-3 text-base sm:text-sm text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-destructive";
 
 export const Input: FC<ComponentProps<"input">> = ({ className, ...props }) => (
   <input className={cn(field, "h-11 py-2", className)} {...props} />
