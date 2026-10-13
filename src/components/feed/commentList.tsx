@@ -1,13 +1,12 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import type { FC } from "react";
-import { deleteCommentAction } from "~/actions/feed";
-import { useAction } from "~/lib/form";
+import { useRef, type FC } from "react";
 import { cn, formatRelative } from "~/lib/utils";
 import { Button } from "../ui/button";
-import { ErrorState } from "../ui/feedback";
+import { DeleteCommentDialog } from "./deleteCommentDialog";
 import type { CommentView } from "./model";
+import { useDeleteComment } from "./useDeleteComment";
 
 interface Props {
   comments: Array<CommentView>;
@@ -15,11 +14,25 @@ interface Props {
 }
 
 export const CommentList: FC<Props> = ({ comments, onDeleted }) => {
-  const { run, pending, error } = useAction(deleteCommentAction, {
-    onSuccess: (_, { commentId }) => {
-      onDeleted(commentId);
-    },
+  const listRef = useRef<HTMLUListElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const deletedRef = useRef(false);
+  const deletion = useDeleteComment((commentId) => {
+    deletedRef.current = true;
+    onDeleted(commentId);
   });
+
+  const restoreFocus = () => {
+    if (deletedRef.current) {
+      // The delete button disappears after success, so focus the still-present list.
+      listRef.current?.focus();
+    } else {
+      triggerRef.current?.focus();
+    }
+
+    deletedRef.current = false;
+    triggerRef.current = null;
+  };
 
   if (comments.length === 0) {
     return <p className="text-sm text-muted-foreground">No comments yet.</p>;
@@ -27,8 +40,12 @@ export const CommentList: FC<Props> = ({ comments, onDeleted }) => {
 
   return (
     <>
-      {error && <ErrorState description={error} />}
-      <ul className="flex list-none flex-col gap-3 p-0">
+      <ul
+        ref={listRef}
+        tabIndex={-1}
+        aria-label="Comments"
+        className="flex list-none flex-col gap-3 p-0"
+      >
         {comments.map((comment) => (
           <li key={comment.id} className="flex items-start gap-2">
             <div className="flex-1">
@@ -49,13 +66,15 @@ export const CommentList: FC<Props> = ({ comments, onDeleted }) => {
             </div>
             {comment.deletable && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
-                disabled={pending}
-                onClick={() => {
-                  run({ commentId: comment.id });
+                disabled={deletion.pending}
+                onClick={(event) => {
+                  triggerRef.current = event.currentTarget;
+                  deletion.requestDelete(comment.id);
                 }}
-                aria-label="Delete this comment"
+                aria-label={`Delete comment by ${comment.authorName}`}
               >
                 <Trash2 aria-hidden="true" />
               </Button>
@@ -63,6 +82,14 @@ export const CommentList: FC<Props> = ({ comments, onDeleted }) => {
           </li>
         ))}
       </ul>
+      <DeleteCommentDialog
+        open={deletion.open}
+        pending={deletion.pending}
+        error={deletion.error}
+        onDismiss={deletion.dismiss}
+        onConfirm={deletion.confirm}
+        onClosed={restoreFocus}
+      />
     </>
   );
 };
