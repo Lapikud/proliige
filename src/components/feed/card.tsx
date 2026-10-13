@@ -3,7 +3,7 @@
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
-import { formatRelative } from "~/lib/utils";
+import { cn, formatRelative } from "~/lib/utils";
 import { UserAvatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -23,7 +23,12 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
   const commentSection = useFeedComments(entry.proofId, entry.commentCount);
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={cn(
+        "overflow-hidden",
+        entry.photoUrls.length === 0 && !commentSection.open && "pb-4",
+      )}
+    >
       <header className="flex items-center gap-3 px-4 py-3">
         <Link href={`/users/${entry.user.id}`} aria-hidden="true" tabIndex={-1}>
           <UserAvatar name={entry.user.displayName} className="size-9 text-xs" />
@@ -48,6 +53,17 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
 
       <PhotoCarousel urls={entry.photoUrls} alt={`Photo for ${entry.taskTitle}`} />
 
+      <p
+        className={cn(
+          "px-4 leading-relaxed",
+          entry.photoUrls.length === 0
+            ? "py-4 text-lg text-pretty wrap-break-word sm:text-xl md:text-2xl"
+            : "pt-1 pb-4 text-sm",
+        )}
+      >
+        Completed <span className="font-bold text-brand-ink">{entry.taskTitle}</span>.
+      </p>
+
       <div className="flex items-center gap-1 px-2 pt-1">
         <LikeButton
           proofId={entry.proofId}
@@ -61,11 +77,6 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
           <span className="sr-only">comments</span>
         </Button>
       </div>
-
-      <p className="px-4 pt-1 pb-4 text-sm leading-relaxed">
-        <span className="font-bold">{entry.user.displayName}</span> completed{" "}
-        <span className="font-bold text-brand-ink">{entry.taskTitle}</span>.
-      </p>
 
       {commentSection.open && (
         <div className="flex flex-col gap-3 border-t border-border bg-muted px-4 py-4">
