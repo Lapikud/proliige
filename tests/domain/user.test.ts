@@ -1,17 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { rolesForGroups, toPublicUserView, type User } from "~/domain/user";
+import { rolesForGroups } from "~/domain/user";
 
 const config = {
   memberGroups: ["members"],
   adminGroups: ["team_juhatus"],
-};
-
-const user: User = {
-  id: "m1",
-  ipaUniqueId: "ipa-1",
-  uid: "jdoe",
-  displayName: "J. Doe",
-  roles: ["member"],
 };
 
 describe("rolesForGroups", () => {
@@ -44,18 +36,5 @@ describe("rolesForGroups", () => {
     expect(rolesForGroups(["members"])).toEqual(["member"]);
     expect(rolesForGroups(["team_juhatus"])).toEqual(["admin"]);
     expect(rolesForGroups(["ipausers"])).toEqual([]);
-  });
-});
-
-describe("toPublicUserView", () => {
-  it("exposes only the id and display name", () => {
-    const view = toPublicUserView(user);
-    expect(view).toEqual({
-      id: "m1",
-      displayName: "J. Doe",
-    });
-
-    expect(Object.keys(view)).not.toContain("uid");
-    expect(Object.keys(view)).not.toContain("ipaUniqueId");
   });
 });

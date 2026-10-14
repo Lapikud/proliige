@@ -379,6 +379,47 @@ describe("approval and point awards", () => {
 });
 
 describe("leaderboard ordering", () => {
+  it("excludes users before applying the leaderboard limit", async () => {
+    const { task, alice, bob, admin } = await seed("repeatable");
+
+    for (let i = 0; i < 3; i += 1) {
+      const proof = await proofs.createPendingProof({
+        taskId: task.id,
+        userId: alice.id,
+        photos: [],
+        now: now(),
+      });
+      await proofs.approve({
+        proofId: proof.id,
+        reviewerId: admin.id,
+        now: now(),
+      });
+    }
+    const bobProof = await proofs.createPendingProof({
+      taskId: task.id,
+      userId: bob.id,
+      photos: [],
+      now: now(),
+    });
+    await proofs.approve({
+      proofId: bobProof.id,
+      reviewerId: admin.id,
+      now: now(),
+    });
+    await users.setExcluded({
+      userId: alice.id,
+      excluded: true,
+    });
+
+    expect(await leaderboard.leaderboard({ limit: 1 })).toMatchObject([
+      {
+        user: { id: bob.id },
+        totalPoints: 10,
+        approvedProofs: 1,
+      },
+    ]);
+  });
+
   it("sorts by points descending, then display name ascending", async () => {
     const category = await categories.create({
       name: "General",

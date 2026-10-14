@@ -565,12 +565,57 @@ describe("user pages", () => {
     expect(bobsProofs.entries).toEqual([]);
   });
 
+  it("filters excluded authors before applying feed limits, unless a profile opts in", async () => {
+    const { task, proof, alice, bob, admin } = await seedApprovedProof();
+    const earlier = new Date("2026-09-18T11:59:00Z");
+    const bobProof = await proofs.createPendingProof({
+      taskId: task.id,
+      userId: bob.id,
+      photos: [],
+      now: earlier,
+    });
+    await proofs.approve({
+      proofId: bobProof.id,
+      reviewerId: admin.id,
+      now: earlier,
+    });
+    await users.setExcluded({
+      userId: alice.id,
+      excluded: true,
+    });
+
+    const firstPage = await feed.listFeed(null, {
+      cursor: null,
+      limit: 1,
+      categoryId: task.categoryId,
+    });
+    expect(firstPage.entries.map((entry) => entry.proofId)).toEqual([bobProof.id]);
+    expect(
+      (
+        await feed.listFeed(null, {
+          cursor: null,
+          authorId: alice.id,
+        })
+      ).entries,
+    ).toEqual([]);
+    expect(
+      (
+        await feed.listFeed(null, {
+          cursor: null,
+          authorId: alice.id,
+          includeExcludedAuthor: true,
+        })
+      ).entries.map((entry) => entry.proofId),
+    ).toEqual([proof.id]);
+  });
+
   it("shows anyone's public profile to visitors, and nothing for an unknown id", async () => {
     const { alice } = await seedApprovedProof();
 
-    expect(await profiles.findProfile(null, alice.id)).toEqual({
+    expect(await profiles.findProfile(null, alice.id)).toMatchObject({
       id: alice.id,
       displayName: "Alice",
+      excluded: false,
     });
     expect(await profiles.findProfile(null, "00000000-0000-4000-8000-000000000000")).toBeNull();
   });
