@@ -74,9 +74,14 @@ export function useAction<Input, Result>(
     });
   };
 
+  const clearError = () => {
+    setError(null);
+  };
+
   return {
     run,
     pending,
     error,
+    clearError,
   };
 }
