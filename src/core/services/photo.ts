@@ -29,7 +29,10 @@ export function createPhotoService(deps: PhotoServiceDeps) {
           bytes: Uint8Array;
         },
       ) => {
-        const result = validatePhotoBytes(input.bytes.subarray(0, SNIFF_LENGTH), input.bytes.length);
+        const result = validatePhotoBytes(
+          input.bytes.subarray(0, SNIFF_LENGTH),
+          input.bytes.length,
+        );
         if (!result.ok) {
           throw validation(describePhotoFailure(result.failure));
         }
