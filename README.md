@@ -133,7 +133,7 @@ The user page (`/users/[userId]`) is a small, complete example:
 
 ### Photos
 
-Browsers upload photos straight to Garage using short-lived signed URLs, so the bucket needs CORS for the app's origin; `pnpm garage:setup` sets it. Keep the bucket private: approved photos are served through the app, and pending or rejected ones only to their owner and admins.
+Photos are uploaded and served through the app: the browser posts each file to `POST /api/photos/upload`, which validates it and stores it in Garage over the server's own connection. Garage stays private and never needs to be reachable from the browser, so no public endpoint or bucket CORS is required. Approved photos are served through the app to everyone; pending or rejected ones only to their owner and admins.
 
 ### Notifications
 
