@@ -6,7 +6,6 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { GarageEnv } from "~/env.config";
 import type { ObjectStoragePort } from "~/core/ports/objectStorage";
 
@@ -46,16 +45,14 @@ export function createGarageObjectStorage(settings: GarageEnv): ObjectStoragePor
       }
     },
 
-    async presignUpload({ objectKey, expiresInSeconds }) {
-      const uploadUrl = await getSignedUrl(client, new PutObjectCommand(object(objectKey)), {
-        expiresIn: expiresInSeconds,
-      });
-
-      return {
-        objectKey,
-        uploadUrl: forBrowser(uploadUrl, settings.GARAGE_PUBLIC_ENDPOINT),
-        expiresInSeconds,
-      };
+    async put(objectKey, bytes, contentType) {
+      await client.send(
+        new PutObjectCommand({
+          ...object(objectKey),
+          Body: bytes,
+          ContentType: contentType,
+        }),
+      );
     },
 
     async stat(objectKey) {
@@ -118,16 +115,4 @@ function isNotFound(error: unknown): boolean {
   }
 
   return ["NotFound", "NoSuchKey", "NoSuchBucket"].includes(String(error.name));
-}
-
-function forBrowser(url: string, publicEndpoint: string | undefined): string {
-  if (publicEndpoint === undefined) {
-    return url;
-  }
-  const parsed = new URL(url);
-  const target = new URL(publicEndpoint);
-  parsed.protocol = target.protocol;
-  parsed.host = target.host;
-
-  return parsed.toString();
 }

@@ -2,7 +2,6 @@
 
 import { type FC, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { createPhotoUploadAction } from "~/actions/proof";
 import type { ProofValues } from "~/actions/proof/schema";
 import { allowedContentTypes, isAllowedContentType, photoLimits } from "~/config/photo";
 import { Button } from "../ui/button";
@@ -133,25 +132,22 @@ function checkFile(file: File): string | null {
 }
 
 async function upload(file: File, proofRef: string): Promise<Preview | { error: string }> {
-  const presigned = await createPhotoUploadAction({
-    proofRef,
-    contentType: file.type,
-  });
-  if (!presigned.ok) {
-    return { error: presigned.error };
-  }
+  const body = new FormData();
+  body.set("file", file);
+  body.set("proofRef", proofRef);
 
-  const response = await fetch(presigned.data.uploadUrl, {
-    method: "PUT",
-    body: file,
-    headers: { "Content-Type": file.type },
+  const response = await fetch("/api/photos/upload", {
+    method: "POST",
+    body,
   }).catch(() => null);
   if (!response?.ok) {
     return { error: "The upload failed. Please try again." };
   }
 
+  const { objectKey } = (await response.json()) as { objectKey: string };
+
   return {
-    objectKey: presigned.data.objectKey,
+    objectKey,
     url: URL.createObjectURL(file),
     name: file.name,
   };

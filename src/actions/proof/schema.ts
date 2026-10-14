@@ -7,9 +7,4 @@ export const proofSchema = z.object({
   reviewerIds: z.array(z.uuid()).max(10),
 });
 
-export const photoUploadSchema = z.object({
-  proofRef: z.string().min(1),
-  contentType: z.string().min(1),
-});
-
 export type ProofValues = z.infer<typeof proofSchema>;
