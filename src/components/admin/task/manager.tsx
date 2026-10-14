@@ -1,83 +1,79 @@
 "use client";
 
-import Link from "next/link";
-import { type FC, useState } from "react";
-import { Button } from "../../ui/button";
-import { EmptyState, Notice } from "../../ui/feedback";
-import { Page } from "../../ui/page";
+import { useSearchParams } from "next/navigation";
+import { type FC, useEffect, useMemo, useState } from "react";
 import type { CategoryView, TaskView } from "./model";
-import { TaskRow } from "./row";
 import { type TaskDialog, TaskEditorDialog } from "./taskEditorDialog";
+import { TaskWorkspaceView } from "./workspaceView";
+import { groupWorkspaceTasks } from "./workspaceState";
 
 interface Props {
-  tasks: Array<TaskView>;
-  categories: Array<CategoryView>;
+  readonly tasks: Array<TaskView>;
+  readonly categories: Array<CategoryView>;
 }
 
 export const TaskManager: FC<Props> = ({ tasks, categories }) => {
+  const searchParams = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [showArchived, setShowArchived] = useState(() => searchParams.get("archived") === "1");
   const [dialog, setDialog] = useState<TaskDialog | null>(null);
-  const hasCategories = categories.length > 0;
+  const groups = useMemo(
+    () => groupWorkspaceTasks(tasks, categories, search, showArchived),
+    [categories, tasks, search, showArchived],
+  );
+  const archivedCount = tasks.filter((task) => task.archived).length;
+  const editedTask =
+    dialog?.kind === "edit" ? tasks.find(({ id }) => id === dialog.taskId) : undefined;
+
+  // Native replaceState keeps the URL shareable without a server round trip (Next syncs it with useSearchParams).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const url = new URL(window.location.href);
+      if (search) url.searchParams.set("search", search);
+      else url.searchParams.delete("search");
+      if (showArchived) url.searchParams.set("archived", "1");
+      else url.searchParams.delete("archived");
+      window.history.replaceState(null, "", url);
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [search, showArchived]);
 
   return (
-    <Page
-      title="Manage tasks"
-      description="Create tasks, set their points and completion policy, and archive what is finished."
-      actions={
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/categories">Categories</Link>
-          </Button>
-          <Button
-            onClick={() => {
-              setDialog({
-                kind: "create",
-                categoryId: undefined,
-              });
-            }}
-            disabled={!hasCategories}
-          >
-            New task
-          </Button>
-        </div>
-      }
-    >
-      {!hasCategories && (
-        <Notice>
-          Every task needs a category.{" "}
-          <Link href="/admin/categories" className="text-brand-ink underline">
-            Create one first.
-          </Link>
-        </Notice>
-      )}
-
-      {tasks.length === 0 && (
-        <EmptyState title="No tasks yet" description="Create the first one above." />
-      )}
-
-      <ul className="flex list-none flex-col gap-3 p-0">
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <TaskRow
-              task={task}
-              onEdit={() => {
-                setDialog({
-                  kind: "edit",
-                  taskId: task.id,
-                });
-              }}
-            />
-          </li>
-        ))}
-      </ul>
-
+    <>
+      <TaskWorkspaceView
+        categories={categories}
+        groups={groups}
+        search={search}
+        showArchived={showArchived}
+        archivedCount={archivedCount}
+        onSearchChange={setSearch}
+        onToggleArchived={() => {
+          setShowArchived((current) => !current);
+        }}
+        onCreate={(categoryId) => {
+          setDialog({
+            kind: "create",
+            categoryId,
+          });
+        }}
+        onEdit={(task) => {
+          setDialog({
+            kind: "edit",
+            taskId: task.id,
+          });
+        }}
+      />
       <TaskEditorDialog
         dialog={dialog}
-        task={dialog?.kind === "edit" ? tasks.find(({ id }) => id === dialog.taskId) : undefined}
+        task={editedTask}
         categories={categories}
         onClose={() => {
           setDialog(null);
         }}
       />
-    </Page>
+    </>
   );
 };
