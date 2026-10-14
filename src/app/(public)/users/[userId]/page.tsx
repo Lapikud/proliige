@@ -7,6 +7,7 @@ import { z } from "zod";
 import { SignOutButton } from "~/components/auth/signOutButton";
 import { DesktopNotifications } from "~/components/notifications/desktop";
 import { CompletedTasks } from "~/components/profile/completedTasks";
+import { ExclusionControl } from "~/components/profile/exclusionControl";
 import { type PointsBar, PointsChart } from "~/components/profile/pointsChart";
 import { UserPicker } from "~/components/profile/userPicker";
 import { UserAvatar } from "~/components/ui/avatar";
@@ -25,7 +26,7 @@ async function findProfile(userId: string) {
     return null;
   }
 
-  return userService.findProfile(await getUser(), userId);
+  return userService.findProfile(await getUser(), userId, { includeExcluded: true });
 }
 
 export async function generateMetadata({
@@ -49,48 +50,71 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
     feedService.listFeed(viewer, {
       cursor: null,
       authorId: userId,
+      includeExcludedAuthor: true,
     }),
   ]);
   const rank = ranking.findIndex((row) => row.user.id === userId) + 1;
   const standing = ranking[rank - 1];
   const isOwnProfile = viewer?.id === profile.id;
   const ipaUrl = new URL(`https://${env.FREEIPA_SERVER}`);
-  const people =
-    rank > 0 ? ranking.map((row) => row.user) : [...ranking.map((row) => row.user), profile];
+  const people = ranking.map((row) => row.user);
+  const profileCanAppearInPicker = !profile.excluded;
+  if (rank === 0 && profileCanAppearInPicker) {
+    people.push({
+      id: profile.id,
+      displayName: profile.displayName,
+    });
+  }
 
   return (
     <Page
       title={profile.displayName}
-      description={`Standing on ${formatDate(new Date())}`}
+      description={
+        profile.excluded ? "Not on the public leaderboard" : `Standing on ${formatDate(new Date())}`
+      }
       actions={
-        <UserAvatar name={profile.displayName} className="size-14 text-lg ring-2 ring-foreground" />
+        <div className="flex items-center gap-2">
+          {viewer?.roles.includes("admin") && (
+            <ExclusionControl userId={profile.id} excluded={profile.excluded} />
+          )}
+          <UserAvatar
+            name={profile.displayName}
+            className="size-14 text-lg ring-2 ring-foreground"
+          />
+        </div>
       }
     >
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
-          <dl className="grid grid-cols-3 gap-3">
-            <Stat label="Rank" highlight>
-              {rank > 0 ? `#${String(rank)}` : "-"}
-              <span className="text-xs font-normal"> of {ranking.length}</span>
-            </Stat>
-            <Stat label="Points">{standing?.totalPoints ?? 0}</Stat>
-            <Stat label="Tasks done">{standing?.approvedProofs ?? 0}</Stat>
-          </dl>
+          {!profile.excluded && (
+            <dl className="grid grid-cols-3 gap-3">
+              <Stat label="Rank" highlight>
+                {rank > 0 ? `#${String(rank)}` : "-"}
+                <span className="text-xs font-normal"> of {ranking.length}</span>
+              </Stat>
+              <Stat label="Points">{standing?.totalPoints ?? 0}</Stat>
+              <Stat label="Tasks done">{standing?.approvedProofs ?? 0}</Stat>
+            </dl>
+          )}
 
-          <Card>
-            <CardContent className="flex flex-col gap-4">
-              <h2 className="text-base font-black">Points compared to others</h2>
-              <PointsChart bars={chartBars(ranking, profile.displayName, userId)} />
-            </CardContent>
-          </Card>
+          {!profile.excluded && (
+            <Card>
+              <CardContent className="flex flex-col gap-4">
+                <h2 className="text-base font-black">Points compared to others</h2>
+                <PointsChart bars={chartBars(ranking, profile.displayName, userId)} />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="flex flex-col gap-6 lg:col-span-5">
-          <Card>
-            <CardContent>
-              <UserPicker users={people} current={userId} />
-            </CardContent>
-          </Card>
+          {!profile.excluded && (
+            <Card>
+              <CardContent>
+                <UserPicker users={people} current={userId} />
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="flex flex-col gap-2">
               <h2 className="text-base font-black">Completed tasks</h2>
