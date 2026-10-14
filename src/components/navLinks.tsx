@@ -8,7 +8,6 @@ import {
   LogIn,
   type LucideIcon,
   Settings2,
-  Tags,
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +22,6 @@ const icons = {
   proofs: FileCheck,
   review: GitPullRequest,
   manage: Settings2,
-  categories: Tags,
   profile: UserRound,
   signIn: LogIn,
 } satisfies Record<NavItem["icon"], LucideIcon>;

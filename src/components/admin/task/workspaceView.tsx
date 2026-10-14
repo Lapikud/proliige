@@ -1,7 +1,6 @@
 "use client";
 
 import { Eye, EyeOff, Plus, Search, Tags } from "lucide-react";
-import Link from "next/link";
 import { type FC, useState } from "react";
 import { Accordion } from "../../ui/accordion";
 import { Button } from "../../ui/button";
@@ -20,6 +19,7 @@ interface Props {
   readonly search: string;
   readonly showArchived: boolean;
   readonly archivedCount: number;
+  readonly onManageCategories: () => void;
   readonly onSearchChange: (search: string) => void;
   readonly onToggleArchived: () => void;
   readonly onCreate: (categoryId?: string) => void;
@@ -32,6 +32,7 @@ export const TaskWorkspaceView: FC<Props> = ({
   search,
   showArchived,
   archivedCount,
+  onManageCategories,
   onSearchChange,
   onToggleArchived,
   onCreate,
@@ -47,9 +48,9 @@ export const TaskWorkspaceView: FC<Props> = ({
       {categories.length === 0 && (
         <Notice>
           Every task needs a category.{" "}
-          <Link href="/admin/categories" className="text-brand-ink underline">
+          <button type="button" onClick={onManageCategories} className="text-brand-ink underline">
             Create one first.
-          </Link>
+          </button>
         </Notice>
       )}
 
@@ -94,11 +95,15 @@ export const TaskWorkspaceView: FC<Props> = ({
               <span className="hidden sm:inline">Archived ({archivedCount})</span>
             </Button>
           )}
-          <Button asChild variant="outline" className="max-sm:w-11 max-sm:px-0">
-            <Link href="/admin/categories" aria-label="Manage categories" title="Manage categories">
-              <Tags aria-hidden />
-              <span className="hidden sm:inline">Categories</span>
-            </Link>
+          <Button
+            variant="outline"
+            className="max-sm:w-11 max-sm:px-0"
+            aria-label="Manage categories"
+            title="Manage categories"
+            onClick={onManageCategories}
+          >
+            <Tags aria-hidden />
+            <span className="hidden sm:inline">Categories</span>
           </Button>
           <Button
             className="max-sm:w-11 max-sm:px-0"

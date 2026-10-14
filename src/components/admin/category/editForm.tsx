@@ -7,11 +7,11 @@ import { useActionForm } from "~/lib/form";
 import { Button } from "../../ui/button";
 import { Field, Form, FormError } from "../../ui/form";
 import { Input } from "../../ui/formControls";
-import type { CategoryRowView } from "./model";
+import type { CategoryView } from "../task/model";
 
 interface Props {
-  category: CategoryRowView;
-  onDone: () => void;
+  readonly category: CategoryView;
+  readonly onDone: () => void;
 }
 
 export const EditCategoryForm: FC<Props> = ({ category, onDone }) => {

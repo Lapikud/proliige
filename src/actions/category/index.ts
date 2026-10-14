@@ -4,7 +4,7 @@ import { categoryService } from "~/infra";
 import { action } from "~/lib/action";
 import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from "./schema";
 
-const revalidate = ["/admin/categories", "/admin/tasks", "/"];
+const revalidate = ["/admin/tasks", "/"];
 
 export const createCategoryAction = action(
   createCategorySchema,

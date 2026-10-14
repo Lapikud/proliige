@@ -1,6 +1,5 @@
 import {
   userCanBrowseTasks,
-  userCanManageCategories,
   userCanManageTasks,
   userCanReviewProofs,
   userCanSubmitProof,
@@ -11,7 +10,7 @@ export interface NavItem {
   href: string;
   label: string;
   shortLabel?: string;
-  icon: "feed" | "tasks" | "proofs" | "review" | "manage" | "categories" | "profile" | "signIn";
+  icon: "feed" | "tasks" | "proofs" | "review" | "manage" | "profile" | "signIn";
   count?: number;
   only?: "desktop" | "mobile";
 }
@@ -44,12 +43,6 @@ export function navItemsFor(user: User | null, reviewRequests = 0): Array<NavIte
       href: "/admin/tasks",
       label: "Manage",
       icon: "manage",
-    },
-    userCanManageCategories(user) && {
-      href: "/admin/categories",
-      label: "Categories",
-      icon: "categories",
-      only: "desktop",
     },
     user !== null && {
       href: `/users/${user.id}`,

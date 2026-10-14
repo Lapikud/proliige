@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { type FC, useEffect, useMemo, useState } from "react";
 import type { CategoryView, TaskView } from "./model";
+import { CategoryManagementDialog } from "../category/managementDialog";
 import { type TaskDialog, TaskEditorDialog } from "./taskEditorDialog";
 import { TaskWorkspaceView } from "./workspaceView";
 import { groupWorkspaceTasks } from "./workspaceState";
@@ -17,6 +18,9 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [showArchived, setShowArchived] = useState(() => searchParams.get("archived") === "1");
   const [dialog, setDialog] = useState<TaskDialog | null>(null);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(
+    () => searchParams.get("categories") === "1",
+  );
   const groups = useMemo(
     () => groupWorkspaceTasks(tasks, categories, search, showArchived),
     [categories, tasks, search, showArchived],
@@ -33,6 +37,8 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
       else url.searchParams.delete("search");
       if (showArchived) url.searchParams.set("archived", "1");
       else url.searchParams.delete("archived");
+      // The nav link opens the dialog once; a reload should not reopen it.
+      url.searchParams.delete("categories");
       window.history.replaceState(null, "", url);
     }, 300);
 
@@ -49,6 +55,9 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
         search={search}
         showArchived={showArchived}
         archivedCount={archivedCount}
+        onManageCategories={() => {
+          setCategoryDialogOpen(true);
+        }}
         onSearchChange={setSearch}
         onToggleArchived={() => {
           setShowArchived((current) => !current);
@@ -65,6 +74,12 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
             taskId: task.id,
           });
         }}
+      />
+      <CategoryManagementDialog
+        open={categoryDialogOpen}
+        categories={categories}
+        tasks={tasks}
+        onOpenChange={setCategoryDialogOpen}
       />
       <TaskEditorDialog
         dialog={dialog}
