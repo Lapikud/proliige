@@ -1,7 +1,8 @@
-import { userCanViewProfiles } from "~/domain/rules";
-import { toPublicUserView } from "~/domain/user";
+import { notFound } from "~/domain/errors";
+import { userCanExcludeOtherUsers, userCanViewProfiles } from "~/domain/rules";
+import { toProfileView, type UserProfileView } from "~/domain/user";
 import { guard } from "../guard";
-import type { UserRepository } from "../ports/user";
+import type { UserLookupOptions, UserRepository } from "../ports/user";
 
 interface Deps {
   readonly users: UserRepository;
@@ -9,11 +10,31 @@ interface Deps {
 
 export function createUserService({ users }: Deps) {
   return {
-    findProfile: guard(userCanViewProfiles, async (_viewer, userId: string) => {
-      const user = await users.findById(userId);
+    findProfile: guard(
+      userCanViewProfiles,
+      async (
+        _viewer,
+        userId: string,
+        options: UserLookupOptions = {},
+      ): Promise<UserProfileView | null> => {
+        const user = await users.findById(userId, options);
 
-      return user === null ? null : toPublicUserView(user);
-    }),
+        return user === null ? null : toProfileView(user);
+      },
+    ),
+
+    setExcluded: guard(
+      userCanExcludeOtherUsers,
+      async (_admin, userId: string, excluded: boolean): Promise<UserProfileView> => {
+        const profile = await users.setExcluded({
+          userId,
+          excluded,
+        });
+        if (profile === null) throw notFound("That user does not exist.");
+
+        return toProfileView(profile);
+      },
+    ),
   };
 }
 
