@@ -11,6 +11,12 @@ export interface TaskListItem {
   readonly takenByAnother: boolean;
 }
 
+export interface TaskMove {
+  readonly taskId: string;
+  readonly fromCategoryId: string;
+  readonly toCategoryId: string;
+}
+
 export interface TaskRepository {
   listActive(userId: string | null): Promise<Array<TaskListItem>>;
   listAll(): Promise<
@@ -24,6 +30,9 @@ export interface TaskRepository {
   create(input: NewTaskInput): Promise<Task>;
   update(id: string, input: NewTaskInput): Promise<Task>;
   setArchived(id: string, archived: boolean): Promise<Task>;
+  moveMany(ids: ReadonlyArray<string>, categoryId: string): Promise<Array<TaskMove>>;
+  undoMoveMany(moves: ReadonlyArray<TaskMove>): Promise<void>;
+  setArchivedMany(ids: ReadonlyArray<string>, archived: boolean): Promise<Array<string>>;
 }
 
 export interface NewTaskInput {

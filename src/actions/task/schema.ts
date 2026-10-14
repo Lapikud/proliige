@@ -25,4 +25,32 @@ export const archiveTaskSchema = z.object({
   archived: z.boolean(),
 });
 
+const taskIdsSchema = z
+  .array(z.uuid())
+  .min(1, "Select one or more tasks.")
+  .refine((ids) => new Set(ids).size === ids.length, "Select each task only once.");
+
+export const moveTasksSchema = z.object({
+  taskIds: taskIdsSchema,
+  categoryId: z.uuid(),
+});
+
+export const setTasksArchivedSchema = z.object({
+  taskIds: taskIdsSchema,
+  archived: z.boolean(),
+});
+
+export const undoMoveTasksSchema = z.object({
+  moves: z
+    .array(
+      z.object({
+        taskId: z.uuid(),
+        fromCategoryId: z.uuid(),
+        toCategoryId: z.uuid(),
+      }),
+    )
+    .min(1)
+    .refine((moves) => new Set(moves.map(({ taskId }) => taskId)).size === moves.length),
+});
+
 export type TaskValues = z.infer<typeof taskSchema>;

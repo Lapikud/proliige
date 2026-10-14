@@ -2,7 +2,14 @@
 
 import { taskService } from "~/infra";
 import { action } from "~/lib/action";
-import { archiveTaskSchema, createTaskSchema, updateTaskSchema } from "./schema";
+import {
+  archiveTaskSchema,
+  createTaskSchema,
+  moveTasksSchema,
+  setTasksArchivedSchema,
+  undoMoveTasksSchema,
+  updateTaskSchema,
+} from "./schema";
 
 const revalidate = ["/admin/tasks", "/tasks"];
 
@@ -27,5 +34,23 @@ export const archiveTaskAction = action(
   async (user, { taskId, archived }) => {
     await taskService.archiveTask(user, taskId, archived);
   },
+  { revalidate },
+);
+
+export const moveTasksAction = action(
+  moveTasksSchema,
+  async (user, { taskIds, categoryId }) => taskService.moveTasks(user, taskIds, categoryId),
+  { revalidate },
+);
+
+export const undoMoveTasksAction = action(
+  undoMoveTasksSchema,
+  async (user, { moves }) => taskService.undoMoveTasks(user, moves),
+  { revalidate },
+);
+
+export const setTasksArchivedAction = action(
+  setTasksArchivedSchema,
+  async (user, { taskIds, archived }) => taskService.setTasksArchived(user, taskIds, archived),
   { revalidate },
 );
