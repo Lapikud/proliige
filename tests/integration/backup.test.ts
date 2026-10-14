@@ -76,8 +76,8 @@ async function proofWithPhotos(objectKeys: ReadonlyArray<string>) {
 describe("weekly photo backup", () => {
   it("copies every proof photo to the backup destination", async () => {
     const { storage, uploaded, backups } = setup();
-    storage.put("proofs/a.jpg", new Uint8Array([1, 2, 3, 4]), "image/jpeg");
-    storage.put("proofs/b.jpg", new Uint8Array([5, 6, 7, 8]), "image/jpeg");
+    void storage.put("proofs/a.jpg", new Uint8Array([1, 2, 3, 4]), "image/jpeg");
+    void storage.put("proofs/b.jpg", new Uint8Array([5, 6, 7, 8]), "image/jpeg");
     await proofWithPhotos(["proofs/a.jpg", "proofs/b.jpg"]);
 
     expect(await backups.backUpPhotos()).toEqual({
@@ -90,7 +90,7 @@ describe("weekly photo backup", () => {
 
   it("copies nothing the second week when nothing new was uploaded", async () => {
     const { storage, uploaded, backups } = setup();
-    storage.put("proofs/a.jpg", new Uint8Array([1, 2, 3, 4]), "image/jpeg");
+    void storage.put("proofs/a.jpg", new Uint8Array([1, 2, 3, 4]), "image/jpeg");
     await proofWithPhotos(["proofs/a.jpg"]);
 
     await backups.backUpPhotos();

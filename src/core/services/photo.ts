@@ -1,5 +1,3 @@
-import { isAllowedContentType } from "~/config/photo";
-import { env } from "~/env.config";
 import type { PhotoRef } from "~/domain/proof";
 import { forbidden, notFound, validation } from "~/domain/errors";
 import {
@@ -22,29 +20,27 @@ const SNIFF_LENGTH = 16;
 
 export function createPhotoService(deps: PhotoServiceDeps) {
   return {
-    createPhotoUpload: guard(
+    uploadPhoto: guard(
       userCanSubmitProof,
       async (
         user,
         input: {
           proofRef: string;
-          contentType: string;
+          bytes: Uint8Array;
         },
       ) => {
-        if (!isAllowedContentType(input.contentType)) {
-          throw validation("Only JPEG, PNG, and WebP photos are accepted.");
+        const result = validatePhotoBytes(input.bytes.subarray(0, SNIFF_LENGTH), input.bytes.length);
+        if (!result.ok) {
+          throw validation(describePhotoFailure(result.failure));
         }
         const objectKey = buildPhotoObjectKey(
           user.id,
           input.proofRef,
-          extensionForContentType(input.contentType),
+          extensionForContentType(result.contentType),
         );
+        await deps.storage.put(objectKey, input.bytes, result.contentType);
 
-        return deps.storage.presignUpload({
-          objectKey,
-          contentType: input.contentType,
-          expiresInSeconds: env.PHOTO_UPLOAD_URL_TTL_SECONDS,
-        });
+        return { objectKey };
       },
     ),
 

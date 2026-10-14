@@ -18,24 +18,19 @@ export function createMemoryObjectStorage() {
   };
 
   const storage: ObjectStoragePort & {
-    put(objectKey: string, bytes: Uint8Array, contentType: string): void;
     has(objectKey: string): boolean;
   } = {
-    put: (objectKey, bytes, contentType) =>
-      void objects.set(objectKey, {
+    put: (objectKey, bytes, contentType) => {
+      objects.set(objectKey, {
         bytes,
         contentType,
-      }),
+      });
+
+      return Promise.resolve();
+    },
     has: (objectKey) => objects.has(objectKey),
 
     ensureBucket: () => Promise.resolve(),
-
-    presignUpload: ({ objectKey, expiresInSeconds }) =>
-      Promise.resolve({
-        objectKey,
-        uploadUrl: `memory://${objectKey}`,
-        expiresInSeconds,
-      }),
 
     stat: (objectKey) => {
       const object = objects.get(objectKey);

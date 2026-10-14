@@ -4,18 +4,8 @@ export interface StoredObjectInfo {
   readonly sizeBytes: number;
 }
 
-export interface PresignedUpload {
-  readonly objectKey: string;
-  readonly uploadUrl: string;
-  readonly expiresInSeconds: number;
-}
-
 export interface ObjectStoragePort {
-  presignUpload(input: {
-    objectKey: string;
-    contentType: string;
-    expiresInSeconds: number;
-  }): Promise<PresignedUpload>;
+  put(objectKey: string, bytes: Uint8Array, contentType: string): Promise<void>;
 
   stat(objectKey: string): Promise<StoredObjectInfo | null>;
 

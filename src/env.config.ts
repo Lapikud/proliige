@@ -53,9 +53,6 @@ export const env = defineEnv({
     GARAGE_SECRET_KEY: optionalText(),
     GARAGE_PHOTO_BUCKET: text("lapikud-photos"),
     GARAGE_REGION: text("garage"),
-    GARAGE_PUBLIC_ENDPOINT: optionalUrl(),
-
-    PHOTO_UPLOAD_URL_TTL_SECONDS: integer(300),
 
     NEXTCLOUD_WEBDAV_URL: optionalUrl(),
     NEXTCLOUD_USERNAME: optionalText(),
@@ -89,8 +86,6 @@ export const env = defineEnv({
     GARAGE_SECRET_KEY: process.env.GARAGE_SECRET_KEY,
     GARAGE_PHOTO_BUCKET: process.env.GARAGE_PHOTO_BUCKET,
     GARAGE_REGION: process.env.GARAGE_REGION,
-    GARAGE_PUBLIC_ENDPOINT: process.env.GARAGE_PUBLIC_ENDPOINT,
-    PHOTO_UPLOAD_URL_TTL_SECONDS: process.env.PHOTO_UPLOAD_URL_TTL_SECONDS,
     NEXTCLOUD_WEBDAV_URL: process.env.NEXTCLOUD_WEBDAV_URL,
     NEXTCLOUD_USERNAME: process.env.NEXTCLOUD_USERNAME,
     NEXTCLOUD_PASSWORD: process.env.NEXTCLOUD_PASSWORD,

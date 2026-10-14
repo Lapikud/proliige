@@ -29,7 +29,7 @@ const GIF = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x00, 0x00]);
 function storageWith(objects: Record<string, Uint8Array>) {
   const storage = createMemoryObjectStorage();
   for (const [key, bytes] of Object.entries(objects)) {
-    storage.put(key, bytes, "image/jpeg");
+    void storage.put(key, bytes, "image/jpeg");
   }
 
   return storage;
@@ -210,7 +210,7 @@ describe("photos validation", () => {
     const { plainTask, alice } = await seed();
     const storage = storageWith({});
     const statSpy = vi.spyOn(storage, "stat");
-    const presignSpy = vi.spyOn(storage, "presignUpload");
+    const putSpy = vi.spyOn(storage, "put");
     const { proofService } = services(storage);
 
     await proofService.submitProof(alice, {
@@ -219,7 +219,7 @@ describe("photos validation", () => {
     });
 
     expect(statSpy).not.toHaveBeenCalled();
-    expect(presignSpy).not.toHaveBeenCalled();
+    expect(putSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -332,26 +332,43 @@ describe("photos access control", () => {
     ).rejects.toThrow(/not part of this proof/i);
   });
 
-  it("refuses to issue an upload URL to an unauthenticated user", async () => {
+  it("refuses an upload from an unauthenticated user", async () => {
     const { photos } = services(storageWith({}));
     await expect(
-      photos.createPhotoUpload(null, {
+      photos.uploadPhoto(null, {
         proofRef: "x",
-        contentType: "image/jpeg",
+        bytes: JPEG,
       }),
     ).rejects.toMatchObject({
       code: "UNAUTHENTICATED",
     });
   });
 
-  it("refuses to issue an upload URL for a disallowed content type", async () => {
+  it("refuses an upload whose bytes are a disallowed format", async () => {
     const { alice } = await seed();
-    const { photos } = services(storageWith({}));
+    const storage = storageWith({});
+    const { photos } = services(storage);
     await expect(
-      photos.createPhotoUpload(alice, {
+      photos.uploadPhoto(alice, {
         proofRef: "x",
-        contentType: "image/gif",
+        bytes: GIF,
       }),
     ).rejects.toThrow(/JPEG, PNG, and WebP/i);
+    expect(storage.has(`photos/${alice.id}/x`)).toBe(false);
+  });
+
+  it("stores a valid upload under the user's namespace and sniffs its type", async () => {
+    const { alice } = await seed();
+    const storage = storageWith({});
+    const { photos } = services(storage);
+
+    const { objectKey } = await photos.uploadPhoto(alice, {
+      proofRef: "draft-1",
+      bytes: JPEG,
+    });
+
+    expect(objectKey).toMatch(new RegExp(`^photos/${alice.id}/draft-1/.+\\.jpg$`));
+    const info = await storage.stat(objectKey);
+    expect(info?.contentType).toBe("image/jpeg");
   });
 });
