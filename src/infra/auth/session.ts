@@ -82,7 +82,7 @@ export function createCookieSession(users: UserRepository): SessionPort {
         return null;
       }
 
-      return users.findById(payload.sub);
+      return users.findById(payload.sub, { includeExcluded: true });
     },
 
     async destroy() {

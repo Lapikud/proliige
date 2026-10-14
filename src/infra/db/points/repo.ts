@@ -1,4 +1,4 @@
-import { asc, count, desc, eq, gte, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, sum } from "drizzle-orm";
 import type { LeaderboardRepository } from "~/core/ports/leaderboard";
 import type { Database } from "../client";
 import { users } from "../user/model";
@@ -17,7 +17,11 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
         })
         .from(pointsLedger)
         .innerJoin(users, eq(users.id, pointsLedger.userId))
-        .where(since === null ? undefined : gte(pointsLedger.awardedAt, since))
+        .where(
+          since === null
+            ? eq(users.excluded, false)
+            : and(eq(users.excluded, false), gte(pointsLedger.awardedAt, since)),
+        )
         .groupBy(users.id, users.displayName)
         .orderBy(desc(totalPoints), asc(users.displayName))
         .limit(limit);
