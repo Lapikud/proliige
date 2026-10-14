@@ -7,6 +7,7 @@ export interface User {
   readonly ipaUniqueId: string;
   readonly uid: string;
   readonly displayName: string;
+  readonly excluded: boolean;
   readonly roles: ReadonlyArray<Role>;
 }
 
@@ -15,9 +16,14 @@ export interface PublicUserView {
   readonly displayName: string;
 }
 
-export const toPublicUserView = ({ id, displayName }: User): PublicUserView => ({
+export interface UserProfileView extends PublicUserView {
+  readonly excluded: boolean;
+}
+
+export const toProfileView = ({ id, displayName, excluded }: User): UserProfileView => ({
   id,
   displayName,
+  excluded,
 });
 
 export function hasRole(user: User | null, role: Role): user is User {

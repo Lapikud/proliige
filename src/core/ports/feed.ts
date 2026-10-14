@@ -6,6 +6,7 @@ export interface FeedRepository {
     limit: number;
     categoryId?: string | null;
     authorId?: string | null;
+    includeExcludedAuthor: boolean;
     viewerId: string | null;
   }): Promise<
     Omit<FeedPage, "entries"> & {

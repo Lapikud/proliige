@@ -7,6 +7,7 @@ const person = (roles: User["roles"]): User => ({
   ipaUniqueId: "ipa-u1",
   uid: "u1",
   displayName: "U",
+  excluded: false,
   roles,
 });
 
