@@ -13,6 +13,7 @@ interface ListFeedInput {
   readonly limit?: number | undefined;
   readonly categoryId?: string | null;
   readonly authorId?: string | null;
+  readonly includeExcludedAuthor?: boolean;
 }
 
 export function createFeedService({ feed }: Deps) {
@@ -23,6 +24,7 @@ export function createFeedService({ feed }: Deps) {
         limit: Math.min(input.limit ?? feedConfig.feedPageSize, feedConfig.feedMaxPageSize),
         categoryId: input.categoryId ?? null,
         authorId: input.authorId ?? null,
+        includeExcludedAuthor: Boolean(input.includeExcludedAuthor && input.authorId),
         viewerId: user?.id ?? null,
       });
 

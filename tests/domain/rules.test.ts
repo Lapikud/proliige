@@ -20,6 +20,7 @@ const person = (id: string, roles: User["roles"]): User => ({
   ipaUniqueId: `ipa-${id}`,
   uid: id,
   displayName: id,
+  excluded: false,
   roles,
 });
 

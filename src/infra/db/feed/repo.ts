@@ -9,8 +9,11 @@ import { proofComments, proofLikes } from "./model";
 
 export function createFeedRepository(db: Database): FeedRepository {
   return {
-    async listFeed({ cursor, limit, categoryId, authorId, viewerId }) {
+    async listFeed({ cursor, limit, categoryId, authorId, includeExcludedAuthor, viewerId }) {
       const conditions = [eq(proofs.status, "approved"), isNotNull(proofs.reviewedAt)];
+      if (!includeExcludedAuthor) {
+        conditions.push(eq(users.excluded, false));
+      }
 
       if (categoryId) {
         conditions.push(eq(tasks.categoryId, categoryId));

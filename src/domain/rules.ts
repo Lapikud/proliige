@@ -25,6 +25,7 @@ export const userCanSubmitProof: Rule = member;
 export const userCanManageTasks: Rule = admin;
 export const userCanManageCategories: Rule = admin;
 export const userCanReviewProofs: Rule = admin;
+export const userCanExcludeOtherUsers: Rule = admin;
 
 export function userCanDeleteComment(user: User | null, comment: { userId: string }): boolean {
   return isAdmin(user) || user?.id === comment.userId;

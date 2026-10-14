@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const users = pgTable(
   "users",
@@ -8,6 +8,7 @@ export const users = pgTable(
     ipaUniqueId: text("ipa_unique_id").notNull(),
     uid: text("uid").notNull(),
     displayName: text("display_name").notNull(),
+    excluded: boolean("excluded").notNull().default(false),
 
     freeipaGroups: text("freeipa_groups").array().notNull().default([]),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),

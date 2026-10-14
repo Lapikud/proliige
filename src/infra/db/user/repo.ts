@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import type { UserRepository } from "~/core/ports/user";
+import { and, eq } from "drizzle-orm";
+import type { UserLookupOptions, UserRepository } from "~/core/ports/user";
 import { rolesForGroups, type User } from "~/domain/user";
 import type { Database } from "../client";
 import { users } from "./model";
@@ -13,6 +13,7 @@ function toUser(row: Row): User {
     ipaUniqueId: row.ipaUniqueId,
     uid: row.uid,
     displayName: row.displayName,
+    excluded: row.excluded,
     roles: rolesForGroups(row.freeipaGroups),
   };
 }
@@ -47,8 +48,31 @@ export function createUserRepository(db: Database): UserRepository {
       return toUser(row);
     },
 
-    async findById(id) {
-      const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    async findById(id: string, options: UserLookupOptions = {}): Promise<User | null> {
+      const conditions = [eq(users.id, id)];
+      const applyPublicVisibilityFilter = options.includeExcluded !== true;
+      if (applyPublicVisibilityFilter) {
+        conditions.push(eq(users.excluded, false));
+      }
+
+      const [row] = await db
+        .select()
+        .from(users)
+        .where(and(...conditions))
+        .limit(1);
+
+      return row === undefined ? null : toUser(row);
+    },
+
+    async setExcluded({ userId, excluded }) {
+      const [row] = await db
+        .update(users)
+        .set({
+          excluded,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
 
       return row === undefined ? null : toUser(row);
     },
