@@ -6,23 +6,17 @@ import { Button } from "../../ui/button";
 import { EmptyState, Notice } from "../../ui/feedback";
 import { Page } from "../../ui/page";
 import type { CategoryView, TaskView } from "./model";
-import { CreateTaskForm } from "./createForm";
-import { EditTaskForm } from "./editForm";
 import { TaskRow } from "./row";
+import { type TaskDialog, TaskEditorDialog } from "./taskEditorDialog";
 
 interface Props {
   tasks: Array<TaskView>;
   categories: Array<CategoryView>;
 }
 
-type Editing = TaskView | "new" | null;
-
 export const TaskManager: FC<Props> = ({ tasks, categories }) => {
-  const [editing, setEditing] = useState<Editing>(null);
+  const [dialog, setDialog] = useState<TaskDialog | null>(null);
   const hasCategories = categories.length > 0;
-  const close = () => {
-    setEditing(null);
-  };
 
   return (
     <Page
@@ -35,7 +29,10 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
           </Button>
           <Button
             onClick={() => {
-              setEditing("new");
+              setDialog({
+                kind: "create",
+                categoryId: undefined,
+              });
             }}
             disabled={!hasCategories}
           >
@@ -53,11 +50,6 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
         </Notice>
       )}
 
-      {editing === "new" && <CreateTaskForm categories={categories} onDone={close} />}
-      {editing !== null && editing !== "new" && (
-        <EditTaskForm key={editing.id} task={editing} categories={categories} onDone={close} />
-      )}
-
       {tasks.length === 0 && (
         <EmptyState title="No tasks yet" description="Create the first one above." />
       )}
@@ -68,12 +60,24 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
             <TaskRow
               task={task}
               onEdit={() => {
-                setEditing(task);
+                setDialog({
+                  kind: "edit",
+                  taskId: task.id,
+                });
               }}
             />
           </li>
         ))}
       </ul>
+
+      <TaskEditorDialog
+        dialog={dialog}
+        task={dialog?.kind === "edit" ? tasks.find(({ id }) => id === dialog.taskId) : undefined}
+        categories={categories}
+        onClose={() => {
+          setDialog(null);
+        }}
+      />
     </Page>
   );
 };
