@@ -1,37 +1,44 @@
+import Link from "next/link";
 import type { FC } from "react";
 import type { ProofWithContext } from "~/core/ports/proof";
 import { formatDateTime } from "~/lib/utils";
-import { ProofStatusBadge } from "./statusBadge";
 import { PhotoGallery } from "./photoGallery";
-import { ReviewerList } from "../review/reviewers";
 import { Badge } from "../ui/badge";
-import { Card, CardContent } from "../ui/card";
 
 interface Props {
   entry: ProofWithContext;
 }
 
-export const MyProofCard: FC<Props> = ({
+export const MyProofRow: FC<Props> = ({
   entry: { proof, taskTitle, taskPoints, categoryName, photos, requestedReviewers, reviewedByName },
-}) => (
-  <Card>
-    <CardContent className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-black text-foreground">{taskTitle}</h2>
+}) => {
+  let review = "any admin can review it";
+  if (reviewedByName !== null) review = `reviewed by ${reviewedByName}`;
+  else if (requestedReviewers.length > 0) {
+    review = `waiting on ${requestedReviewers.map((reviewer) => reviewer.displayName).join(", ")}`;
+  }
+
+  return (
+    <div className="flex flex-col gap-2 px-2 py-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <Link
+            href={`/tasks/${proof.taskId}`}
+            className="font-semibold break-words text-foreground hover:text-brand-ink"
+          >
+            {taskTitle}
+          </Link>
           <p className="text-sm text-muted-foreground">
             {categoryName} · submitted{" "}
             <time dateTime={proof.submittedAt.toISOString()}>
               {formatDateTime(proof.submittedAt)}
-            </time>
+            </time>{" "}
+            · {review}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ProofStatusBadge status={proof.status} />
-          <Badge variant="points" className="tabular-nums">
-            {taskPoints} pts
-          </Badge>
-        </div>
+        <Badge variant="points" className="tabular-nums">
+          {taskPoints} pts
+        </Badge>
       </div>
 
       {proof.status === "rejected" && proof.rejectionReason && (
@@ -43,14 +50,8 @@ export const MyProofCard: FC<Props> = ({
       <PhotoGallery
         urls={photos.map((item) => `/api/photos/${proof.id}/${item.id}`)}
         alt={`Photos you submitted for ${taskTitle}`}
-        size="sm"
+        size="xs"
       />
-
-      <ReviewerList
-        requested={requestedReviewers}
-        status={proof.status}
-        reviewedByName={reviewedByName}
-      />
-    </CardContent>
-  </Card>
-);
+    </div>
+  );
+};

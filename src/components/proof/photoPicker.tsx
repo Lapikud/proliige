@@ -1,12 +1,12 @@
 "use client";
 
+import { Camera, LoaderCircle, X } from "lucide-react";
 import { type FC, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ProofValues } from "~/actions/proof/schema";
 import { allowedContentTypes, isAllowedContentType, photoLimits } from "~/config/photo";
 import { Button } from "../ui/button";
 import { ErrorState } from "../ui/feedback";
-import { Label } from "../ui/formControls";
 
 interface Props {
   proofRef: string;
@@ -69,53 +69,70 @@ export const PhotoPicker: FC<Props> = ({ proofRef, instructions }) => {
       <legend className="sr-only">Photos (required)</legend>
       {instructions && <p className="text-sm text-muted-foreground">{instructions}</p>}
 
-      <Label htmlFor="photos" className="sr-only">
-        Choose photos
-      </Label>
-      <input
-        id="photos"
-        type="file"
-        multiple
-        accept={allowedContentTypes.join(",")}
-        disabled={uploading || remaining <= 0}
-        onChange={(event) => void add(event.target.files)}
-        className="text-sm text-foreground/80 file:mr-3 file:rounded-xl file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-sm"
-      />
+      <ul className="grid list-none grid-cols-3 gap-2 p-0 sm:grid-cols-5">
+        {previews.map((preview) => (
+          <li key={preview.objectKey} className="relative aspect-square">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={preview.url}
+              alt={preview.name}
+              className="size-full rounded-xl border border-border object-cover"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="absolute top-1 right-1 w-8 px-0"
+              aria-label={`Remove ${preview.name}`}
+              title="Remove"
+              onClick={() => {
+                remove(preview.objectKey);
+              }}
+            >
+              <X className="size-4" aria-hidden />
+            </Button>
+          </li>
+        ))}
+        {remaining > 0 && (
+          <li className="aspect-square">
+            <label
+              htmlFor="photos"
+              className="flex size-full cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-foreground/50 bg-background text-center text-sm font-semibold text-foreground hover:border-foreground hover:bg-muted has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring has-disabled:cursor-not-allowed has-disabled:opacity-60"
+            >
+              {uploading ? (
+                <LoaderCircle className="size-5 animate-spin" aria-hidden />
+              ) : (
+                <Camera className="size-5" aria-hidden />
+              )}
+              {uploading ? "Uploading…" : "Add photos"}
+              <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                {objectKeys.length} / {maxPhotosPerProof}
+              </span>
+              <input
+                id="photos"
+                type="file"
+                multiple
+                accept={allowedContentTypes.join(",")}
+                disabled={uploading}
+                onChange={(event) => {
+                  void add(event.target.files);
+                  event.target.value = "";
+                }}
+                className="sr-only"
+              />
+            </label>
+          </li>
+        )}
+      </ul>
       <p className="text-xs text-muted-foreground">
         JPEG, PNG, or WebP. Up to {maxMegabytes} MB each, {maxPhotosPerProof} photos at most.
       </p>
-
       {uploading && (
-        <p className="text-sm text-muted-foreground" aria-live="polite">
+        <p className="sr-only" aria-live="polite">
           Uploading…
         </p>
       )}
       {error && <ErrorState description={error} />}
-
-      {previews.length > 0 && (
-        <ul className="flex list-none flex-wrap gap-2 p-0">
-          {previews.map((preview) => (
-            <li key={preview.objectKey} className="flex flex-col items-center gap-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={preview.url}
-                alt={preview.name}
-                className="size-20 rounded-xl border border-border object-cover"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  remove(preview.objectKey);
-                }}
-              >
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ul>
-      )}
     </fieldset>
   );
 };
