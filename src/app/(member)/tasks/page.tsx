@@ -26,7 +26,13 @@ const TasksPage: FC = async () => {
     policy: describeTaskPolicy(item.task.policy),
     photoRequired: item.task.photoRequired,
     textRequired: item.task.textRequired,
-    availability: taskAvailability(item, now),
+    availability: taskAvailability(
+      {
+        ...item,
+        policy: item.task.policy,
+      },
+      now,
+    ),
     cooldownUntil: item.userCooldownUntil && formatDate(item.userCooldownUntil),
   }));
   const open = tasks.filter((task) => task.availability === "open").length;

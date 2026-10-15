@@ -3,6 +3,7 @@ import { taskAvailability } from "~/lib/taskLabels";
 
 const now = new Date("2026-10-15T12:00:00Z");
 const standing = {
+  policy: "one_per_user" as const,
   userProofStatus: null,
   takenByAnother: false,
   userCooldownUntil: null,
@@ -45,6 +46,34 @@ describe("taskAvailability", () => {
         now,
       ),
     ).toBe("taken");
+  });
+
+  it("shows a repeatable task's active cooldown even after an approval", () => {
+    expect(
+      taskAvailability(
+        {
+          ...standing,
+          policy: "repeatable",
+          userProofStatus: "approved",
+          userCooldownUntil: new Date(now.getTime() + 60_000),
+        },
+        now,
+      ),
+    ).toBe("cooldown");
+  });
+
+  it("reopens a repeatable task after its cooldown expires", () => {
+    expect(
+      taskAvailability(
+        {
+          ...standing,
+          policy: "repeatable",
+          userProofStatus: "approved",
+          userCooldownUntil: new Date(now.getTime() - 60_000),
+        },
+        now,
+      ),
+    ).toBe("open");
   });
 
   it("only counts a cooldown that has not ended", () => {

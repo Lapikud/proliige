@@ -44,19 +44,20 @@ export function describeUnavailability(
 export type TaskAvailability = "open" | "pending" | "done" | "taken" | "cooldown";
 
 interface Standing {
+  readonly policy: TaskPolicy;
   readonly userProofStatus: ProofStatus | null;
   readonly takenByAnother: boolean;
   readonly userCooldownUntil: Date | null;
 }
 
 export function taskAvailability(
-  { userProofStatus, takenByAnother, userCooldownUntil }: Standing,
+  { policy, userProofStatus, takenByAnother, userCooldownUntil }: Standing,
   now: Date,
 ): TaskAvailability {
   if (userProofStatus === "pending") return "pending";
-  if (userProofStatus === "approved") return "done";
   if (takenByAnother) return "taken";
   if (userCooldownUntil !== null && userCooldownUntil > now) return "cooldown";
+  if (userProofStatus === "approved" && policy !== "repeatable") return "done";
 
   return "open";
 }
