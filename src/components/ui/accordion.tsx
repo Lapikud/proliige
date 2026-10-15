@@ -2,7 +2,7 @@
 
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "~/lib/utils";
 
 export const Accordion = AccordionPrimitive.Root;
@@ -31,7 +31,7 @@ export function AccordionTrigger({
           {...props}
         >
           {children}
-          <ChevronDown className="size-4 shrink-0 opacity-70 transition-transform" />
+          <ChevronDown className="size-4 shrink-0 transition-transform" />
         </AccordionPrimitive.Trigger>
       </Heading>
     </AccordionPrimitive.Header>
@@ -50,5 +50,35 @@ export function AccordionContent({
     >
       <div className={cn("pb-3", className)}>{children}</div>
     </AccordionPrimitive.Content>
+  );
+}
+
+export interface GroupAccordionItemProps {
+  readonly value: string;
+  readonly title: ReactNode;
+  readonly leading?: ReactNode;
+  readonly headerAction?: ReactNode;
+  readonly children: ReactNode;
+}
+
+export function GroupAccordionItem({
+  value,
+  title,
+  leading,
+  headerAction,
+  children,
+}: GroupAccordionItemProps) {
+  return (
+    <AccordionItem
+      value={value}
+      className="group overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-card"
+    >
+      <div className="flex items-center gap-3 border-border px-4 group-data-[state=open]:border-b">
+        {leading}
+        <AccordionTrigger heading="h2">{title}</AccordionTrigger>
+        {headerAction}
+      </div>
+      <AccordionContent className="pb-0">{children}</AccordionContent>
+    </AccordionItem>
   );
 }

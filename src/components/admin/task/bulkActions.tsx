@@ -117,7 +117,7 @@ export function TaskBulkActions({ tasks, categories, categoryId, onDone }: Props
       </Select>
       <Button
         size="sm"
-        variant="solid"
+        variant="subtle"
         className="w-9 px-0"
         aria-label="Move selected tasks"
         title="Move selected tasks"
@@ -134,7 +134,7 @@ export function TaskBulkActions({ tasks, categories, categoryId, onDone }: Props
       {activeIds.length > 0 && (
         <Button
           size="sm"
-          variant="solid"
+          variant="subtle"
           aria-label={`Archive ${count(activeIds.length)}`}
           title={`Archive ${count(activeIds.length)}`}
           disabled={pending}
@@ -152,7 +152,7 @@ export function TaskBulkActions({ tasks, categories, categoryId, onDone }: Props
       {archivedIds.length > 0 && (
         <Button
           size="sm"
-          variant="solid"
+          variant="subtle"
           aria-label={`Reactivate ${count(archivedIds.length)}`}
           title={`Reactivate ${count(archivedIds.length)}`}
           disabled={pending}

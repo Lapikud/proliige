@@ -1,3 +1,4 @@
+import { matchesTaskSearch } from "../../task/search";
 import type { CategoryView, TaskView } from "./model";
 
 export interface TaskGroup {
@@ -11,7 +12,6 @@ export function groupWorkspaceTasks(
   search: string,
   showArchived: boolean,
 ): Array<TaskGroup> {
-  const query = search.trim().toLocaleLowerCase();
   const groups = categories.map((category) => ({
     category,
     tasks: tasks.filter((task) => {
@@ -19,15 +19,11 @@ export function groupWorkspaceTasks(
         return false;
       }
 
-      return (
-        query.length === 0 ||
-        task.title.toLocaleLowerCase().includes(query) ||
-        task.description.toLocaleLowerCase().includes(query)
-      );
+      return matchesTaskSearch(task, search);
     }),
   }));
 
-  return query.length === 0
+  return search.trim() === ""
     ? groups
     : groups.filter(({ tasks: visibleTasks }) => visibleTasks.length > 0);
 }
