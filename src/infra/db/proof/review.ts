@@ -10,7 +10,7 @@ import { toProof } from "./map";
 
 export function createProofReview(db: Database): Pick<ProofRepository, "approve" | "reject"> {
   return {
-    async approve({ proofId, reviewerId, now }) {
+    async approve({ proofId, reviewerId, points: override, now }) {
       return db.transaction(async (tx) => {
         const [updated] = await tx
           .update(proofs)
@@ -35,11 +35,21 @@ export function createProofReview(db: Database): Pick<ProofRepository, "approve"
           };
         }
 
-        const [task] = await tx
-          .select({ points: tasks.points })
-          .from(tasks)
-          .where(eq(tasks.id, updated.taskId))
-          .limit(1);
+        const [task] =
+          override === undefined
+            ? await tx
+                .select({ points: tasks.points })
+                .from(tasks)
+                .where(eq(tasks.id, updated.taskId))
+                .limit(1)
+            : await tx
+                .update(tasks)
+                .set({
+                  points: override,
+                  updatedAt: now,
+                })
+                .where(eq(tasks.id, updated.taskId))
+                .returning({ points: tasks.points });
         const points = task?.points ?? 0;
 
         try {

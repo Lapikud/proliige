@@ -38,12 +38,18 @@ const toNewCategory = ({ name }: CategoryInput) => ({
 });
 
 function slugify(value: string): string {
-  return value
+  const normalized = value
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, "-");
+  let start = 0;
+  let end = normalized.length;
+
+  while (start < end && normalized.charCodeAt(start) === 45) start += 1;
+  while (end > start && normalized.charCodeAt(end - 1) === 45) end -= 1;
+
+  return normalized.slice(start, end);
 }
 
 export type CategoryService = ReturnType<typeof createCategoryService>;

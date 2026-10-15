@@ -8,6 +8,7 @@ export type PublicRule = (user: User | null) => boolean;
 const everyone: PublicRule = () => true;
 const signedIn: Rule = (user): user is User => user !== null;
 const member: Rule = (user): user is User => hasRole(user, "member");
+const pixel: Rule = (user): user is User => hasRole(user, "pixel");
 const admin: Rule = (user): user is User => hasRole(user, "admin");
 
 const isAdmin = (user: User | null): boolean => hasRole(user, "admin");
@@ -21,6 +22,7 @@ export const userCanReactToProofs: Rule = signedIn;
 
 export const userCanBrowseTasks: Rule = member;
 export const userCanSubmitProof: Rule = member;
+export const userCanAddOwnTask: Rule = pixel;
 
 export const userCanManageTasks: Rule = admin;
 export const userCanManageCategories: Rule = admin;

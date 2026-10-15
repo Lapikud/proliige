@@ -1,4 +1,4 @@
-import { asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { TaskListItem, TaskRepository } from "~/core/ports/task";
 import {
   completionPolicy,
@@ -26,7 +26,7 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(isNull(tasks.archivedAt))
+        .where(and(isNull(tasks.archivedAt), isNull(tasks.createdBy)))
         .orderBy(asc(categories.name), asc(tasks.title));
 
       if (rows.length === 0) {
@@ -69,6 +69,7 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
+        .where(isNull(tasks.createdBy))
         .orderBy(asc(categories.name), asc(tasks.title));
 
       return rows.map((row) => ({
@@ -91,7 +92,7 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(eq(tasks.id, id))
+        .where(and(eq(tasks.id, id), isNull(tasks.createdBy)))
         .limit(1);
       if (row === undefined) {
         return null;

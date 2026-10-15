@@ -20,6 +20,7 @@ const toTaskView = ({ task, categoryName }: { task: Task; categoryName: string }
   cooldownSeconds: task.cooldownSeconds,
   photoRequired: task.photoRequired,
   photoInstructions: task.photoInstructions,
+  textRequired: task.textRequired,
   archived: task.archivedAt !== null,
 });
 

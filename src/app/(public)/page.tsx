@@ -28,7 +28,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
       categoryId,
     }),
     leaderboardService.listLeaderboard(user, {
-      limit: 50,
+      limit: 10,
       since: period === "month" ? startOfMonthInTallinn() : null,
     }),
     categoryService.listFeedCategories(user),
@@ -39,9 +39,9 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
       <h1 className="sr-only">Feed and leaderboard</h1>
 
       <aside aria-label="Leaderboard" className="hidden lg:col-span-4 lg:block">
-        <div className="sticky top-6">
+        <div className="sticky top-[calc(var(--nav-h)+1.5rem)]">
           <LeaderboardPanel
-            rows={ranking.slice(0, 15)}
+            rows={ranking}
             currentUserId={user?.id ?? null}
             period={period}
             {...(keepCategory ? { keep: keepCategory } : {})}

@@ -24,7 +24,7 @@ export const Navbar: FC = async () => {
     <>
       <div className="sticky top-0 z-50">
         <header className="relative bg-ink text-white">
-          <div className="relative z-10 mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 md:h-[76px]">
+          <div className="relative z-10 mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 md:h-(--nav-h)">
             <Link href="/" className="shrink-0 rounded-lg">
               <Image
                 src="/brand/lapikud-logo-light.svg"
@@ -43,13 +43,16 @@ export const Navbar: FC = async () => {
               {user ? (
                 <>
                   <NotificationBell user={user} />
-                  <span className="hidden items-center gap-2 pl-1 text-sm font-bold lg:inline-flex">
+                  <Link
+                    href={`/users/${user.id}`}
+                    className="hidden items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-bold hover:bg-white/10 lg:inline-flex"
+                  >
                     <UserAvatar
                       name={user.displayName}
                       className="size-8 bg-primary text-primary-foreground"
                     />
                     {user.displayName}
-                  </span>
+                  </Link>
                   <Link
                     href={`/users/${user.id}`}
                     aria-label="View your profile"

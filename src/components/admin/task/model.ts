@@ -11,10 +11,12 @@ export interface TaskView {
   cooldownSeconds: number | null;
   photoRequired: boolean;
   photoInstructions: string | null;
+  textRequired: boolean;
   archived: boolean;
 }
 
 export interface CategoryView {
   id: string;
   name: string;
+  slug: string;
 }

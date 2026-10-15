@@ -5,11 +5,12 @@ import { cn } from "~/lib/utils";
 interface Props {
   urls: ReadonlyArray<string>;
   alt: string;
-  size?: "sm" | "md";
+  size?: "xs" | "sm" | "md";
   layout?: "row" | "grid";
 }
 
 const sizes = {
+  xs: "size-12",
   sm: "size-20",
   md: "size-28",
 };

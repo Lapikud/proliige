@@ -37,8 +37,8 @@ describe("navItemsFor", () => {
     }
   });
 
-  it("puts Categories in the desktop nav only", () => {
-    expect(links(admin, "desktop")).toContain("/admin/categories");
+  it("manages categories from the task page instead of the nav", () => {
+    expect(links(admin, "desktop")).not.toContain("/admin/categories");
     expect(links(admin, "mobile")).not.toContain("/admin/categories");
   });
 

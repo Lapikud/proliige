@@ -12,7 +12,7 @@ import { onlyRow } from "../rows";
 
 export function createProofSubmit(db: Database): Pick<ProofRepository, "createPendingProof"> {
   return {
-    async createPendingProof({ taskId, userId, photos, reviewerIds = [], now }) {
+    async createPendingProof({ taskId, userId, photos, textAnswer = null, reviewerIds = [], now }) {
       return db.transaction(async (tx) => {
         const [task] = await tx
           .select()
@@ -44,6 +44,9 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
         if (refusal) {
           throw conflict(describeRefusal(refusal));
         }
+        if (task.textRequired && !textAnswer) {
+          throw validation("This task requires a written answer.");
+        }
 
         let proofRow: ProofRow;
         try {
@@ -55,6 +58,7 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
                 userId,
                 policy: task.policy,
                 status: "pending",
+                textAnswer: task.textRequired ? textAnswer : null,
                 submittedAt: now,
               })
               .returning(),

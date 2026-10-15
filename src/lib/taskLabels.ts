@@ -1,4 +1,5 @@
 import { completionPolicy } from "~/domain/completionPolicy";
+import type { ProofStatus } from "~/domain/proof";
 import type { TaskPolicy } from "~/domain/task";
 
 export const describeTaskPolicy = (policy: TaskPolicy): string => completionPolicy(policy).label;
@@ -38,4 +39,25 @@ export function describeUnavailability(
   }
 
   return null;
+}
+
+export type TaskAvailability = "open" | "pending" | "done" | "taken" | "cooldown";
+
+interface Standing {
+  readonly policy: TaskPolicy;
+  readonly userProofStatus: ProofStatus | null;
+  readonly takenByAnother: boolean;
+  readonly userCooldownUntil: Date | null;
+}
+
+export function taskAvailability(
+  { policy, userProofStatus, takenByAnother, userCooldownUntil }: Standing,
+  now: Date,
+): TaskAvailability {
+  if (userProofStatus === "pending") return "pending";
+  if (takenByAnother) return "taken";
+  if (userCooldownUntil !== null && userCooldownUntil > now) return "cooldown";
+  if (userProofStatus === "approved" && policy !== "repeatable") return "done";
+
+  return "open";
 }

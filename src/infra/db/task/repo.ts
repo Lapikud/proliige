@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import type { TaskRepository } from "~/core/ports/task";
 import { conflict, notFound } from "~/domain/errors";
 import { proofs } from "../proof/model";
+import { categories } from "../category/model";
 import type { Database } from "../client";
-import { isUniqueViolation } from "../errors";
+import { isForeignKeyViolation, isUniqueViolation } from "../errors";
 import { tasks } from "./model";
 import { toTask } from "./map";
 import { createTaskRead } from "./read";
@@ -54,6 +55,10 @@ export function createTaskRepository(db: Database): TaskRepository {
       });
     },
 
+    async remove(id) {
+      await db.delete(tasks).where(eq(tasks.id, id));
+    },
+
     async setArchived(id, archived) {
       const [row] = await db
         .update(tasks)
@@ -68,6 +73,138 @@ export function createTaskRepository(db: Database): TaskRepository {
       }
 
       return toTask(row);
+    },
+
+    async moveMany(ids, categoryId) {
+      return db.transaction(async (tx) => {
+        const [category] = await tx
+          .select({ id: categories.id })
+          .from(categories)
+          .where(eq(categories.id, categoryId))
+          .limit(1);
+        if (category === undefined) {
+          throw notFound("That category does not exist.");
+        }
+
+        const existing = await tx
+          .select({
+            id: tasks.id,
+            categoryId: tasks.categoryId,
+          })
+          .from(tasks)
+          .where(inArray(tasks.id, ids))
+          .orderBy(tasks.id)
+          .for("update");
+        if (existing.length !== ids.length) {
+          throw notFound("One or more selected tasks do not exist.");
+        }
+
+        const existingById = new Map(existing.map((task) => [task.id, task]));
+        const moves = ids.flatMap((id) => {
+          const task = existingById.get(id);
+          if (task === undefined || task.categoryId === categoryId) return [];
+
+          return [
+            {
+              taskId: task.id,
+              fromCategoryId: task.categoryId,
+              toCategoryId: categoryId,
+            },
+          ];
+        });
+        if (moves.length > 0) {
+          await tx
+            .update(tasks)
+            .set({
+              categoryId,
+              updatedAt: new Date(),
+            })
+            .where(
+              inArray(
+                tasks.id,
+                moves.map(({ taskId }) => taskId),
+              ),
+            );
+        }
+
+        return moves;
+      });
+    },
+
+    async undoMoveMany(moves) {
+      await db.transaction(async (tx) => {
+        const ids = moves.map(({ taskId }) => taskId);
+        const existing = await tx
+          .select({
+            id: tasks.id,
+            categoryId: tasks.categoryId,
+          })
+          .from(tasks)
+          .where(inArray(tasks.id, ids))
+          .orderBy(tasks.id)
+          .for("update");
+        if (existing.length !== moves.length) {
+          throw notFound("One or more moved tasks no longer exist; no changes were made.");
+        }
+
+        const currentCategories = new Map(existing.map(({ id, categoryId }) => [id, categoryId]));
+        if (
+          moves.some(({ taskId, toCategoryId }) => currentCategories.get(taskId) !== toCategoryId)
+        ) {
+          throw conflict(
+            "Some tasks have changed categories since the move; no changes were made.",
+          );
+        }
+
+        const fromCategoryIds = new Set(moves.map(({ fromCategoryId }) => fromCategoryId));
+        for (const fromCategoryId of fromCategoryIds) {
+          const groupIds = moves
+            .filter((move) => move.fromCategoryId === fromCategoryId)
+            .map(({ taskId }) => taskId);
+          try {
+            await tx
+              .update(tasks)
+              .set({
+                categoryId: fromCategoryId,
+                updatedAt: new Date(),
+              })
+              .where(inArray(tasks.id, groupIds));
+          } catch (error) {
+            if (isForeignKeyViolation(error)) {
+              throw conflict("The original category no longer exists; no changes were made.");
+            }
+            throw error;
+          }
+        }
+      });
+    },
+
+    async setArchivedMany(ids, archived) {
+      return db.transaction(async (tx) => {
+        const existing = await tx
+          .select({ id: tasks.id })
+          .from(tasks)
+          .where(inArray(tasks.id, ids));
+        if (existing.length !== ids.length) {
+          throw notFound("One or more selected tasks do not exist.");
+        }
+
+        const rows = await tx
+          .update(tasks)
+          .set({
+            archivedAt: archived ? new Date() : null,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              inArray(tasks.id, ids),
+              archived ? isNull(tasks.archivedAt) : isNotNull(tasks.archivedAt),
+            ),
+          )
+          .returning({ id: tasks.id });
+
+        return rows.map(({ id }) => id);
+      });
     },
   };
 }

@@ -67,6 +67,7 @@ async function seed() {
     cooldownSeconds: 0,
     photoRequired: false,
     photoInstructions: null,
+    textRequired: false,
   });
 
   return {

@@ -48,6 +48,7 @@ async function seedApprovedProof(clockAt = new Date("2026-09-18T12:00:00Z")) {
     cooldownSeconds: 0,
     photoRequired: false,
     photoInstructions: null,
+    textRequired: false,
   });
 
   const aliceUser = await users.upsertFromIdentity({

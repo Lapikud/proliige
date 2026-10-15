@@ -15,6 +15,7 @@ Everyone signs in with their existing FreeIPA account. The app never creates or 
 | Visitor | not signed in       | Reads public pages               |
 | Account | any other FreeIPA   | Likes, comments, gets notified   |
 | Member  | `pixels`, `members` | Does tasks and submits proofs    |
+| Pixel   | `pixels`            | A member who may add own tasks   |
 | Admin   | `team_juhatus`      | Reviews proofs and manages tasks |
 
 Admin replaces member: someone in both groups is an admin and never submits proofs, so nobody approves their own work.
@@ -32,6 +33,7 @@ Every permission is a named rule in `src/domain/rules.ts`. Services enforce them
 | `userCanReadNotifications` | Signed in                                  |
 | `userCanBrowseTasks`       | Members                                    |
 | `userCanSubmitProof`       | Members                                    |
+| `userCanAddOwnTask`        | Pixels                                     |
 | `userCanReviewProofs`      | Admins                                     |
 | `userCanManageTasks`       | Admins                                     |
 | `userCanManageCategories`  | Admins                                     |
@@ -67,6 +69,12 @@ The check runs twice: once in the service for a quick answer, and again in the d
 5. **Rejected**: nothing is awarded, and the member may submit again if the policy allows.
 
 A proof is reviewed once; a second review of the same proof changes nothing.
+
+### Own tasks
+
+A pixel can add an own task for work that is not on the task list (`/tasks/new`): a title, details, category, suggested points and optional photos. This creates a task only they did (`tasks.created_by` is the pixel) with a pending proof on it, so it goes through the normal review queue, feed and points ledger. Own tasks never show in the task lists.
+
+The reviewer may change the points when approving; the task's points are updated to match. Only own tasks accept a points override. Rejecting the proof archives the own task, so it cannot be resubmitted.
 
 ### Photos
 

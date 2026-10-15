@@ -53,13 +53,24 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
 
       <PhotoCarousel urls={entry.photoUrls} alt={`Photo for ${entry.taskTitle}`} />
 
+      {entry.textAnswer && (
+        <p
+          className={cn(
+            "px-4 leading-relaxed text-pretty wrap-break-word whitespace-pre-wrap",
+            entry.photoUrls.length === 0 ? "pt-2 text-lg sm:text-xl md:text-2xl" : "pt-1 text-base",
+          )}
+        >
+          {entry.textAnswer}
+        </p>
+      )}
+
       <p
-        className={cn(
-          "px-4 leading-relaxed",
-          entry.photoUrls.length === 0
-            ? "py-4 text-lg text-pretty wrap-break-word sm:text-xl md:text-2xl"
-            : "pt-1 pb-4 text-sm",
-        )}
+        className={cn("px-4 leading-relaxed", {
+          "pt-2 pb-4 text-sm text-muted-foreground": !!entry.textAnswer,
+          "py-4 text-lg text-pretty wrap-break-word sm:text-xl md:text-2xl":
+            !entry.textAnswer && entry.photoUrls.length === 0,
+          "pt-1 pb-4 text-sm": !entry.textAnswer && entry.photoUrls.length > 0,
+        })}
       >
         Completed <span className="font-bold text-brand-ink">{entry.taskTitle}</span>.
       </p>

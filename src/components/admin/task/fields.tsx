@@ -8,10 +8,10 @@ import { taskPolicies } from "~/domain/task";
 import { describeTaskPolicy } from "~/lib/taskLabels";
 import { Field } from "../../ui/form";
 import { Checkbox, Input, Select, Textarea } from "../../ui/formControls";
-import type { CategoryView } from "./model";
+import type { CategoryView, TaskView } from "./model";
 
 interface Props {
-  categories: Array<CategoryView>;
+  readonly categories: Array<CategoryView>;
 }
 
 export const TaskFields: FC<Props> = ({ categories }) => {
@@ -68,9 +68,14 @@ export const TaskFields: FC<Props> = ({ categories }) => {
         )}
       </div>
 
-      <Field name="task.photoRequired" label="Require photos" inline>
-        {(control) => <Checkbox {...control} />}
-      </Field>
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <Field name="task.photoRequired" label="Require photos" inline>
+          {(control) => <Checkbox {...control} />}
+        </Field>
+        <Field name="task.textRequired" label="Require a written answer" inline>
+          {(control) => <Checkbox {...control} />}
+        </Field>
+      </div>
       {photoRequired && (
         <Field name="task.photoInstructions" label="Instructions shown to the user">
           {(control) => <Input placeholder="Upload a photo of the sorted recycling" {...control} />}
@@ -80,15 +85,34 @@ export const TaskFields: FC<Props> = ({ categories }) => {
   );
 };
 
-export function taskValues(categories: Array<CategoryView>): TaskValues {
+export function taskValues(
+  categories: Array<CategoryView>,
+  task?: TaskView,
+  categoryId?: string,
+): TaskValues {
+  if (task) {
+    return {
+      title: task.title,
+      description: task.description,
+      categoryId: task.categoryId,
+      points: task.points,
+      policy: task.policy,
+      cooldownSeconds: task.cooldownSeconds ?? 86_400,
+      photoRequired: task.photoRequired,
+      photoInstructions: task.photoInstructions ?? "",
+      textRequired: task.textRequired,
+    };
+  }
+
   return {
     title: "",
     description: "",
-    categoryId: categories[0]?.id ?? "",
+    categoryId: categoryId ?? categories[0]?.id ?? "",
     points: 5,
     policy: "one_per_user",
     cooldownSeconds: 86_400,
     photoRequired: false,
     photoInstructions: "",
+    textRequired: false,
   };
 }
