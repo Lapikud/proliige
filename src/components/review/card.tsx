@@ -51,7 +51,7 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
         <div className="flex items-start gap-3">
           <GitPullRequest aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-success" />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <h2 className="text-base font-black text-foreground">{proof.taskTitle}</h2>
+            <h3 className="text-base font-black text-foreground">{proof.taskTitle}</h3>
             <p className="text-xs text-muted-foreground">
               <span className="font-bold text-foreground">{proof.userDisplayName}</span>{" "}
               {proof.ownTask ? "added their own task, suggests" : "wants"}{" "}

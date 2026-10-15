@@ -24,7 +24,7 @@ export const Navbar: FC = async () => {
     <>
       <div className="sticky top-0 z-50">
         <header className="relative bg-ink text-white">
-          <div className="relative z-10 mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 md:h-[76px]">
+          <div className="relative z-10 mx-auto flex h-16 w-full max-w-5xl items-center gap-4 px-4 sm:px-6 md:h-(--nav-h)">
             <Link href="/" className="shrink-0 rounded-lg">
               <Image
                 src="/brand/lapikud-logo-light.svg"

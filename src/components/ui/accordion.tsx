@@ -58,6 +58,7 @@ export interface GroupAccordionItemProps {
   readonly title: ReactNode;
   readonly leading?: ReactNode;
   readonly headerAction?: ReactNode;
+  readonly heading?: "h2" | "h3";
   readonly children: ReactNode;
 }
 
@@ -66,6 +67,7 @@ export function GroupAccordionItem({
   title,
   leading,
   headerAction,
+  heading = "h2",
   children,
 }: GroupAccordionItemProps) {
   return (
@@ -75,7 +77,7 @@ export function GroupAccordionItem({
     >
       <div className="flex items-center gap-3 border-border px-4 group-data-[state=open]:border-b">
         {leading}
-        <AccordionTrigger heading="h2">{title}</AccordionTrigger>
+        <AccordionTrigger heading={heading}>{title}</AccordionTrigger>
         {headerAction}
       </div>
       <AccordionContent className="pb-0">{children}</AccordionContent>
