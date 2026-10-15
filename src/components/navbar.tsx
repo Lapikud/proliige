@@ -43,13 +43,16 @@ export const Navbar: FC = async () => {
               {user ? (
                 <>
                   <NotificationBell user={user} />
-                  <span className="hidden items-center gap-2 pl-1 text-sm font-bold lg:inline-flex">
+                  <Link
+                    href={`/users/${user.id}`}
+                    className="hidden items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-bold hover:bg-white/10 lg:inline-flex"
+                  >
                     <UserAvatar
                       name={user.displayName}
                       className="size-8 bg-primary text-primary-foreground"
                     />
                     {user.displayName}
-                  </span>
+                  </Link>
                   <Link
                     href={`/users/${user.id}`}
                     aria-label="View your profile"
