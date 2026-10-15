@@ -55,6 +55,10 @@ export function createTaskRepository(db: Database): TaskRepository {
       });
     },
 
+    async remove(id) {
+      await db.delete(tasks).where(eq(tasks.id, id));
+    },
+
     async setArchived(id, archived) {
       const [row] = await db
         .update(tasks)

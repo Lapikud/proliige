@@ -12,6 +12,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { ErrorState } from "../ui/feedback";
+import { Input, Label } from "../ui/formControls";
 import type { PendingProofView } from "./model";
 import { RejectForm } from "./rejectForm";
 import { ReviewerList } from "./reviewers";
@@ -24,6 +25,7 @@ type Stage = "reviewing" | "rejecting" | Exclude<ProofStatus, "pending">;
 
 export const ReviewCard: FC<Props> = ({ proof }) => {
   const [stage, setStage] = useState<Stage>("reviewing");
+  const [points, setPoints] = useState(proof.points);
   const approve = useAction(approveProofAction, {
     onSuccess: () => {
       setStage("approved");
@@ -51,7 +53,8 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <h2 className="text-base font-black text-foreground">{proof.taskTitle}</h2>
             <p className="text-xs text-muted-foreground">
-              <span className="font-bold text-foreground">{proof.userDisplayName}</span> wants{" "}
+              <span className="font-bold text-foreground">{proof.userDisplayName}</span>{" "}
+              {proof.ownTask ? "added their own task, suggests" : "wants"}{" "}
               <span className="font-mono">{proof.points} pts</span> · {proof.categoryName} ·{" "}
               <time dateTime={proof.submittedAt}>{formatDateTime(proof.submittedAt)}</time>
             </p>
@@ -62,6 +65,12 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
             </Badge>
           )}
         </div>
+
+        {proof.ownTask && proof.taskDescription && (
+          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap text-foreground/85">
+            {proof.taskDescription}
+          </p>
+        )}
 
         {proof.textAnswer && (
           <blockquote className="rounded-xl border border-border bg-muted px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
@@ -90,27 +99,52 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
             }}
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              size="lg"
-              disabled={approve.pending}
-              onClick={() => {
-                approve.run({ proofId: proof.proofId });
-              }}
-            >
-              <Check aria-hidden="true" />
-              {approve.pending ? "Approving…" : "Approve"}
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => {
-                setStage("rejecting");
-              }}
-            >
-              <X aria-hidden="true" />
-              Reject
-            </Button>
+          <div className="flex flex-col gap-3">
+            {proof.ownTask && (
+              <div className="flex items-center gap-3">
+                <Label htmlFor={`points-${proof.proofId}`}>Award points</Label>
+                <Input
+                  id={`points-${proof.proofId}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  className="w-24"
+                  value={Number.isNaN(points) ? "" : points}
+                  onChange={(event) => {
+                    setPoints(event.target.valueAsNumber);
+                  }}
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                size="lg"
+                disabled={approve.pending}
+                onClick={() => {
+                  approve.run(
+                    proof.ownTask
+                      ? {
+                          proofId: proof.proofId,
+                          points,
+                        }
+                      : { proofId: proof.proofId },
+                  );
+                }}
+              >
+                <Check aria-hidden="true" />
+                {approve.pending ? "Approving…" : "Approve"}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  setStage("rejecting");
+                }}
+              >
+                <X aria-hidden="true" />
+                Reject
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

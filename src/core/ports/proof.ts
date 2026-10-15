@@ -5,6 +5,8 @@ import type { PublicUserView } from "~/domain/user";
 export interface ProofWithContext {
   readonly proof: Proof;
   readonly taskTitle: string;
+  readonly taskDescription: string;
+  readonly ownTask: boolean;
   readonly taskPoints: number;
   readonly categoryName: string;
   readonly userDisplayName: string;
@@ -33,7 +35,12 @@ export interface ProofRepository {
   listForUser(userId: string): Promise<Array<ProofWithContext>>;
   listPhotos(proofId: string): Promise<Array<ProofPhoto>>;
 
-  approve(input: { proofId: string; reviewerId: string; now: Date }): Promise<{
+  approve(input: {
+    proofId: string;
+    reviewerId: string;
+    points?: number | undefined;
+    now: Date;
+  }): Promise<{
     proof: Proof;
     alreadyReviewed: boolean;
     pointsAwarded: number;

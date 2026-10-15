@@ -44,10 +44,12 @@ The same words are used in the code, the database and the screens.
 | Word            | Meaning                                                                                    |
 | --------------- | ------------------------------------------------------------------------------------------ |
 | **User**        | Anyone who signed in with a FreeIPA account                                                |
-| **Role**        | What a user may do, derived from their FreeIPA groups: `member` or `admin`                 |
+| **Role**        | What a user may do, derived from their FreeIPA groups: `member`, `pixel` or `admin`        |
 | **Member**      | A user in a member group (`pixels`, `members`); does tasks                                 |
+| **Pixel**       | A member in the `pixels` group; may also add own tasks                                     |
 | **Admin**       | A user in an admin group (`team_juhatus`); reviews proofs and manages tasks, never submits |
 | **Task**        | Something to do for the club, worth points, in a **category**                              |
+| **Own task**    | A task a pixel adds for work they already did, sent with its proof; a reviewer sets points |
 | **Policy**      | How often a task can be done: once per user, repeatable, first one wins                    |
 | **Proof**       | What a member submits to show they did a task, often with photos                           |
 | **Reviewer**    | An admin asked to review a proof, like a reviewer on a pull request                        |
@@ -64,6 +66,7 @@ Who can do what:
 | Visitor             | Read the feed, the leaderboard and user pages                    |
 | Signed in, no group | Also like, comment, and get notified of replies                  |
 | Member              | Also browse tasks, submit proofs, and request reviewers          |
+| Pixel               | Also add own tasks                                               |
 | Admin               | Review proofs, manage tasks and categories; never submits proofs |
 
 A proof with requested reviewers notifies them; without any, nobody is notified and it simply waits in the review queue. Groups are set in `src/config/access.ts`. Every rule lives in `src/domain/rules.ts`.

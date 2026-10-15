@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import type { FC } from "react";
 import { TaskList } from "~/components/task/list";
+import { Button } from "~/components/ui/button";
 import { Page } from "~/components/ui/page";
 import { taskService } from "~/infra";
 import { describeTaskPolicy, taskAvailability } from "~/lib/taskLabels";
 import { formatDate } from "~/lib/utils";
-import { userCanBrowseTasks } from "~/domain/rules";
+import { userCanBrowseTasks, userCanAddOwnTask } from "~/domain/rules";
 import { requireUser } from "~/lib/user";
 
 export const metadata: Metadata = { title: "Tasks" };
 
 const TasksPage: FC = async () => {
-  const items = await taskService.listOpenTasks(await requireUser(userCanBrowseTasks));
+  const user = await requireUser(userCanBrowseTasks);
+  const items = await taskService.listOpenTasks(user);
   const now = new Date();
   const tasks = items.map((item) => ({
     id: item.task.id,
@@ -32,6 +35,13 @@ const TasksPage: FC = async () => {
     <Page
       title="Tasks"
       description={`${open} available to you now. Do one, submit proof, and a reviewer approves it for points.`}
+      actions={
+        userCanAddOwnTask(user) && (
+          <Button asChild variant="outline">
+            <Link href="/tasks/new">Add your own task</Link>
+          </Button>
+        )
+      }
     >
       <TaskList tasks={tasks} />
     </Page>

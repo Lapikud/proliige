@@ -19,6 +19,8 @@ const toPendingView = (
   {
     proof,
     taskTitle,
+    taskDescription,
+    ownTask,
     taskPoints,
     categoryName,
     userDisplayName,
@@ -29,6 +31,8 @@ const toPendingView = (
 ): PendingProofView => ({
   proofId: proof.id,
   taskTitle,
+  taskDescription,
+  ownTask,
   categoryName,
   points: taskPoints,
   userDisplayName,

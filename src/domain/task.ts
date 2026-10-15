@@ -26,6 +26,7 @@ export interface Task {
 
   readonly photoInstructions: string | null;
   readonly textRequired: boolean;
+  readonly createdBy: string | null;
   readonly archivedAt: Date | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;

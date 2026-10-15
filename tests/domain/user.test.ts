@@ -3,6 +3,7 @@ import { rolesForGroups } from "~/domain/user";
 
 const config = {
   memberGroups: ["members"],
+  pixelGroups: ["pixels"],
   adminGroups: ["team_juhatus"],
 };
 
@@ -32,7 +33,7 @@ describe("rolesForGroups", () => {
   });
 
   it("uses the shipped defaults: pixels and members for members, team_juhatus for admins", () => {
-    expect(rolesForGroups(["pixels"])).toEqual(["member"]);
+    expect(rolesForGroups(["pixels"])).toEqual(["member", "pixel"]);
     expect(rolesForGroups(["members"])).toEqual(["member"]);
     expect(rolesForGroups(["team_juhatus"])).toEqual(["admin"]);
     expect(rolesForGroups(["ipausers"])).toEqual([]);

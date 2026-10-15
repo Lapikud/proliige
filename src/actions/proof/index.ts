@@ -2,7 +2,7 @@
 
 import { proofService } from "~/infra";
 import { action } from "~/lib/action";
-import { proofSchema } from "./schema";
+import { ownTaskSchema, proofSchema } from "./schema";
 
 export const submitProofAction = action(
   proofSchema,
@@ -10,4 +10,12 @@ export const submitProofAction = action(
     await proofService.submitProof(user, proof);
   },
   { revalidate: ["/tasks", "/proofs"] },
+);
+
+export const addOwnTaskAction = action(
+  ownTaskSchema,
+  async (user, ownTask) => {
+    await proofService.addOwnTask(user, ownTask);
+  },
+  { revalidate: ["/proofs", "/admin/review"] },
 );

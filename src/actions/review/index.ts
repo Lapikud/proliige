@@ -8,8 +8,8 @@ const revalidate = ["/", "/admin/review", "/proofs", "/tasks"];
 
 export const approveProofAction = action(
   approveSchema,
-  async (user, { proofId }) => {
-    await proofService.approveProof(user, proofId);
+  async (user, { proofId, points }) => {
+    await proofService.approveProof(user, proofId, points);
   },
   { revalidate },
 );

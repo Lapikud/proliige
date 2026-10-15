@@ -1,6 +1,6 @@
 import { accessConfig } from "~/config/access";
 
-export type Role = "member" | "admin";
+export type Role = "member" | "pixel" | "admin";
 
 export interface User {
   readonly id: string;
@@ -37,6 +37,9 @@ export function rolesForGroups(groups: ReadonlyArray<string>, config = accessCon
 
   if (inAny(config.adminGroups)) {
     return ["admin"];
+  }
+  if (inAny(config.pixelGroups)) {
+    return ["member", "pixel"];
   }
   if (inAny(config.memberGroups)) {
     return ["member"];

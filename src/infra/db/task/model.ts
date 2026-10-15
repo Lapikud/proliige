@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { predicate } from "../predicate";
 import { categories } from "../category/model";
+import { users } from "../user/model";
 
 export const taskPolicyEnum = pgEnum("task_policy", [
   "single_winner",
@@ -34,6 +35,7 @@ export const tasks = pgTable(
     photoRequired: boolean("photo_required").notNull().default(false),
     photoInstructions: text("photo_instructions"),
     textRequired: boolean("text_required").notNull().default(false),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

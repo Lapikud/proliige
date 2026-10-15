@@ -102,6 +102,8 @@ function selectWithContext(db: Database) {
     .select({
       proof: proofs,
       taskTitle: tasks.title,
+      taskDescription: tasks.description,
+      taskCreatedBy: tasks.createdBy,
       taskPoints: tasks.points,
       categoryName: categories.name,
       userDisplayName: users.displayName,
@@ -117,6 +119,8 @@ function selectWithContext(db: Database) {
 interface ContextRow {
   proof: ProofRow;
   taskTitle: string;
+  taskDescription: string;
+  taskCreatedBy: string | null;
   taskPoints: number;
   categoryName: string;
   userDisplayName: string;
@@ -161,6 +165,8 @@ async function attachDetails(
   return rows.map((row) => ({
     proof: toProof(row.proof),
     taskTitle: row.taskTitle,
+    taskDescription: row.taskDescription,
+    ownTask: row.taskCreatedBy !== null,
     taskPoints: row.taskPoints,
     categoryName: row.categoryName,
     userDisplayName: row.userDisplayName,

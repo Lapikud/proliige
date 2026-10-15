@@ -86,7 +86,7 @@ export const ProofForm: FC<Props> = ({
   );
 };
 
-const ReviewerPicker: FC<{ reviewers: ReadonlyArray<PublicUserView> }> = ({ reviewers }) => {
+export const ReviewerPicker: FC<{ reviewers: ReadonlyArray<PublicUserView> }> = ({ reviewers }) => {
   const { register } = useFormContext<{ reviewerIds: Array<string> }>();
 
   return (

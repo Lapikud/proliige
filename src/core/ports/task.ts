@@ -30,6 +30,7 @@ export interface TaskRepository {
   create(input: NewTaskInput): Promise<Task>;
   update(id: string, input: NewTaskInput): Promise<Task>;
   setArchived(id: string, archived: boolean): Promise<Task>;
+  remove(id: string): Promise<void>;
   moveMany(ids: ReadonlyArray<string>, categoryId: string): Promise<Array<TaskMove>>;
   undoMoveMany(moves: ReadonlyArray<TaskMove>): Promise<void>;
   setArchivedMany(ids: ReadonlyArray<string>, archived: boolean): Promise<Array<string>>;
@@ -45,4 +46,5 @@ export interface NewTaskInput {
   readonly photoRequired: boolean;
   readonly photoInstructions: string | null;
   readonly textRequired: boolean;
+  readonly createdBy?: string | null;
 }
