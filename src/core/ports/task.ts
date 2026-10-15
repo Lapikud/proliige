@@ -44,4 +44,5 @@ export interface NewTaskInput {
   readonly cooldownSeconds: number | null;
   readonly photoRequired: boolean;
   readonly photoInstructions: string | null;
+  readonly textRequired: boolean;
 }

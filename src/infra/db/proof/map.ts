@@ -11,6 +11,7 @@ export function toProof(row: ProofRow): Proof {
     taskId: row.taskId,
     userId: row.userId,
     status: row.status,
+    textAnswer: row.textAnswer,
     rejectionReason: row.rejectionReason,
     submittedAt: row.submittedAt,
     reviewedAt: row.reviewedAt,

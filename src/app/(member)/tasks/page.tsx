@@ -22,6 +22,7 @@ const TasksPage: FC = async () => {
     points: item.task.points,
     policy: describeTaskPolicy(item.task.policy),
     photoRequired: item.task.photoRequired,
+    textRequired: item.task.textRequired,
     availability: taskAvailability(item, now),
     cooldownUntil: item.userCooldownUntil && formatDate(item.userCooldownUntil),
   }));

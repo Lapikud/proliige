@@ -7,6 +7,7 @@ export interface PendingProofView {
   points: number;
   userDisplayName: string;
   submittedAt: string;
+  textAnswer: string | null;
   photoUrls: Array<string>;
   requestedReviewers: ReadonlyArray<PublicUserView>;
   requestedFromMe: boolean;

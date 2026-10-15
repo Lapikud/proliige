@@ -20,6 +20,7 @@ export interface Proof {
   readonly taskId: string;
   readonly userId: string;
   readonly status: ProofStatus;
+  readonly textAnswer: string | null;
   readonly rejectionReason: string | null;
   readonly submittedAt: Date;
 

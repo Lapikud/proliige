@@ -14,6 +14,7 @@ interface Props {
   points: number;
   photoRequired: boolean;
   photoInstructions: string | null;
+  textRequired: boolean;
   reviewers: ReadonlyArray<PublicUserView>;
   status: ProofStatus | null;
   unavailable: string | null;

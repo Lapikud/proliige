@@ -75,6 +75,7 @@ async function seed() {
     cooldownSeconds: null,
     photoRequired: true,
     photoInstructions: "Photo of the sorted bins",
+    textRequired: false,
   });
   const plainTask = await tasks.create({
     title: "Attend the meeting",
@@ -85,6 +86,7 @@ async function seed() {
     cooldownSeconds: null,
     photoRequired: false,
     photoInstructions: null,
+    textRequired: false,
   });
 
   return {

@@ -23,6 +23,7 @@ export interface BrowsableTask {
   readonly points: number;
   readonly policy: string;
   readonly photoRequired: boolean;
+  readonly textRequired: boolean;
   readonly availability: TaskAvailability;
   readonly cooldownUntil: string | null;
 }
@@ -80,6 +81,7 @@ export const TaskList: FC<{ readonly tasks: ReadonlyArray<BrowsableTask> }> = ({
                       policy={task.policy}
                       points={task.points}
                       photoRequired={task.photoRequired}
+                      textRequired={task.textRequired}
                       muted={task.availability !== "open"}
                       status={<AvailabilityBadge task={task} />}
                     />

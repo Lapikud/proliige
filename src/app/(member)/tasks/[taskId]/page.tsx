@@ -1,4 +1,4 @@
-import { Camera, ChevronLeft } from "lucide-react";
+import { Camera, ChevronLeft, PenLine } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -64,6 +64,12 @@ const TaskPage: FC<PageProps<"/tasks/[taskId]">> = async ({ params }) => {
               photo required
             </Badge>
           )}
+          {task.textRequired && (
+            <Badge>
+              <PenLine className="size-3.5" aria-hidden />
+              written answer
+            </Badge>
+          )}
         </div>
       </header>
       {task.description && (
@@ -80,6 +86,7 @@ const TaskPage: FC<PageProps<"/tasks/[taskId]">> = async ({ params }) => {
         points={task.points}
         photoRequired={task.photoRequired}
         photoInstructions={task.photoInstructions}
+        textRequired={task.textRequired}
         reviewers={reviewers}
         status={item.userProofStatus}
         unavailable={describeUnavailability(

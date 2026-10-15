@@ -122,6 +122,7 @@ export const TaskWorkspaceView: FC<Props> = ({
                 policy={describeTaskPolicy(task.policy)}
                 points={task.points}
                 photoRequired={task.photoRequired}
+                textRequired={task.textRequired}
                 muted={task.archived}
                 status={task.archived && <Badge>Archived</Badge>}
                 aria-label={`Edit ${task.title}`}

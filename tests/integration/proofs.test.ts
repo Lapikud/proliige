@@ -44,6 +44,7 @@ async function seed(
     cooldownSeconds: overrides.cooldownSeconds ?? null,
     photoRequired: overrides.photoRequired ?? false,
     photoInstructions: null,
+    textRequired: false,
   });
 
   return {
@@ -434,6 +435,7 @@ describe("leaderboard ordering", () => {
       cooldownSeconds: 0,
       photoRequired: false,
       photoInstructions: null,
+      textRequired: false,
     });
 
     const people = [

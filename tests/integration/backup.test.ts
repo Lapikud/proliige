@@ -60,6 +60,7 @@ async function proofWithPhotos(objectKeys: ReadonlyArray<string>) {
     cooldownSeconds: 0,
     photoRequired: true,
     photoInstructions: null,
+    textRequired: false,
   });
   await proofs.createPendingProof({
     taskId: task.id,

@@ -68,9 +68,14 @@ export const TaskFields: FC<Props> = ({ categories }) => {
         )}
       </div>
 
-      <Field name="task.photoRequired" label="Require photos" inline>
-        {(control) => <Checkbox {...control} />}
-      </Field>
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        <Field name="task.photoRequired" label="Require photos" inline>
+          {(control) => <Checkbox {...control} />}
+        </Field>
+        <Field name="task.textRequired" label="Require a written answer" inline>
+          {(control) => <Checkbox {...control} />}
+        </Field>
+      </div>
       {photoRequired && (
         <Field name="task.photoInstructions" label="Instructions shown to the user">
           {(control) => <Input placeholder="Upload a photo of the sorted recycling" {...control} />}
@@ -95,6 +100,7 @@ export function taskValues(
       cooldownSeconds: task.cooldownSeconds ?? 86_400,
       photoRequired: task.photoRequired,
       photoInstructions: task.photoInstructions ?? "",
+      textRequired: task.textRequired,
     };
   }
 
@@ -107,5 +113,6 @@ export function taskValues(
     cooldownSeconds: 86_400,
     photoRequired: false,
     photoInstructions: "",
+    textRequired: false,
   };
 }

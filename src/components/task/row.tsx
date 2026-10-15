@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, ChevronRight } from "lucide-react";
+import { Camera, ChevronRight, PenLine } from "lucide-react";
 import Link from "next/link";
 import type { FC, ReactNode } from "react";
 import { cn } from "~/lib/utils";
@@ -14,6 +14,7 @@ interface Props {
   readonly policy: string;
   readonly points: number;
   readonly photoRequired: boolean;
+  readonly textRequired: boolean;
   readonly muted?: boolean;
   readonly status?: ReactNode;
   readonly href?: string;
@@ -27,6 +28,7 @@ export const TaskRow: FC<Props> = ({
   policy,
   points,
   photoRequired,
+  textRequired,
   muted = false,
   status,
   href,
@@ -49,6 +51,12 @@ export const TaskRow: FC<Props> = ({
           <Badge variant="brand" title="Photo required">
             <Camera className="size-3.5" aria-hidden />
             <span className="sr-only">Photo required</span>
+          </Badge>
+        )}
+        {textRequired && (
+          <Badge variant="brand" title="Written answer required">
+            <PenLine className="size-3.5" aria-hidden />
+            <span className="sr-only">Written answer required</span>
           </Badge>
         )}
         {status}

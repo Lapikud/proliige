@@ -14,6 +14,7 @@ export function toTask(row: TaskRow): Task {
     cooldownSeconds: row.cooldownSeconds,
     photoRequired: row.photoRequired,
     photoInstructions: row.photoInstructions,
+    textRequired: row.textRequired,
     archivedAt: row.archivedAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

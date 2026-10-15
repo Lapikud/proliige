@@ -18,6 +18,7 @@ export interface ProofRepository {
     taskId: string;
     userId: string;
     photos: ReadonlyArray<PhotoRef>;
+    textAnswer?: string | null;
     reviewerIds?: ReadonlyArray<string>;
     now: Date;
   }): Promise<Proof>;

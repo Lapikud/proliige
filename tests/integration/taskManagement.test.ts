@@ -21,6 +21,7 @@ const taskInput = (categoryId: string, title: string) => ({
   cooldownSeconds: 0,
   photoRequired: false,
   photoInstructions: "",
+  textRequired: false,
 });
 
 async function setup() {
@@ -37,11 +38,13 @@ async function setup() {
     ...taskInput(source.id, "First"),
     cooldownSeconds: null,
     photoInstructions: null,
+    textRequired: false,
   });
   const second = await tasks.create({
     ...taskInput(source.id, "Second"),
     cooldownSeconds: null,
     photoInstructions: null,
+    textRequired: false,
   });
 
   return {

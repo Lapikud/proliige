@@ -33,6 +33,7 @@ const toPendingView = (
   points: taskPoints,
   userDisplayName,
   submittedAt: proof.submittedAt.toISOString(),
+  textAnswer: proof.textAnswer,
   photoUrls: photos.map((item) => `/api/photos/${proof.id}/${item.id}`),
   requestedReviewers,
   requestedFromMe: requestedReviewers.some((reviewer) => reviewer.id === user.id),

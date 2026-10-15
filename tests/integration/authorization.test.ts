@@ -51,6 +51,7 @@ const taskFields = (categoryId: string): TaskInput => ({
   cooldownSeconds: 0,
   photoRequired: false,
   photoInstructions: "",
+  textRequired: false,
 });
 
 async function seed() {
@@ -64,6 +65,7 @@ async function seed() {
     points: 5,
     cooldownSeconds: null,
     photoInstructions: null,
+    textRequired: false,
   });
   const people = await seedUsers(users);
   const proof = await proofs.createPendingProof({

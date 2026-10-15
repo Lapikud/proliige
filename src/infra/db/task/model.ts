@@ -33,6 +33,7 @@ export const tasks = pgTable(
     cooldownSeconds: integer("cooldown_seconds"),
     photoRequired: boolean("photo_required").notNull().default(false),
     photoInstructions: text("photo_instructions"),
+    textRequired: boolean("text_required").notNull().default(false),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

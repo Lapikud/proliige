@@ -36,6 +36,7 @@ export function createProofService({
         user,
         input: {
           taskId: string;
+          textAnswer?: string;
           objectKeys: ReadonlyArray<string>;
           reviewerIds?: ReadonlyArray<string>;
         },
@@ -88,10 +89,16 @@ export function createProofService({
           throw validation("This task does not accept photo uploads.");
         }
 
+        const textAnswer = input.textAnswer?.trim() ?? "";
+        if (task.textRequired && textAnswer.length === 0) {
+          throw validation("This task requires a written answer.");
+        }
+
         const proof = await proofs.createPendingProof({
           taskId: task.id,
           userId: user.id,
           photos: verified,
+          textAnswer: task.textRequired ? textAnswer : null,
           reviewerIds,
           now: clock.now(),
         });

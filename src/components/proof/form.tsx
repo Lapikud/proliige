@@ -9,8 +9,8 @@ import type { PublicUserView } from "~/domain/user";
 import { useActionForm } from "~/lib/form";
 import { UserAvatar } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Checkbox } from "../ui/formControls";
-import { Form, FormActions, FormError } from "../ui/form";
+import { Checkbox, Textarea } from "../ui/formControls";
+import { Field, Form, FormActions, FormError } from "../ui/form";
 import { PhotoPicker } from "./photoPicker";
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   points: number;
   photoRequired: boolean;
   photoInstructions: string | null;
+  textRequired: boolean;
   reviewers: ReadonlyArray<PublicUserView>;
   onSubmitted: () => void;
 }
@@ -27,6 +28,7 @@ export const ProofForm: FC<Props> = ({
   points,
   photoRequired,
   photoInstructions,
+  textRequired,
   reviewers,
   onSubmitted,
 }) => {
@@ -34,16 +36,18 @@ export const ProofForm: FC<Props> = ({
   const { form, submit, pending } = useActionForm(proofSchema, submitProofAction, {
     defaultValues: {
       taskId,
+      textAnswer: "",
       objectKeys: [],
       reviewerIds: [],
     },
     onSuccess: onSubmitted,
   });
-  const objectKeys = useWatch({
+  const [objectKeys, textAnswer] = useWatch({
     control: form.control,
-    name: "objectKeys",
+    name: ["objectKeys", "textAnswer"],
   });
   const missingPhotos = photoRequired && objectKeys.length === 0;
+  const missingText = textRequired && textAnswer.trim().length === 0;
 
   return (
     <Form
@@ -52,6 +56,11 @@ export const ProofForm: FC<Props> = ({
       className="gap-5 rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5"
     >
       <h2 className="text-lg font-bold">Submit proof</h2>
+      {textRequired && (
+        <Field name="textAnswer" label="Your answer">
+          {(control) => <Textarea rows={4} maxLength={2000} {...control} />}
+        </Field>
+      )}
       {photoRequired && (
         <section className="flex flex-col gap-2">
           <h3 className="text-sm font-bold">
@@ -68,7 +77,7 @@ export const ProofForm: FC<Props> = ({
           type="submit"
           size="lg"
           className="w-full sm:w-auto"
-          disabled={pending || missingPhotos}
+          disabled={pending || missingPhotos || missingText}
         >
           {pending ? "Submitting…" : `Submit for ${points} pts`}
         </Button>

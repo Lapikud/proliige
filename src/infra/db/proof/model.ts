@@ -28,6 +28,7 @@ export const proofs = pgTable(
       .references(() => users.id, { onDelete: "restrict" }),
     policy: taskPolicyEnum("policy").notNull(),
     status: proofStatusEnum("status").notNull().default("pending"),
+    textAnswer: text("text_answer"),
     rejectionReason: text("rejection_reason"),
     submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

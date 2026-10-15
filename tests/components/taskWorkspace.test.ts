@@ -32,6 +32,7 @@ const tasks: Array<TaskView> = [
     cooldownSeconds: null,
     photoRequired: false,
     photoInstructions: null,
+    textRequired: false,
     archived: false,
   },
   {
@@ -45,6 +46,7 @@ const tasks: Array<TaskView> = [
     cooldownSeconds: null,
     photoRequired: false,
     photoInstructions: null,
+    textRequired: false,
     archived: true,
   },
 ];

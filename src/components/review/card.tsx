@@ -63,6 +63,12 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
           )}
         </div>
 
+        {proof.textAnswer && (
+          <blockquote className="rounded-xl border border-border bg-muted px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
+            {proof.textAnswer}
+          </blockquote>
+        )}
+
         <PhotoGallery
           urls={proof.photoUrls}
           alt={`Photos submitted by ${proof.userDisplayName}`}

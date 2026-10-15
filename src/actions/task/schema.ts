@@ -11,6 +11,7 @@ export const taskSchema = z.object({
   cooldownSeconds: z.number("Enter a number.").int().min(0, "Cooldown cannot be negative."),
   photoRequired: z.boolean(),
   photoInstructions: z.string().trim().max(200),
+  textRequired: z.boolean(),
 }) satisfies z.ZodType<TaskInput>;
 
 export const createTaskSchema = z.object({ task: taskSchema });
