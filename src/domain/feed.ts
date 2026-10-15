@@ -3,6 +3,7 @@ import type { PublicUserView } from "./user";
 export interface FeedEntry {
   readonly proofId: string;
   readonly taskTitle: string;
+  readonly textAnswer: string | null;
   readonly categoryName: string;
   readonly points: number;
   readonly user: PublicUserView;

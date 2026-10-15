@@ -1,8 +1,10 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { createFeedService } from "~/core/services/feed";
 import { createProofService } from "~/core/services/proof";
 import { createPhotoService } from "~/core/services/photo";
 import { createMemoryObjectStorage } from "~/infra/storage/memory";
 import { createCategoryRepository } from "~/infra/db/category/repo";
+import { createFeedRepository } from "~/infra/db/feed/repo";
 import { createProofRepository } from "~/infra/db/proof/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { createTaskRepository } from "~/infra/db/task/repo";
@@ -13,6 +15,7 @@ const users = createUserRepository(db);
 const categories = createCategoryRepository(db);
 const tasks = createTaskRepository(db);
 const proofs = createProofRepository(db);
+const feed = createFeedService({ feed: createFeedRepository(db) });
 const proofService = createProofService({
   proofs,
   tasks,
@@ -97,5 +100,22 @@ describe("text answers", () => {
     });
 
     expect((await proofs.findById(proof.id))?.textAnswer).toBeNull();
+  });
+
+  it("shows the answer on the feed once approved", async () => {
+    const { task, alice } = await seed(true);
+    const proof = await proofService.submitProof(alice, {
+      taskId: task.id,
+      textAnswer: "https://example.com/post",
+      objectKeys: [],
+    });
+    await proofs.approve({
+      proofId: proof.id,
+      reviewerId: alice.id,
+      now: new Date(),
+    });
+
+    const [entry] = (await feed.listFeed(null, { cursor: null })).entries;
+    expect(entry?.textAnswer).toBe("https://example.com/post");
   });
 });

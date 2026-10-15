@@ -37,6 +37,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           proofId: proofs.id,
           reviewedAt: proofs.reviewedAt,
           taskTitle: tasks.title,
+          textAnswer: proofs.textAnswer,
           points: tasks.points,
           categoryName: categories.name,
           userId: users.id,
@@ -84,6 +85,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           return {
             proofId: row.proofId,
             taskTitle: row.taskTitle,
+            textAnswer: row.textAnswer,
             categoryName: row.categoryName,
             points: row.points,
             user: {
