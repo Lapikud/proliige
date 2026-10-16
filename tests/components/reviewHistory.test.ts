@@ -45,13 +45,14 @@ const entry: ProofWithContext = {
 };
 
 describe("review history proof details", () => {
-  it("preserves the main history card layout and makes it a dialog trigger", () => {
+  it("keeps the main history row and opens details from it", () => {
     const html = renderToStaticMarkup(createElement(HistoryRow, { entry }));
 
     expect(html).toContain('aria-haspopup="dialog"');
-    expect(html).toContain("whitespace-normal");
-    expect(html).toContain("Alex Member</span> · Organize a meetup");
-    expect(html).toContain("Approved");
+    expect(html).toContain('href="/users/member-1"');
+    expect(html).toContain("reviewed by Sam Reviewer");
+    expect(html).toContain("Organize a meetup");
+    expect(html).toContain("+10");
     expect(html).not.toContain("I organized the community meetup.");
     expect(html).not.toContain("/api/photos/proof-1/photo-1");
   });

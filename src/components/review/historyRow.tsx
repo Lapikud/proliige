@@ -1,14 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { FC } from "react";
 import type { ProofWithContext } from "~/core/ports/proof";
-import { formatDateTime } from "~/lib/utils";
+import { formatDateTime, formatRelative } from "~/lib/utils";
 import { UserAvatar } from "../ui/avatar";
 import { PhotoGallery } from "../proof/photoGallery";
 import { Badge } from "../ui/badge";
 import { UserText } from "../ui/markdown";
-import { ProofStatusBadge } from "../proof/statusBadge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
 
@@ -41,34 +41,76 @@ export const HistoryRow: FC<Props> = ({ entry }) => {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        className="h-auto min-h-0 w-full flex-wrap justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3 text-left text-sm whitespace-normal text-foreground shadow-card hover:bg-muted"
-        onClick={() => {
-          setOpen(true);
-        }}
-        aria-haspopup="dialog"
-        aria-label={`View proof history for ${userDisplayName}: ${taskTitle}`}
-      >
-        <span className="min-w-0 flex-1 break-words">
-          <span className="font-medium">{userDisplayName}</span> · {taskTitle}
-          {taskRemoved && (
-            <Badge variant="neutral" className="ml-2 align-middle">
-              Removed task
-            </Badge>
-          )}
-          {ownTask && (
-            <Badge variant="brand" className="ml-2 align-middle">
-              Own task
-            </Badge>
-          )}
+      <div className="relative flex items-start gap-3 rounded-xl px-2 py-3 hover:bg-muted">
+        <Link
+          href={`/users/${proof.userId}`}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="relative z-10"
+        >
+          <UserAvatar name={userDisplayName} className="size-9 text-xs" />
+        </Link>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <p className="text-sm break-words text-foreground">
+            <Link
+              href={`/users/${proof.userId}`}
+              className="relative z-10 font-bold hover:text-brand-ink"
+            >
+              {userDisplayName}
+            </Link>{" "}
+            ·{" "}
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={`View proof details for ${userDisplayName}: ${taskTitle}`}
+              onClick={() => {
+                setOpen(true);
+              }}
+              className="text-left after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-ring"
+            >
+              {taskTitle}
+            </button>
+            {taskRemoved && (
+              <Badge variant="neutral" className="ml-2 align-middle">
+                Removed task
+              </Badge>
+            )}
+            {ownTask && (
+              <Badge variant="brand" className="ml-2 align-middle">
+                Own task
+              </Badge>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {categoryName} · reviewed by {reviewedByName ?? "an admin"}
+            {proof.reviewedAt && (
+              <>
+                {" · "}
+                <time dateTime={proof.reviewedAt.toISOString()}>
+                  {formatRelative(proof.reviewedAt)}
+                </time>
+              </>
+            )}
+          </p>
           {proof.rejectionReason && (
-            <span className="text-muted-foreground"> — {proof.rejectionReason}</span>
+            <p className="mt-1 rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              {proof.rejectionReason}
+            </p>
           )}
-        </span>
-        <ProofStatusBadge status={proof.status} />
-      </Button>
+        </div>
+        {proof.status === "approved" &&
+          (pointsReversed ? (
+            <Badge variant="neutral" className="shrink-0">
+              Points reversed
+            </Badge>
+          ) : (
+            taskPoints > 0 && (
+              <Badge variant="points" className="shrink-0 tabular-nums">
+                +{taskPoints}
+              </Badge>
+            )
+          ))}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[min(90dvh,800px)] overflow-y-auto">
