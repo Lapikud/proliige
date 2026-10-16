@@ -13,6 +13,7 @@ import { TaskBulkActions } from "./bulkActions";
 import type { CategoryView, TaskView } from "./model";
 import { TaskRow } from "../../task/row";
 import { ArchiveTaskButton } from "./archiveButton";
+import { SuggestionActions } from "./suggestionActions";
 import { Badge } from "../../ui/badge";
 import { describeTaskPolicy } from "~/lib/taskLabels";
 import type { TaskGroup } from "./workspaceState";
@@ -188,6 +189,8 @@ export const TaskWorkspaceView: FC<Props> = ({
                 status={
                   task.removed ? (
                     <Badge variant="neutral">Removed</Badge>
+                  ) : task.suggestionPending ? (
+                    <Badge variant="brand">Suggested by {task.suggestedBy ?? "a member"}</Badge>
                   ) : (
                     task.archived && <Badge>Archived</Badge>
                   )
@@ -196,7 +199,13 @@ export const TaskWorkspaceView: FC<Props> = ({
                 onClick={() => {
                   onEdit(task);
                 }}
-                action={task.removed ? null : <ArchiveTaskButton task={task} />}
+                action={
+                  task.removed ? null : task.suggestionPending ? (
+                    <SuggestionActions task={task} />
+                  ) : (
+                    <ArchiveTaskButton task={task} />
+                  )
+                }
               />
             )}
             actions={(selected, clear) => (

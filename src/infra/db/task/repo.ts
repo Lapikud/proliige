@@ -125,6 +125,26 @@ export function createTaskRepository(db: Database): TaskRepository {
       await db.delete(tasks).where(eq(tasks.id, id));
     },
 
+    async publishSuggestion(id) {
+      const rows = await db
+        .update(tasks)
+        .set({
+          suggestionPending: false,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(tasks.id, id), eq(tasks.suggestionPending, true)))
+        .returning({ id: tasks.id });
+      if (rows.length === 0) throw notFound("That suggestion does not exist.");
+    },
+
+    async declineSuggestion(id) {
+      const rows = await db
+        .delete(tasks)
+        .where(and(eq(tasks.id, id), eq(tasks.suggestionPending, true)))
+        .returning({ id: tasks.id });
+      if (rows.length === 0) throw notFound("That suggestion does not exist.");
+    },
+
     async setArchived(id, archived) {
       const [row] = await db
         .update(tasks)

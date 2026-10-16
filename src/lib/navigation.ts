@@ -1,9 +1,9 @@
 import {
-  userCanAddOwnTask,
   userCanBrowseTasks,
   userCanManageTasks,
   userCanReviewProofs,
-  userCanTrackProofs,
+  userCanSubmitProof,
+  userCanSuggestTasks,
 } from "~/domain/rules";
 import type { User } from "~/domain/user";
 
@@ -29,13 +29,13 @@ export function navItemsFor(user: User | null, reviewRequests = 0): Array<NavIte
       icon: "tasks",
     },
     !userCanBrowseTasks(user) &&
-      userCanAddOwnTask(user) && {
-        href: "/tasks/new",
+      userCanSuggestTasks(user) && {
+        href: "/tasks/suggest",
         label: "Suggest a task",
         shortLabel: "Suggest",
         icon: "tasks",
       },
-    userCanTrackProofs(user) && {
+    userCanSubmitProof(user) && {
       href: "/proofs",
       label: "My proofs",
       shortLabel: "Proofs",

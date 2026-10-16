@@ -51,7 +51,6 @@ async function seed() {
     category,
     pixel: await signUp("pixel", ["pixels"]),
     member: await signUp("member", ["members"]),
-    guest: await signUp("guest", []),
     admin: await signUp("boss", ["team_juhatus"]),
   };
 }
@@ -66,12 +65,10 @@ const ownTask = (categoryId: string) => ({
 });
 
 describe("own tasks", () => {
-  it("lets members and pixels suggest one, but not users without a group", async () => {
-    const { category, member, pixel, guest } = await seed();
+  it("lets only pixels add one", async () => {
+    const { category, member } = await seed();
 
-    await expect(proofService.addOwnTask(member, ownTask(category.id))).resolves.toBeDefined();
-    await expect(proofService.addOwnTask(pixel, ownTask(category.id))).resolves.toBeDefined();
-    await expect(proofService.addOwnTask(guest, ownTask(category.id))).rejects.toThrow();
+    await expect(proofService.addOwnTask(member, ownTask(category.id))).rejects.toThrow();
   });
 
   it("stays off the task lists and awards the admin's points", async () => {

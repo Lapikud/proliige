@@ -43,6 +43,13 @@
       "when": 1792192481426,
       "tag": "0005_recognitions_and_markdown",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792193990692,
+      "tag": "0006_task_suggestions",
+      "breakpoints": true
     }
   ]
 }

@@ -6,7 +6,7 @@ import {
   extensionForContentType,
   validatePhotoBytes,
 } from "~/domain/photo";
-import { userCanAddOwnTask, userCanViewFeed, userCanViewPhoto } from "~/domain/rules";
+import { userCanSubmitProof, userCanViewFeed, userCanViewPhoto } from "~/domain/rules";
 import type { ProofRepository } from "../ports/proof";
 import type { ObjectStoragePort } from "../ports/objectStorage";
 import { guard } from "../guard";
@@ -21,7 +21,7 @@ const SNIFF_LENGTH = 16;
 export function createPhotoService(deps: PhotoServiceDeps) {
   return {
     uploadPhoto: guard(
-      userCanAddOwnTask,
+      userCanSubmitProof,
       async (
         user,
         input: {

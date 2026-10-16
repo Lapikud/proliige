@@ -635,13 +635,27 @@ async function seed() {
     reviewerIds: [admin2.id],
   });
   at(2);
-  await proofService.addOwnTask(member1, {
-    title: "Korraldasin lauamänguõhtu",
-    description: "Tõin mängud kaasa ja kutsusin uued liikmed.",
+  await taskService.suggestTask(member1, {
+    title: "Korralda lauamänguõhtu",
+    description: "Too mängud kaasa ja kutsu uued liikmed.",
     categoryId: events.id,
     points: 40,
-    objectKeys: [],
-    reviewerIds: [],
+    policy: "one_per_user",
+    cooldownSeconds: 0,
+    photoRequired: true,
+    photoInstructions: "Pilt mänguõhtult.",
+    textRequired: false,
+  });
+  await taskService.suggestTask(member2, {
+    title: "Kirjuta klubi ajaloost",
+    description: "",
+    categoryId: writing.id,
+    points: 75,
+    policy: "single_winner",
+    cooldownSeconds: 0,
+    photoRequired: false,
+    photoInstructions: "",
+    textRequired: true,
   });
   at(7);
   const ownRejected = await proofService.addOwnTask(pixel2, {

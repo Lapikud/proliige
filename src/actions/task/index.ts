@@ -8,6 +8,7 @@ import {
   moveTasksSchema,
   removeTaskSchema,
   setTasksArchivedSchema,
+  suggestionSchema,
   undoMoveTasksSchema,
   updateTaskSchema,
 } from "./schema";
@@ -26,6 +27,30 @@ export const updateTaskAction = action(
   updateTaskSchema,
   async (user, { taskId, task }) => {
     await taskService.updateTask(user, taskId, task);
+  },
+  { revalidate },
+);
+
+export const suggestTaskAction = action(
+  createTaskSchema,
+  async (user, { task }) => {
+    await taskService.suggestTask(user, task);
+  },
+  { revalidate: ["/admin/tasks"] },
+);
+
+export const publishSuggestionAction = action(
+  suggestionSchema,
+  async (user, { taskId }) => {
+    await taskService.publishSuggestion(user, taskId);
+  },
+  { revalidate },
+);
+
+export const declineSuggestionAction = action(
+  suggestionSchema,
+  async (user, { taskId }) => {
+    await taskService.declineSuggestion(user, taskId);
   },
   { revalidate },
 );

@@ -11,6 +11,7 @@ import type { Task } from "~/domain/task";
 import { categories } from "../category/model";
 import { proofs } from "../proof/model";
 import type { Database } from "../client";
+import { users } from "../user/model";
 import { tasks } from "./model";
 import { toTask } from "./map";
 
@@ -26,7 +27,14 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(and(isNull(tasks.archivedAt), isNull(tasks.removedAt), isNull(tasks.createdBy)))
+        .where(
+          and(
+            isNull(tasks.archivedAt),
+            isNull(tasks.removedAt),
+            isNull(tasks.createdBy),
+            eq(tasks.suggestionPending, false),
+          ),
+        )
         .orderBy(asc(categories.name), asc(tasks.title));
 
       if (rows.length === 0) {
@@ -66,15 +74,18 @@ export function createTaskRead(
         .select({
           task: tasks,
           categoryName: categories.name,
+          suggestedByName: users.displayName,
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
+        .leftJoin(users, eq(users.id, tasks.suggestedBy))
         .where(isNull(tasks.createdBy))
         .orderBy(asc(categories.name), asc(tasks.title));
 
       return rows.map((row) => ({
         task: toTask(row.task),
         categoryName: row.categoryName,
+        suggestedByName: row.suggestedByName,
       }));
     },
 
@@ -92,7 +103,14 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(and(eq(tasks.id, id), isNull(tasks.removedAt), isNull(tasks.createdBy)))
+        .where(
+          and(
+            eq(tasks.id, id),
+            isNull(tasks.removedAt),
+            isNull(tasks.createdBy),
+            eq(tasks.suggestionPending, false),
+          ),
+        )
         .limit(1);
       if (row === undefined) {
         return null;

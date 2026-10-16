@@ -36,6 +36,8 @@ export const tasks = pgTable(
     photoInstructions: text("photo_instructions"),
     textRequired: boolean("text_required").notNull().default(false),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }),
+    suggestedBy: uuid("suggested_by").references(() => users.id, { onDelete: "restrict" }),
+    suggestionPending: boolean("suggestion_pending").notNull().default(false),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     removedAt: timestamp("removed_at", { withTimezone: true }),
     removedBy: uuid("removed_by").references(() => users.id, { onDelete: "restrict" }),

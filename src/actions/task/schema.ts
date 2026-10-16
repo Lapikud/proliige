@@ -38,6 +38,8 @@ export const archiveTaskSchema = z.object({
 
 export const removeTaskSchema = z.object({ taskId: z.uuid() });
 
+export const suggestionSchema = z.object({ taskId: z.uuid() });
+
 const taskIdsSchema = z
   .array(z.uuid())
   .min(1, "Select one or more tasks.")

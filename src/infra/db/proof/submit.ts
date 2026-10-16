@@ -46,7 +46,7 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
         // Rechecked here because the task row is locked, so two submissions cannot both pass.
         const refusal = findRefusal({
           policy: task.policy,
-          taskArchived: task.archivedAt !== null,
+          taskArchived: task.archivedAt !== null || task.suggestionPending,
           cooldownSeconds: task.cooldownSeconds,
           now,
           ...standingOf(snapshots, userId),

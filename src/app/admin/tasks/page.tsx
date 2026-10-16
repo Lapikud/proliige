@@ -9,7 +9,15 @@ import { requireUser } from "~/lib/user";
 
 export const metadata: Metadata = { title: "Manage tasks" };
 
-const toTaskView = ({ task, categoryName }: { task: Task; categoryName: string }): TaskView => ({
+const toTaskView = ({
+  task,
+  categoryName,
+  suggestedByName,
+}: {
+  task: Task;
+  categoryName: string;
+  suggestedByName: string | null;
+}): TaskView => ({
   id: task.id,
   title: task.title,
   description: task.description,
@@ -23,6 +31,8 @@ const toTaskView = ({ task, categoryName }: { task: Task; categoryName: string }
   textRequired: task.textRequired,
   archived: task.archivedAt !== null,
   removed: task.removedAt !== null,
+  suggestedBy: suggestedByName,
+  suggestionPending: task.suggestionPending,
 });
 
 const AdminTasksPage: FC = async () => {

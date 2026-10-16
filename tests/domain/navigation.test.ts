@@ -26,7 +26,7 @@ describe("navItemsFor", () => {
   it.each([
     ["a visitor", visitor, ["/", "/login"]],
     ["a signed-in account in no group", ipauser, ["/", "/users/u1"]],
-    ["a member", member, ["/", "/tasks/new", "/proofs", "/users/u1"]],
+    ["a member", member, ["/", "/tasks/suggest", "/users/u1"]],
     ["a pixel", pixel, ["/", "/tasks", "/proofs", "/users/u1"]],
     ["an admin", admin, ["/", "/admin/review", "/admin/tasks", "/users/u1"]],
   ] as const)("gives %s their phone tabs", (_who, user, expected) => {

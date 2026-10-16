@@ -22,8 +22,8 @@ export const userCanReactToProofs: Rule = signedIn;
 
 export const userCanBrowseTasks: Rule = pixel;
 export const userCanSubmitProof: Rule = pixel;
-export const userCanAddOwnTask: Rule = member;
-export const userCanTrackProofs: Rule = member;
+export const userCanAddOwnTask: Rule = pixel;
+export const userCanSuggestTasks: Rule = member;
 
 export const userCanManageTasks: Rule = admin;
 export const userCanManageCategories: Rule = admin;

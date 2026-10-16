@@ -27,6 +27,8 @@ export interface Task {
   readonly photoInstructions: string | null;
   readonly textRequired: boolean;
   readonly createdBy: string | null;
+  readonly suggestedBy: string | null;
+  readonly suggestionPending: boolean;
   readonly archivedAt: Date | null;
   readonly removedAt: Date | null;
   readonly removedBy: string | null;

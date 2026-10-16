@@ -42,11 +42,16 @@ const TasksPage: FC = async () => {
       title="Tasks"
       description={`${open} available to you now. Do one, submit proof, and a reviewer approves it for points.`}
       actions={
-        userCanAddOwnTask(user) && (
-          <Button asChild variant="outline">
-            <Link href="/tasks/new">Add your own task</Link>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="ghost">
+            <Link href="/tasks/suggest">Suggest a task</Link>
           </Button>
-        )
+          {userCanAddOwnTask(user) && (
+            <Button asChild variant="outline">
+              <Link href="/tasks/new">Add your own task</Link>
+            </Button>
+          )}
+        </div>
       }
     >
       <TaskList tasks={tasks} />

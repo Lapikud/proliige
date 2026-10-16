@@ -35,6 +35,8 @@ const tasks: Array<TaskView> = [
     textRequired: false,
     archived: false,
     removed: false,
+    suggestedBy: null,
+    suggestionPending: false,
   },
   {
     id: "task-2",
@@ -50,6 +52,8 @@ const tasks: Array<TaskView> = [
     textRequired: false,
     archived: true,
     removed: false,
+    suggestedBy: null,
+    suggestionPending: false,
   },
   {
     id: "task-3",
@@ -65,6 +69,8 @@ const tasks: Array<TaskView> = [
     textRequired: false,
     archived: true,
     removed: true,
+    suggestedBy: null,
+    suggestionPending: false,
   },
 ];
 

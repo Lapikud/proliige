@@ -14,6 +14,8 @@ export interface TaskView {
   textRequired: boolean;
   archived: boolean;
   removed: boolean;
+  suggestedBy: string | null;
+  suggestionPending: boolean;
 }
 
 export interface CategoryView {
