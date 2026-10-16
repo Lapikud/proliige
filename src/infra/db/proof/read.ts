@@ -97,6 +97,7 @@ export function createProofRead(
 }
 
 const reviewer = alias(users, "reviewer");
+const remover = alias(users, "task_remover");
 const reversal = alias(pointsLedger, "reversal");
 
 function selectWithContext(db: Database) {
@@ -104,11 +105,15 @@ function selectWithContext(db: Database) {
     .select({
       proof: proofs,
       taskTitle: tasks.title,
+      proofPolicy: proofs.policy,
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
       taskPoints: sql<number>`coalesce(${pointsLedger.points}, ${tasks.points})`,
       taskRemoved: tasks.removedAt,
-      pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL`,
+      taskRemovedByName: remover.displayName,
+      pointsAwardedAt: pointsLedger.awardedAt,
+      pointsReversedAt: reversal.createdAt,
+      pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL AND ${pointsLedger.points} > 0`,
       categoryName: categories.name,
       userDisplayName: users.displayName,
       reviewedByName: reviewer.displayName,
@@ -118,6 +123,7 @@ function selectWithContext(db: Database) {
     .innerJoin(categories, eq(categories.id, tasks.categoryId))
     .innerJoin(users, eq(users.id, proofs.userId))
     .leftJoin(reviewer, eq(reviewer.id, proofs.reviewedBy))
+    .leftJoin(remover, eq(remover.id, tasks.removedBy))
     .leftJoin(
       pointsLedger,
       and(eq(pointsLedger.proofId, proofs.id), isNull(pointsLedger.reversalOf)),
@@ -128,10 +134,14 @@ function selectWithContext(db: Database) {
 interface ContextRow {
   proof: ProofRow;
   taskTitle: string;
+  proofPolicy: ProofRow["policy"];
   taskDescription: string;
   taskCreatedBy: string | null;
   taskPoints: number;
   taskRemoved: Date | null;
+  taskRemovedByName: string | null;
+  pointsAwardedAt: Date | null;
+  pointsReversedAt: Date | null;
   pointsReversed: boolean;
   categoryName: string;
   userDisplayName: string;
@@ -176,11 +186,16 @@ async function attachDetails(
   return rows.map((row) => ({
     proof: toProof(row.proof),
     taskTitle: row.taskTitle,
+    proofPolicy: row.proofPolicy,
     taskDescription: row.taskDescription,
     ownTask: row.taskCreatedBy !== null,
     taskPoints: row.taskPoints,
     taskRemoved: row.taskRemoved !== null,
+    taskRemovedAt: row.taskRemoved,
+    taskRemovedByName: row.taskRemovedByName,
     pointsReversed: row.pointsReversed,
+    pointsAwardedAt: row.pointsAwardedAt,
+    pointsReversedAt: row.pointsReversedAt,
     categoryName: row.categoryName,
     userDisplayName: row.userDisplayName,
     photos: byProof.get(row.proof.id) ?? [],

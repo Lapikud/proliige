@@ -1,15 +1,21 @@
 import type { UserStanding } from "~/domain/completionPolicy";
 import type { Proof, ProofPhoto, PhotoRef } from "~/domain/proof";
+import type { TaskPolicy } from "~/domain/task";
 import type { PublicUserView } from "~/domain/user";
 
 export interface ProofWithContext {
   readonly proof: Proof;
   readonly taskTitle: string;
+  readonly proofPolicy: TaskPolicy;
   readonly taskDescription: string;
   readonly ownTask: boolean;
   readonly taskPoints: number;
   readonly taskRemoved: boolean;
+  readonly taskRemovedAt: Date | null;
+  readonly taskRemovedByName: string | null;
   readonly pointsReversed: boolean;
+  readonly pointsAwardedAt: Date | null;
+  readonly pointsReversedAt: Date | null;
   readonly categoryName: string;
   readonly userDisplayName: string;
   readonly photos: ReadonlyArray<ProofPhoto>;

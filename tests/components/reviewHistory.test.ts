@@ -17,11 +17,16 @@ const entry: ProofWithContext = {
     reviewedBy: "reviewer-1",
   },
   taskTitle: "Organize a meetup",
+  proofPolicy: "one_per_user",
   taskDescription: "",
   ownTask: false,
   taskPoints: 10,
   taskRemoved: false,
+  taskRemovedAt: null,
+  taskRemovedByName: null,
   pointsReversed: false,
+  pointsAwardedAt: new Date("2026-10-15T12:00:00Z"),
+  pointsReversedAt: null,
   categoryName: "Culture",
   userDisplayName: "Alex Member",
   photos: [
@@ -39,13 +44,15 @@ const entry: ProofWithContext = {
 };
 
 describe("review history proof details", () => {
-  it("shows the submitted answer and photo alongside submitter and reviewer", () => {
+  it("preserves the main history card layout and makes it a dialog trigger", () => {
     const html = renderToStaticMarkup(createElement(HistoryRow, { entry }));
 
-    expect(html).toContain("I organized the community meetup.");
-    expect(html).toContain("/api/photos/proof-1/photo-1");
-    expect(html).toContain("Alex Member");
-    expect(html).toContain("reviewed by Sam Reviewer");
+    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).toContain("whitespace-normal");
+    expect(html).toContain("Alex Member</span> · Organize a meetup");
+    expect(html).toContain("Approved");
+    expect(html).not.toContain("I organized the community meetup.");
+    expect(html).not.toContain("/api/photos/proof-1/photo-1");
   });
 
   it("renders safely when the proof has no text or photos", () => {
