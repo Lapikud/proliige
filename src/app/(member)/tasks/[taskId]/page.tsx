@@ -52,7 +52,7 @@ const TaskPage: FC<PageProps<"/tasks/[taskId]">> = async ({ params }) => {
 
       <header className="rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-card sm:p-6">
         <p className="text-sm text-muted-foreground">{categoryName}</p>
-        <h1 className="mt-1 font-heading text-xl font-bold tracking-wide break-words uppercase sm:text-3xl">
+        <h1 className="mt-1 font-heading text-xl font-bold tracking-wide wrap-break-word uppercase sm:text-3xl">
           {task.title}
         </h1>
         <div className="mt-3 flex flex-wrap items-center gap-2">
