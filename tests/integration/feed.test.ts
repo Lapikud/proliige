@@ -484,6 +484,38 @@ describe("comment moderation", () => {
 });
 
 describe("public feed reading", () => {
+  it("retains removed-task feed history and reflects the point reversal", async () => {
+    const { task, admin, alice } = await seedApprovedProof(new Date("2026-09-18T12:00:00Z"));
+    await tasks.removeWithHistory({
+      taskId: task.id,
+      removedBy: admin.id,
+      now: new Date("2026-10-16T12:00:00Z"),
+    });
+
+    const entry = (await feed.listFeed(null, { cursor: null })).entries[0];
+    expect(entry).toMatchObject({
+      taskRemoved: true,
+      pointsReversed: true,
+      points: 10,
+      taskTitle: task.title,
+    });
+    expect(await leaderboard.leaderboard()).toMatchObject([
+      {
+        user: { id: alice.id },
+        totalPoints: 0,
+        approvedProofs: 1,
+      },
+    ]);
+    expect(
+      await leaderboard.leaderboard({ since: new Date("2026-09-01T00:00:00Z") }),
+    ).toMatchObject([
+      {
+        totalPoints: 0,
+        approvedProofs: 1,
+      },
+    ]);
+  });
+
   it("is readable without authentication", async () => {
     const { proof, bob } = await seedApprovedProof();
     const { likes, comments } = service();

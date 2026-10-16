@@ -29,6 +29,8 @@ export const archiveTaskSchema = z.object({
   archived: z.boolean(),
 });
 
+export const removeTaskSchema = z.object({ taskId: z.uuid() });
+
 const taskIdsSchema = z
   .array(z.uuid())
   .min(1, "Select one or more tasks.")

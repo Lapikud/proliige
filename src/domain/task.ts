@@ -28,6 +28,8 @@ export interface Task {
   readonly textRequired: boolean;
   readonly createdBy: string | null;
   readonly archivedAt: Date | null;
+  readonly removedAt: Date | null;
+  readonly removedBy: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }

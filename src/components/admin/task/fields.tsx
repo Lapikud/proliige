@@ -63,10 +63,7 @@ export const TaskFields: FC<Props> = ({ categories }) => {
           )}
         </Field>
         {completionPolicy(policy).usesCooldown && (
-          <Field
-            name="task.cooldownSeconds"
-            label="Cooldown"
-          >
+          <Field name="task.cooldownSeconds" label="Cooldown">
             {(field) => (
               <>
                 <Input

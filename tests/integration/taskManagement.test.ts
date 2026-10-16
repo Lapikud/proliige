@@ -1,16 +1,24 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
 import { moveTasksSchema, setTasksArchivedSchema } from "~/actions/task/schema";
 import { createTaskService } from "~/core/services/task";
 import { createCategoryRepository } from "~/infra/db/category/repo";
+import { pointsLedger } from "~/infra/db/points/model";
+import { proofs } from "~/infra/db/proof/model";
 import { createTaskRepository } from "~/infra/db/task/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { connect, seedUsers, truncateAll } from "./helpers";
+import { first as firstRow } from "../support";
 
 const { client, db } = connect();
 const categories = createCategoryRepository(db);
 const tasks = createTaskRepository(db);
 const users = createUserRepository(db);
-const taskService = createTaskService({ tasks });
+const removalTime = new Date("2026-10-16T12:00:00Z");
+const taskService = createTaskService({
+  tasks,
+  clock: { now: () => removalTime },
+});
 
 const taskInput = (categoryId: string, title: string) => ({
   title,
@@ -62,6 +70,127 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await truncateAll(db);
+});
+
+describe("task removal", () => {
+  it("closes pending proofs and reverses exact approved credits atomically", async () => {
+    const { admin, alice, first } = await setup();
+    const pending = firstRow(
+      await db
+        .insert(proofs)
+        .values({
+          taskId: first.id,
+          userId: alice.id,
+          policy: first.policy,
+          status: "pending",
+        })
+        .returning(),
+    );
+    const approved = firstRow(
+      await db
+        .insert(proofs)
+        .values({
+          taskId: first.id,
+          userId: admin.id,
+          policy: first.policy,
+          status: "approved",
+        })
+        .returning(),
+    );
+    const awardedAt = new Date("2026-10-01T09:00:00Z");
+    const credit = firstRow(
+      await db
+        .insert(pointsLedger)
+        .values({
+          userId: admin.id,
+          proofId: approved.id,
+          points: 9,
+          awardedAt,
+        })
+        .returning(),
+    );
+
+    await taskService.removeTask(admin, first.id);
+    await taskService.removeTask(admin, first.id);
+
+    expect(await tasks.findById(first.id)).toMatchObject({
+      removedAt: removalTime,
+      removedBy: admin.id,
+    });
+    expect(await tasks.findDetail(first.id, alice.id)).toBeNull();
+    expect((await tasks.listActive(alice.id)).some(({ task }) => task.id === first.id)).toBe(false);
+    expect((await tasks.listAll()).some(({ task }) => task.id === first.id)).toBe(true);
+    expect(await db.select().from(proofs).where(eq(proofs.id, pending.id))).toMatchObject([
+      {
+        status: "rejected",
+        rejectionReason: "Task removed",
+        reviewedBy: admin.id,
+        reviewedAt: removalTime,
+      },
+    ]);
+    expect(await db.select().from(proofs).where(eq(proofs.id, approved.id))).toMatchObject([
+      { status: "approved" },
+    ]);
+    const ledger = await db
+      .select()
+      .from(pointsLedger)
+      .where(eq(pointsLedger.proofId, approved.id));
+    expect(ledger).toHaveLength(2);
+    expect(ledger.find((entry) => entry.id === credit.id)).toBeDefined();
+    expect(ledger.find((entry) => entry.reversalOf === credit.id)).toMatchObject({
+      points: -9,
+      awardedAt,
+      createdAt: removalTime,
+    });
+  });
+
+  it("removes an empty task and audits zero-point credits without changing the total", async () => {
+    const { admin, alice, first, second } = await setup();
+    await taskService.removeTask(admin, first.id);
+    const proof = firstRow(
+      await db
+        .insert(proofs)
+        .values({
+          taskId: second.id,
+          userId: alice.id,
+          policy: second.policy,
+          status: "approved",
+        })
+        .returning(),
+    );
+    await db.insert(pointsLedger).values({
+      userId: alice.id,
+      proofId: proof.id,
+      points: 0,
+    });
+
+    await taskService.removeTask(admin, second.id);
+
+    const zeroPointLedger = await db
+      .select()
+      .from(pointsLedger)
+      .where(eq(pointsLedger.proofId, proof.id));
+    expect(zeroPointLedger).toHaveLength(2);
+    expect(zeroPointLedger.find((entry) => entry.reversalOf !== null)?.points).toBe(0);
+    expect(await tasks.findById(first.id)).toMatchObject({ removedBy: admin.id });
+  });
+
+  it("refuses edits and archive changes after removal", async () => {
+    const { admin, source, destination, first } = await setup();
+    await taskService.removeTask(admin, first.id);
+    await expect(
+      taskService.updateTask(admin, first.id, taskInput(source.id, "Changed")),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(taskService.moveTasks(admin, [first.id], destination.id)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(taskService.archiveTask(admin, first.id, true)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+    await expect(taskService.archiveTask(admin, first.id, false)).rejects.toMatchObject({
+      code: "CONFLICT",
+    });
+  });
 });
 
 describe("bulk task management", () => {

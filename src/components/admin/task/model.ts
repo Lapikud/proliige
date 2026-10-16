@@ -13,6 +13,7 @@ export interface TaskView {
   photoInstructions: string | null;
   textRequired: boolean;
   archived: boolean;
+  removed: boolean;
 }
 
 export interface CategoryView {

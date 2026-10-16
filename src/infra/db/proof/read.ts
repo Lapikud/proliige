@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { ProofRepository, ProofWithContext } from "~/core/ports/proof";
 import { standingOf } from "~/domain/completionPolicy";
@@ -7,6 +7,7 @@ import type { PublicUserView } from "~/domain/user";
 import { categories } from "../category/model";
 import type { Database } from "../client";
 import { users } from "../user/model";
+import { pointsLedger } from "../points/model";
 import { tasks } from "../task/model";
 import { proofPhotos, proofReviewRequests, proofs } from "./model";
 import { toProof, toPhoto, type ProofRow } from "./map";
@@ -96,6 +97,7 @@ export function createProofRead(
 }
 
 const reviewer = alias(users, "reviewer");
+const reversal = alias(pointsLedger, "reversal");
 
 function selectWithContext(db: Database) {
   return db
@@ -104,7 +106,9 @@ function selectWithContext(db: Database) {
       taskTitle: tasks.title,
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
-      taskPoints: tasks.points,
+      taskPoints: sql<number>`coalesce(${pointsLedger.points}, ${tasks.points})`,
+      taskRemoved: tasks.removedAt,
+      pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL`,
       categoryName: categories.name,
       userDisplayName: users.displayName,
       reviewedByName: reviewer.displayName,
@@ -113,7 +117,12 @@ function selectWithContext(db: Database) {
     .innerJoin(tasks, eq(tasks.id, proofs.taskId))
     .innerJoin(categories, eq(categories.id, tasks.categoryId))
     .innerJoin(users, eq(users.id, proofs.userId))
-    .leftJoin(reviewer, eq(reviewer.id, proofs.reviewedBy));
+    .leftJoin(reviewer, eq(reviewer.id, proofs.reviewedBy))
+    .leftJoin(
+      pointsLedger,
+      and(eq(pointsLedger.proofId, proofs.id), isNull(pointsLedger.reversalOf)),
+    )
+    .leftJoin(reversal, eq(reversal.reversalOf, pointsLedger.id));
 }
 
 interface ContextRow {
@@ -122,6 +131,8 @@ interface ContextRow {
   taskDescription: string;
   taskCreatedBy: string | null;
   taskPoints: number;
+  taskRemoved: Date | null;
+  pointsReversed: boolean;
   categoryName: string;
   userDisplayName: string;
   reviewedByName: string | null;
@@ -168,6 +179,8 @@ async function attachDetails(
     taskDescription: row.taskDescription,
     ownTask: row.taskCreatedBy !== null,
     taskPoints: row.taskPoints,
+    taskRemoved: row.taskRemoved !== null,
+    pointsReversed: row.pointsReversed,
     categoryName: row.categoryName,
     userDisplayName: row.userDisplayName,
     photos: byProof.get(row.proof.id) ?? [],

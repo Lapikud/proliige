@@ -8,6 +8,8 @@ export interface ProofWithContext {
   readonly taskDescription: string;
   readonly ownTask: boolean;
   readonly taskPoints: number;
+  readonly taskRemoved: boolean;
+  readonly pointsReversed: boolean;
   readonly categoryName: string;
   readonly userDisplayName: string;
   readonly photos: ReadonlyArray<ProofPhoto>;

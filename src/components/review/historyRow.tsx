@@ -15,6 +15,8 @@ export const HistoryRow: FC<Props> = ({
     proof,
     taskTitle,
     taskPoints,
+    taskRemoved,
+    pointsReversed,
     ownTask,
     categoryName,
     userDisplayName,
@@ -32,6 +34,11 @@ export const HistoryRow: FC<Props> = ({
           {userDisplayName}
         </Link>{" "}
         · {taskTitle}
+        {taskRemoved && (
+          <Badge variant="neutral" className="ml-2 align-middle">
+            Removed
+          </Badge>
+        )}
         {ownTask && (
           <Badge variant="brand" className="ml-2 align-middle">
             Own task
@@ -65,10 +72,17 @@ export const HistoryRow: FC<Props> = ({
         </p>
       )}
     </div>
-    {proof.status === "approved" && (
-      <Badge variant="points" className="shrink-0 tabular-nums">
-        +{taskPoints}
-      </Badge>
-    )}
+    {proof.status === "approved" &&
+      (pointsReversed ? (
+        <Badge variant="neutral" className="shrink-0">
+          Points reversed
+        </Badge>
+      ) : (
+        taskPoints > 0 && (
+          <Badge variant="points" className="shrink-0 tabular-nums">
+            +{taskPoints}
+          </Badge>
+        )
+      ))}
   </div>
 );

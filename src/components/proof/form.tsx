@@ -107,8 +107,7 @@ export const ReviewerPicker: FC<{ reviewers: ReadonlyArray<PublicUserView> }> = 
   return (
     <details className="group rounded-xl border border-border">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-        Notify a reviewer{" "}
-        <span className="font-normal text-muted-foreground">· optional</span>
+        Notify a reviewer <span className="font-normal text-muted-foreground">· optional</span>
         <ChevronDown
           className="ml-auto size-4 transition-transform group-open:rotate-180"
           aria-hidden

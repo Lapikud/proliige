@@ -20,6 +20,8 @@ const entry: ProofWithContext = {
   taskDescription: "",
   ownTask: false,
   taskPoints: 10,
+  taskRemoved: false,
+  pointsReversed: false,
   categoryName: "Culture",
   userDisplayName: "Alex Member",
   photos: [

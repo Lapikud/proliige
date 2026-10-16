@@ -22,6 +22,7 @@ const toTaskView = ({ task, categoryName }: { task: Task; categoryName: string }
   photoInstructions: task.photoInstructions,
   textRequired: task.textRequired,
   archived: task.archivedAt !== null,
+  removed: task.removedAt !== null,
 });
 
 const AdminTasksPage: FC = async () => {

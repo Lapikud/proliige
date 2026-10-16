@@ -6,6 +6,8 @@ export interface FeedEntry {
   readonly textAnswer: string | null;
   readonly categoryName: string;
   readonly points: number;
+  readonly taskRemoved: boolean;
+  readonly pointsReversed: boolean;
   readonly user: PublicUserView;
   readonly approvedAt: Date;
   readonly photoUrls: ReadonlyArray<string>;

@@ -17,6 +17,8 @@ export function toTask(row: TaskRow): Task {
     textRequired: row.textRequired,
     createdBy: row.createdBy,
     archivedAt: row.archivedAt,
+    removedAt: row.removedAt,
+    removedBy: row.removedBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

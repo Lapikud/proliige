@@ -2,6 +2,7 @@ import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import type { TaskRepository } from "~/core/ports/task";
 import { conflict, notFound } from "~/domain/errors";
 import { proofs } from "../proof/model";
+import { pointsLedger } from "../points/model";
 import { categories } from "../category/model";
 import type { Database } from "../client";
 import { isForeignKeyViolation, isUniqueViolation } from "../errors";
@@ -21,10 +22,16 @@ export function createTaskRepository(db: Database): TaskRepository {
 
     async update(id, input) {
       return db.transaction(async (tx) => {
-        const [existing] = await tx.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+        const [existing] = await tx
+          .select()
+          .from(tasks)
+          .where(eq(tasks.id, id))
+          .limit(1)
+          .for("update");
         if (existing === undefined) {
           throw notFound("That task does not exist.");
         }
+        if (existing.removedAt !== null) throw conflict("Removed tasks cannot be changed.");
 
         const row = onlyRow(
           await tx
@@ -55,6 +62,63 @@ export function createTaskRepository(db: Database): TaskRepository {
       });
     },
 
+    async removeWithHistory({ taskId, removedBy, now }) {
+      await db.transaction(async (tx) => {
+        const [task] = await tx
+          .select()
+          .from(tasks)
+          .where(eq(tasks.id, taskId))
+          .limit(1)
+          .for("update");
+        if (task === undefined) throw notFound("That task does not exist.");
+        if (task.removedAt !== null) return;
+
+        await tx
+          .update(proofs)
+          .set({
+            status: "rejected",
+            rejectionReason: "Task removed",
+            reviewedBy: removedBy,
+            reviewedAt: now,
+          })
+          .where(and(eq(proofs.taskId, taskId), eq(proofs.status, "pending")));
+
+        const credits = await tx
+          .select({
+            id: pointsLedger.id,
+            userId: pointsLedger.userId,
+            proofId: pointsLedger.proofId,
+            points: pointsLedger.points,
+            awardedAt: pointsLedger.awardedAt,
+          })
+          .from(pointsLedger)
+          .innerJoin(proofs, eq(pointsLedger.proofId, proofs.id))
+          .where(and(eq(proofs.taskId, taskId), isNull(pointsLedger.reversalOf)));
+        for (const credit of credits) {
+          await tx
+            .insert(pointsLedger)
+            .values({
+              userId: credit.userId,
+              proofId: credit.proofId,
+              points: -credit.points,
+              awardedAt: credit.awardedAt,
+              createdAt: now,
+              reversalOf: credit.id,
+            })
+            .onConflictDoNothing();
+        }
+
+        await tx
+          .update(tasks)
+          .set({
+            removedAt: now,
+            removedBy,
+            updatedAt: now,
+          })
+          .where(eq(tasks.id, taskId));
+      });
+    },
+
     async remove(id) {
       await db.delete(tasks).where(eq(tasks.id, id));
     },
@@ -66,10 +130,16 @@ export function createTaskRepository(db: Database): TaskRepository {
           archivedAt: archived ? new Date() : null,
           updatedAt: new Date(),
         })
-        .where(eq(tasks.id, id))
+        .where(and(eq(tasks.id, id), isNull(tasks.removedAt)))
         .returning();
       if (row === undefined) {
-        throw notFound("That task does not exist.");
+        const existing = await db
+          .select({ id: tasks.id })
+          .from(tasks)
+          .where(eq(tasks.id, id))
+          .limit(1);
+        if (existing.length === 0) throw notFound("That task does not exist.");
+        throw conflict("Removed tasks cannot be changed.");
       }
 
       return toTask(row);
@@ -90,6 +160,7 @@ export function createTaskRepository(db: Database): TaskRepository {
           .select({
             id: tasks.id,
             categoryId: tasks.categoryId,
+            removedAt: tasks.removedAt,
           })
           .from(tasks)
           .where(inArray(tasks.id, ids))
@@ -98,6 +169,8 @@ export function createTaskRepository(db: Database): TaskRepository {
         if (existing.length !== ids.length) {
           throw notFound("One or more selected tasks do not exist.");
         }
+        if (existing.some((task) => task.removedAt !== null))
+          throw conflict("Removed tasks cannot be moved.");
 
         const existingById = new Map(existing.map((task) => [task.id, task]));
         const moves = ids.flatMap((id) => {
@@ -138,6 +211,7 @@ export function createTaskRepository(db: Database): TaskRepository {
           .select({
             id: tasks.id,
             categoryId: tasks.categoryId,
+            removedAt: tasks.removedAt,
           })
           .from(tasks)
           .where(inArray(tasks.id, ids))
@@ -146,6 +220,8 @@ export function createTaskRepository(db: Database): TaskRepository {
         if (existing.length !== moves.length) {
           throw notFound("One or more moved tasks no longer exist; no changes were made.");
         }
+        if (existing.some((task) => task.removedAt !== null))
+          throw conflict("Removed tasks cannot be changed.");
 
         const currentCategories = new Map(existing.map(({ id, categoryId }) => [id, categoryId]));
         if (
@@ -182,12 +258,18 @@ export function createTaskRepository(db: Database): TaskRepository {
     async setArchivedMany(ids, archived) {
       return db.transaction(async (tx) => {
         const existing = await tx
-          .select({ id: tasks.id })
+          .select({
+            id: tasks.id,
+            removedAt: tasks.removedAt,
+          })
           .from(tasks)
-          .where(inArray(tasks.id, ids));
+          .where(inArray(tasks.id, ids))
+          .for("update");
         if (existing.length !== ids.length) {
           throw notFound("One or more selected tasks do not exist.");
         }
+        if (existing.some((task) => task.removedAt !== null))
+          throw conflict("Removed tasks cannot be changed.");
 
         const rows = await tx
           .update(tasks)

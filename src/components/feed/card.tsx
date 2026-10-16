@@ -46,9 +46,14 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
             {entry.categoryName}
           </span>
         </div>
-        <Badge variant="points" className="tabular-nums">
-          +{entry.points}
-        </Badge>
+        {entry.taskRemoved && <Badge variant="neutral">Removed task</Badge>}
+        {entry.pointsReversed ? (
+          <Badge variant="neutral">Points reversed</Badge>
+        ) : entry.points > 0 ? (
+          <Badge variant="points" className="tabular-nums">
+            +{entry.points}
+          </Badge>
+        ) : null}
       </header>
 
       <PhotoCarousel urls={entry.photoUrls} alt={`Photo for ${entry.taskTitle}`} />
@@ -72,7 +77,8 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
           "pt-1 pb-4 text-sm": !entry.textAnswer && entry.photoUrls.length > 0,
         })}
       >
-        Completed <span className="font-bold text-brand-ink">{entry.taskTitle}</span>.
+        Completed <span className="font-bold text-brand-ink">{entry.taskTitle}</span>
+        {entry.taskRemoved ? " (removed)" : ""}.
       </p>
 
       <div className="flex items-center gap-1 px-2 pt-1">

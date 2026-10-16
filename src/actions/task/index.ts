@@ -6,6 +6,7 @@ import {
   archiveTaskSchema,
   createTaskSchema,
   moveTasksSchema,
+  removeTaskSchema,
   setTasksArchivedSchema,
   undoMoveTasksSchema,
   updateTaskSchema,
@@ -25,6 +26,14 @@ export const updateTaskAction = action(
   updateTaskSchema,
   async (user, { taskId, task }) => {
     await taskService.updateTask(user, taskId, task);
+  },
+  { revalidate },
+);
+
+export const removeTaskAction = action(
+  removeTaskSchema,
+  async (user, { taskId }) => {
+    await taskService.removeTask(user, taskId);
   },
   { revalidate },
 );

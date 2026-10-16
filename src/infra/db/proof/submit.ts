@@ -24,6 +24,8 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
         if (task === undefined) {
           throw notFound("That task does not exist.");
         }
+        if (task.removedAt !== null)
+          throw conflict("This task has been removed and no longer accepts proof.");
 
         const snapshots = await tx
           .select({

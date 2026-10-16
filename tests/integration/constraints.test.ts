@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import type { TaskPolicy } from "~/domain/task";
 import { categories } from "~/infra/db/category/model";
@@ -173,6 +174,53 @@ describe("completion policies", () => {
 });
 
 describe("points", () => {
+  it("allows one reversal linked to an original credit and preserves removal metadata", async () => {
+    const { task, alice } = await seed("one_per_user");
+    const proof = first(
+      await insertProof({
+        taskId: task.id,
+        userId: alice.id,
+        policy: task.policy,
+        status: "approved",
+      }),
+    );
+    const credit = first(
+      await db
+        .insert(pointsLedger)
+        .values({
+          userId: alice.id,
+          proofId: proof.id,
+          points: 5,
+        })
+        .returning(),
+    );
+
+    const removedAt = new Date();
+    const removedTask = first(
+      await db
+        .update(tasks)
+        .set({
+          removedAt,
+          removedBy: alice.id,
+        })
+        .where(eq(tasks.id, task.id))
+        .returning(),
+    );
+    expect(removedTask.removedAt).toEqual(removedAt);
+
+    const reversal = {
+      userId: alice.id,
+      proofId: proof.id,
+      points: -5,
+      reversalOf: credit.id,
+    };
+    await db.insert(pointsLedger).values(reversal);
+    await expect(db.insert(pointsLedger).values(reversal)).rejects.toThrow();
+    expect(await db.select().from(pointsLedger).where(eq(pointsLedger.id, credit.id))).toHaveLength(
+      1,
+    );
+  });
+
   it("refuses a second award for the same proof", async () => {
     const { task, alice } = await seed("one_per_user");
     const proof = first(

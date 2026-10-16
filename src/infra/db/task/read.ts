@@ -26,7 +26,7 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(and(isNull(tasks.archivedAt), isNull(tasks.createdBy)))
+        .where(and(isNull(tasks.archivedAt), isNull(tasks.removedAt), isNull(tasks.createdBy)))
         .orderBy(asc(categories.name), asc(tasks.title));
 
       if (rows.length === 0) {
@@ -92,7 +92,7 @@ export function createTaskRead(
         })
         .from(tasks)
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
-        .where(and(eq(tasks.id, id), isNull(tasks.createdBy)))
+        .where(and(eq(tasks.id, id), isNull(tasks.removedAt), isNull(tasks.createdBy)))
         .limit(1);
       if (row === undefined) {
         return null;

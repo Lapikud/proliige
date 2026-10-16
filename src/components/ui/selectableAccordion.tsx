@@ -14,6 +14,7 @@ interface Props<Item extends { readonly id: string }> extends Omit<
   readonly label: string;
   readonly items: ReadonlyArray<Item>;
   readonly itemLabel: (item: Item) => string;
+  readonly isItemDisabled?: (item: Item) => boolean;
   readonly renderItem: (item: Item) => ReactNode;
   readonly actions: (selected: Array<Item>, clear: () => void) => ReactNode;
   readonly empty?: ReactNode;
@@ -23,13 +24,15 @@ export function SelectableAccordion<Item extends { readonly id: string }>({
   label,
   items,
   itemLabel,
+  isItemDisabled = () => false,
   renderItem,
   actions,
   empty,
   ...group
 }: Props<Item>) {
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set());
-  const selected = items.filter((item) => selectedIds.has(item.id));
+  const selectableItems = items.filter((item) => !isItemDisabled(item));
+  const selected = selectableItems.filter((item) => selectedIds.has(item.id));
   const clear = () => {
     setSelectedIds(new Set());
   };
@@ -41,19 +44,22 @@ export function SelectableAccordion<Item extends { readonly id: string }>({
   };
 
   let allState: boolean | "indeterminate" = false;
-  if (selected.length > 0) allState = selected.length === items.length ? true : "indeterminate";
+  if (selected.length > 0)
+    allState = selected.length === selectableItems.length ? true : "indeterminate";
 
   return (
     <GroupAccordionItem
       {...group}
       leading={
         <Checkbox
-          className={cn(items.length === 0 && "invisible")}
+          className={cn(selectableItems.length === 0 && "invisible")}
           checked={allState}
-          disabled={items.length === 0}
+          disabled={selectableItems.length === 0}
           aria-label={`Select all in ${label}`}
           onCheckedChange={(checked) => {
-            setSelectedIds(checked === true ? new Set(items.map((item) => item.id)) : new Set());
+            setSelectedIds(
+              checked === true ? new Set(selectableItems.map((item) => item.id)) : new Set(),
+            );
           }}
         />
       }
@@ -88,6 +94,7 @@ export function SelectableAccordion<Item extends { readonly id: string }>({
             >
               <Checkbox
                 checked={selectedIds.has(item.id)}
+                disabled={isItemDisabled(item)}
                 aria-label={`Select ${itemLabel(item)}`}
                 onCheckedChange={(checked) => {
                   toggle(item.id, checked === true);

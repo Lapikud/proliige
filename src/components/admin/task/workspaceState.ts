@@ -15,7 +15,7 @@ export function groupWorkspaceTasks(
   const groups = categories.map((category) => ({
     category,
     tasks: tasks.filter((task) => {
-      if (task.categoryId !== category.id || (!showArchived && task.archived)) {
+      if (task.categoryId !== category.id || (!showArchived && task.archived && !task.removed)) {
         return false;
       }
 

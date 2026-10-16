@@ -116,6 +116,7 @@ export const TaskWorkspaceView: FC<Props> = ({
             title={<CategoryTitle name={category.name} count={tasks.length} />}
             items={tasks}
             itemLabel={(task) => task.title}
+            isItemDisabled={(task) => task.removed}
             renderItem={(task) => (
               <TaskRow
                 title={task.title}
@@ -123,13 +124,20 @@ export const TaskWorkspaceView: FC<Props> = ({
                 points={task.points}
                 photoRequired={task.photoRequired}
                 textRequired={task.textRequired}
-                muted={task.archived}
-                status={task.archived && <Badge>Archived</Badge>}
+                muted={task.archived || task.removed}
+                disabled={task.removed}
+                status={
+                  task.removed ? (
+                    <Badge variant="neutral">Removed</Badge>
+                  ) : (
+                    task.archived && <Badge>Archived</Badge>
+                  )
+                }
                 aria-label={`Edit ${task.title}`}
                 onClick={() => {
                   onEdit(task);
                 }}
-                action={<ArchiveTaskButton task={task} />}
+                action={task.removed ? null : <ArchiveTaskButton task={task} />}
               />
             )}
             actions={(selected, clear) => (

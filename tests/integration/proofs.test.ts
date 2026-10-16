@@ -1,9 +1,12 @@
+import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import type { TaskPolicy } from "~/domain/task";
 import { createCategoryRepository } from "~/infra/db/category/repo";
 import { createProofRepository } from "~/infra/db/proof/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
+import { pointsLedger } from "~/infra/db/points/model";
 import { createLeaderboardRepository } from "~/infra/db/points/repo";
+import { tasks as taskTable } from "~/infra/db/task/model";
 import { createTaskRepository } from "~/infra/db/task/repo";
 import { connect, seedUsers, truncateAll } from "./helpers";
 import { first } from "../support";
@@ -151,6 +154,83 @@ describe("proof creation", () => {
       now: now(),
     });
     expect(secondProof.status).toBe("pending");
+  });
+
+  it("refuses a proof on a removed task", async () => {
+    const { task, alice, admin } = await seed("one_per_user");
+    await tasks.removeWithHistory({
+      taskId: task.id,
+      removedBy: admin.id,
+      now: now(),
+    });
+    await expect(
+      proofs.createPendingProof({
+        taskId: task.id,
+        userId: alice.id,
+        photos: [],
+        now: now(),
+      }),
+    ).rejects.toThrow(/removed/i);
+  });
+
+  it("serializes concurrent approval and removal without leaving credited points", async () => {
+    const { task, alice, admin } = await seed("repeatable");
+    const proof = await proofs.createPendingProof({
+      taskId: task.id,
+      userId: alice.id,
+      photos: [],
+      now: now(),
+    });
+
+    await Promise.allSettled([
+      proofs.approve({
+        proofId: proof.id,
+        reviewerId: admin.id,
+        now: now(),
+      }),
+      tasks.removeWithHistory({
+        taskId: task.id,
+        removedBy: admin.id,
+        now: now(),
+      }),
+    ]);
+
+    const finalProof = await proofs.findById(proof.id);
+    const ledger = await db.select().from(pointsLedger).where(eq(pointsLedger.proofId, proof.id));
+    expect(finalProof?.status === "approved" || finalProof?.status === "rejected").toBe(true);
+    expect(ledger.reduce((total, entry) => total + entry.points, 0)).toBe(0);
+    if (finalProof?.status === "approved") {
+      expect(ledger).toHaveLength(2);
+      expect(ledger.find((entry) => entry.reversalOf !== null)?.points).toBe(-task.points);
+    } else {
+      expect(ledger).toHaveLength(0);
+    }
+  });
+
+  it("does not approve a pending proof after its task is marked removed", async () => {
+    const { task, alice, admin } = await seed("repeatable");
+    const proof = await proofs.createPendingProof({
+      taskId: task.id,
+      userId: alice.id,
+      photos: [],
+      now: now(),
+    });
+    await db
+      .update(taskTable)
+      .set({
+        removedAt: now(),
+        removedBy: admin.id,
+      })
+      .where(eq(taskTable.id, task.id));
+    await expect(
+      proofs.approve({
+        proofId: proof.id,
+        reviewerId: admin.id,
+        now: now(),
+      }),
+    ).rejects.toThrow(/removed/i);
+    expect((await proofs.findById(proof.id))?.status).toBe("pending");
+    expect(await leaderboard.leaderboard()).toEqual([]);
   });
 
   it("refuses a proof on an archived task", async () => {

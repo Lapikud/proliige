@@ -37,6 +37,8 @@ export const tasks = pgTable(
     textRequired: boolean("text_required").notNull().default(false),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+    removedBy: uuid("removed_by").references(() => users.id, { onDelete: "restrict" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

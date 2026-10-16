@@ -1,7 +1,9 @@
-import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import type { FeedRepository } from "~/core/ports/feed";
 import { categories } from "../category/model";
 import { proofPhotos, proofs } from "../proof/model";
+import { pointsLedger } from "../points/model";
+import { alias } from "drizzle-orm/pg-core";
 import type { Database } from "../client";
 import { users } from "../user/model";
 import { tasks } from "../task/model";
@@ -11,6 +13,7 @@ export function createFeedRepository(db: Database): FeedRepository {
   return {
     async listFeed({ cursor, limit, categoryId, authorId, includeExcludedAuthor, viewerId }) {
       const conditions = [eq(proofs.status, "approved"), isNotNull(proofs.reviewedAt)];
+      const reversal = alias(pointsLedger, "reversal");
       if (!includeExcludedAuthor) {
         conditions.push(eq(users.excluded, false));
       }
@@ -38,7 +41,9 @@ export function createFeedRepository(db: Database): FeedRepository {
           reviewedAt: proofs.reviewedAt,
           taskTitle: tasks.title,
           textAnswer: proofs.textAnswer,
-          points: tasks.points,
+          points: pointsLedger.points,
+          taskRemoved: sql<boolean>`${tasks.removedAt} IS NOT NULL`,
+          pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL AND ${pointsLedger.points} > 0`,
           categoryName: categories.name,
           userId: users.id,
           displayName: users.displayName,
@@ -62,6 +67,11 @@ export function createFeedRepository(db: Database): FeedRepository {
         .innerJoin(tasks, eq(tasks.id, proofs.taskId))
         .innerJoin(categories, eq(categories.id, tasks.categoryId))
         .innerJoin(users, eq(users.id, proofs.userId))
+        .leftJoin(
+          pointsLedger,
+          and(eq(pointsLedger.proofId, proofs.id), isNull(pointsLedger.reversalOf)),
+        )
+        .leftJoin(reversal, eq(reversal.reversalOf, pointsLedger.id))
         .where(and(...conditions))
         .orderBy(desc(proofs.reviewedAt), desc(proofs.id))
         .limit(limit + 1);
@@ -87,7 +97,9 @@ export function createFeedRepository(db: Database): FeedRepository {
             taskTitle: row.taskTitle,
             textAnswer: row.textAnswer,
             categoryName: row.categoryName,
-            points: row.points,
+            points: row.points ?? 0,
+            taskRemoved: row.taskRemoved,
+            pointsReversed: row.pointsReversed,
             user: {
               id: row.userId,
               displayName: row.displayName,

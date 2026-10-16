@@ -30,6 +30,7 @@ export interface TaskRepository {
   create(input: NewTaskInput): Promise<Task>;
   update(id: string, input: NewTaskInput): Promise<Task>;
   setArchived(id: string, archived: boolean): Promise<Task>;
+  removeWithHistory(input: { taskId: string; removedBy: string; now: Date }): Promise<void>;
   remove(id: string): Promise<void>;
   moveMany(ids: ReadonlyArray<string>, categoryId: string): Promise<Array<TaskMove>>;
   undoMoveMany(moves: ReadonlyArray<TaskMove>): Promise<void>;

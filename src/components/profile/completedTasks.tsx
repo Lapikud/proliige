@@ -16,15 +16,22 @@ export const CompletedTasks: FC<{ entries: ReadonlyArray<FeedEntry> }> = ({ entr
           className="flex items-center gap-3 border-t border-border py-3 first:border-t-0"
         >
           <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-bold">{entry.taskTitle}</span>
+            <span className="truncate text-sm font-bold">
+              {entry.taskTitle}
+              {entry.taskRemoved ? " · Removed" : ""}
+            </span>
             <span className="text-xs text-muted-foreground">
               {entry.categoryName} ·{" "}
               <time dateTime={entry.approvedAt.toISOString()}>{formatDate(entry.approvedAt)}</time>
             </span>
           </div>
-          <Badge variant="points" className="tabular-nums">
-            +{entry.points}
-          </Badge>
+          {entry.pointsReversed ? (
+            <Badge variant="neutral">Points reversed</Badge>
+          ) : entry.points > 0 ? (
+            <Badge variant="points" className="tabular-nums">
+              +{entry.points}
+            </Badge>
+          ) : null}
         </li>
       ))}
     </ul>

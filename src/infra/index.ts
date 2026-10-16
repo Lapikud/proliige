@@ -117,7 +117,10 @@ export const authService = createAuthService({
   users: userRepository,
 });
 
-export const taskService = createTaskService({ tasks: taskRepository });
+export const taskService = createTaskService({
+  tasks: taskRepository,
+  clock,
+});
 
 export const categoryService = createCategoryService({ categories: categoryRepository });
 
