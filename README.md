@@ -54,20 +54,22 @@ The same words are used in the code, the database and the screens.
 | **Proof**       | What a member submits to show they did a task, often with photos                           |
 | **Reviewer**    | An admin asked to review a proof, like a reviewer on a pull request                        |
 | **Review**      | Approving or rejecting a proof; any admin may review any proof                             |
-| **Points**      | Awarded when a proof is approved, recorded in the points ledger                            |
-| **Feed**        | Approved proofs, newest first, with likes and comments                                     |
+| **Points**      | Awarded when a proof is approved or a contribution is recognized, in the points ledger     |
+| **Recognition** | Points an admin gives a member for a contribution with no task or proof, shown in the feed |
+| **Badge**       | A reusable label, with an optional image, that an admin can attach to a recognition        |
+| **Feed**        | Approved proofs and recognitions, newest first; proofs have likes and comments             |
 | **Leaderboard** | Users ranked by points, all time or this month                                             |
 | **Rule**        | A yes/no check of what a user may do, such as `userCanSubmitProof`                         |
 
 Who can do what:
 
-| Who                 | Can                                                              |
-| ------------------- | ---------------------------------------------------------------- |
-| Visitor             | Read the feed, the leaderboard and user pages                    |
-| Signed in, no group | Also like, comment, and get notified of replies                  |
-| Member              | Also browse tasks, submit proofs, and request reviewers          |
-| Pixel               | Also add own tasks                                               |
-| Admin               | Review proofs, manage tasks and categories; never submits proofs |
+| Who                 | Can                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Visitor             | Read the feed, the leaderboard and user pages                                       |
+| Signed in, no group | Also like, comment, and get notified of replies                                     |
+| Member              | Also browse tasks, submit proofs, and request reviewers                             |
+| Pixel               | Also add own tasks                                                                  |
+| Admin               | Review proofs, manage tasks and categories, recognize members; never submits proofs |
 
 A proof with requested reviewers notifies them; without any, nobody is notified and it simply waits in the review queue. Groups are set in `src/config/access.ts`. Every rule lives in `src/domain/rules.ts`.
 

@@ -36,6 +36,27 @@
       "when": 1792165940486,
       "tag": "0004_conscious_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792181256119,
+      "tag": "0005_oval_ben_urich",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792181288084,
+      "tag": "0006_careless_genesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792182568082,
+      "tag": "0007_lumpy_blindfold",
+      "breakpoints": true
     }
   ]
 }

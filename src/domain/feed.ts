@@ -1,6 +1,15 @@
 import type { PublicUserView } from "./user";
 
+export const recognitionFilter = "recognitions";
+
+export interface EarnedBadge {
+  readonly id: string;
+  readonly label: string;
+  readonly imageUrl: string | null;
+}
+
 export interface FeedEntry {
+  readonly kind: "proof" | "recognition";
   readonly proofId: string;
   readonly taskTitle: string;
   readonly textAnswer: string | null;
@@ -15,6 +24,11 @@ export interface FeedEntry {
   readonly commentCount: number;
 
   readonly likedByUser: boolean;
+  readonly recognitionDescription?: string;
+  readonly reviewer?: PublicUserView;
+  readonly badges?: ReadonlyArray<EarnedBadge>;
+  readonly authorBadges: ReadonlyArray<EarnedBadge>;
+  readonly achievementLinks?: ReadonlyArray<{ readonly title: string; readonly url: string }>;
 }
 
 export interface FeedComment {

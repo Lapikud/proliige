@@ -9,6 +9,7 @@ import { createLikeService } from "~/core/services/like";
 import { createNotificationService } from "~/core/services/notification";
 import { createPhotoService } from "~/core/services/photo";
 import { createProofService } from "~/core/services/proof";
+import { createRecognitionService } from "~/core/services/recognition";
 import { createTaskService } from "~/core/services/task";
 import { createUserService } from "~/core/services/user";
 import { accessConfig } from "~/config/access";
@@ -28,6 +29,7 @@ import { createUserRepository } from "./db/user/repo";
 import { createNotificationAdapter } from "./db/notification/repo";
 import { createLeaderboardRepository } from "./db/points/repo";
 import { createProofRepository } from "./db/proof/repo";
+import { createRecognitionRepository } from "./db/recognition/repo";
 import { createTaskRepository } from "./db/task/repo";
 import { createGarageObjectStorage } from "./storage/garage";
 import { createMemoryObjectStorage } from "./storage/memory";
@@ -96,6 +98,7 @@ const userRepository = createUserRepository(db);
 const categoryRepository = createCategoryRepository(db);
 const taskRepository = createTaskRepository(db);
 const proofRepository = createProofRepository(db);
+const recognitionRepository = createRecognitionRepository(db, accessConfig.memberGroups);
 const leaderboardRepository = createLeaderboardRepository(db);
 const feedRepository = createFeedRepository(db);
 const likeRepository = createLikeRepository(db);
@@ -127,6 +130,11 @@ export const categoryService = createCategoryService({ categories: categoryRepos
 export const photoService = createPhotoService({
   storage: objectStorage,
   proofs: proofRepository,
+});
+
+export const recognitionService = createRecognitionService({
+  recognitions: recognitionRepository,
+  clock,
 });
 
 export const proofService = createProofService({

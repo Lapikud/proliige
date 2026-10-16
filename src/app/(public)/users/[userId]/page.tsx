@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import type { FC, ReactNode } from "react";
 import { z } from "zod";
 import { SignOutButton } from "~/components/auth/signOutButton";
+import { EarnedBadges } from "~/components/badges/earnedBadges";
 import { DesktopNotifications } from "~/components/notifications/desktop";
 import { CompletedTasks } from "~/components/profile/completedTasks";
 import { ExclusionControl } from "~/components/profile/exclusionControl";
@@ -15,7 +16,7 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Page } from "~/components/ui/page";
 import { env } from "~/env.config";
 import type { LeaderboardRow } from "~/domain/points";
-import { feedService, leaderboardService, userService } from "~/infra";
+import { feedService, leaderboardService, recognitionService, userService } from "~/infra";
 import { getUser } from "~/lib/user";
 import { formatDate } from "~/lib/utils";
 
@@ -45,13 +46,14 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
   }
 
   const viewer = await getUser();
-  const [ranking, completed] = await Promise.all([
+  const [ranking, completed, badges] = await Promise.all([
     leaderboardService.listLeaderboard(viewer, { limit: 1000 }),
     feedService.listFeed(viewer, {
       cursor: null,
       authorId: userId,
       includeExcludedAuthor: true,
     }),
+    recognitionService.listEarnedBadges(viewer, userId),
   ]);
   const rank = ranking.findIndex((row) => row.user.id === userId) + 1;
   const standing = ranking[rank - 1];
@@ -86,6 +88,14 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
     >
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
+          {badges.length > 0 && (
+            <Card>
+              <CardContent className="flex flex-col gap-3">
+                <h2 className="text-base font-black">Badges</h2>
+                <EarnedBadges badges={badges} />
+              </CardContent>
+            </Card>
+          )}
           {!profile.excluded && (
             <dl className="grid grid-cols-3 gap-3">
               <Stat label="Rank" highlight>
@@ -117,7 +127,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
           )}
           <Card>
             <CardContent className="flex flex-col gap-2">
-              <h2 className="text-base font-black">Completed tasks</h2>
+              <h2 className="text-base font-black">History</h2>
               <CompletedTasks entries={completed.entries} />
             </CardContent>
           </Card>

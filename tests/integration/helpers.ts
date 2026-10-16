@@ -8,6 +8,8 @@ import { proofComments, proofLikes } from "~/infra/db/feed/model";
 import { users } from "~/infra/db/user/model";
 import { notifications } from "~/infra/db/notification/model";
 import { pointsLedger } from "~/infra/db/points/model";
+import { recognitions } from "~/infra/db/recognition/model";
+import { recognitionBadges } from "~/infra/db/recognition/badgeModel";
 import * as schema from "~/infra/db/schema";
 import { tasks } from "~/infra/db/task/model";
 import { vi } from "vitest";
@@ -32,6 +34,8 @@ export async function truncateAll(db: TestDatabase): Promise<void> {
   await db.delete(proofComments);
   await db.delete(proofPhotos);
   await db.delete(pointsLedger);
+  await db.delete(recognitions);
+  await db.delete(recognitionBadges);
   await db.delete(notifications);
   await db.delete(proofs);
   await db.delete(tasks);

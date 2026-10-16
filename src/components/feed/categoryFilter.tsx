@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FC } from "react";
+import { recognitionFilter } from "~/domain/feed";
 import type { Category } from "~/domain/task";
 import { cn } from "~/lib/utils";
 
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export const CategoryFilter: FC<Props> = ({ categories, current, keep = {} }) => {
-  if (categories.length < 2) {
+  if (categories.length === 0) {
     return null;
   }
   const href = (category: string | null) => {
@@ -27,6 +28,10 @@ export const CategoryFilter: FC<Props> = ({ categories, current, keep = {} }) =>
       name: "All",
     },
     ...categories,
+    {
+      id: recognitionFilter,
+      name: "Recognitions",
+    },
   ];
 
   return (

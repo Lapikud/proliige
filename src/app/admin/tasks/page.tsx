@@ -3,7 +3,7 @@ import type { FC } from "react";
 import type { TaskView } from "~/components/admin/task/model";
 import { TaskManager } from "~/components/admin/task/manager";
 import type { Task } from "~/domain/task";
-import { taskService, categoryService } from "~/infra";
+import { taskService, categoryService, recognitionService } from "~/infra";
 import { userCanManageTasks } from "~/domain/rules";
 import { requireUser } from "~/lib/user";
 
@@ -27,12 +27,22 @@ const toTaskView = ({ task, categoryName }: { task: Task; categoryName: string }
 
 const AdminTasksPage: FC = async () => {
   const user = await requireUser(userCanManageTasks);
-  const [tasks, categories] = await Promise.all([
+  const [tasks, categories, eligibleRecipients, badges] = await Promise.all([
     taskService.listAllTasks(user),
     categoryService.listCategories(user),
+    recognitionService.listEligibleRecipients(user),
+    recognitionService.listBadges(user),
   ]);
+  const recipients = eligibleRecipients.filter(({ id }) => id !== user.id);
 
-  return <TaskManager tasks={tasks.map(toTaskView)} categories={categories} />;
+  return (
+    <TaskManager
+      tasks={tasks.map(toTaskView)}
+      categories={categories}
+      recipients={recipients}
+      badges={badges}
+    />
+  );
 };
 
 export default AdminTasksPage;

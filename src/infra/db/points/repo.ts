@@ -13,7 +13,9 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
           id: users.id,
           displayName: users.displayName,
           totalPoints,
-          approvedProofs: count(sql`CASE WHEN ${pointsLedger.reversalOf} IS NULL THEN 1 END`),
+          approvedProofs: count(
+            sql`CASE WHEN ${pointsLedger.proofId} IS NOT NULL AND ${pointsLedger.reversalOf} IS NULL THEN 1 END`,
+          ),
         })
         .from(pointsLedger)
         .innerJoin(users, eq(users.id, pointsLedger.userId))

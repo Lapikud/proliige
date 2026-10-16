@@ -4,6 +4,7 @@ import { type FC, useCallback, useEffect, useRef, useState, useTransition } from
 import { Button } from "../ui/button";
 import { EmptyState, ErrorState } from "../ui/feedback";
 import { FeedCard } from "./card";
+import { RecognitionCard } from "./recognitionCard";
 import type { FeedEntryView } from "./model";
 
 interface Props {
@@ -100,7 +101,11 @@ export const FeedList: FC<Props> = ({
       <ul className="flex list-none flex-col gap-4 p-0">
         {entries.map((entry) => (
           <li key={entry.proofId}>
-            <FeedCard entry={entry} canReact={canReact} />
+            {entry.kind === "recognition" ? (
+              <RecognitionCard entry={entry} />
+            ) : (
+              <FeedCard entry={entry} canReact={canReact} />
+            )}
           </li>
         ))}
       </ul>

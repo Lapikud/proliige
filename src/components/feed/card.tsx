@@ -4,6 +4,7 @@ import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import type { FC } from "react";
 import { cn, formatRelative } from "~/lib/utils";
+import { EarnedBadges } from "../badges/earnedBadges";
 import { UserAvatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -34,12 +35,15 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
           <UserAvatar name={entry.user.displayName} className="size-9 text-xs" />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col">
-          <Link
-            href={`/users/${entry.user.id}`}
-            className="truncate text-sm font-bold text-foreground hover:text-brand-ink"
-          >
-            {entry.user.displayName}
-          </Link>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Link
+              href={`/users/${entry.user.id}`}
+              className="truncate text-sm font-bold text-foreground hover:text-brand-ink"
+            >
+              {entry.user.displayName}
+            </Link>
+            <EarnedBadges badges={entry.authorBadges} compact />
+          </div>
           <span className="truncate text-xs text-muted-foreground">
             <time dateTime={entry.approvedAt}>{formatRelative(entry.approvedAt)}</time>
             {" · "}

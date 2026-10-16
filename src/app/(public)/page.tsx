@@ -6,7 +6,7 @@ import { toFeedEntryView } from "~/components/feed/model";
 import { LeaderboardPanel } from "~/components/leaderboard/panel";
 import { leaderboardPeriod } from "~/components/leaderboard/periodToggle";
 import { LeaderboardStories } from "~/components/leaderboard/stories";
-import { encodeFeedCursor } from "~/domain/feed";
+import { encodeFeedCursor, recognitionFilter } from "~/domain/feed";
 import { userCanReactToProofs } from "~/domain/rules";
 import { categoryService, feedService, leaderboardService } from "~/infra";
 import { getUser } from "~/lib/user";
@@ -71,7 +71,11 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
           canReact={userCanReactToProofs(user)}
           categoryId={categoryId}
-          categoryName={categories.find((category) => category.id === categoryId)?.name ?? null}
+          categoryName={
+            categoryId === recognitionFilter
+              ? "Recognitions"
+              : (categories.find((category) => category.id === categoryId)?.name ?? null)
+          }
         />
       </section>
     </div>

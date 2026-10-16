@@ -1,7 +1,7 @@
 "use client";
 
-import { Eye, EyeOff, Plus, Tags } from "lucide-react";
-import type { FC } from "react";
+import { ChevronDown, Eye, EyeOff, FolderTree, Medal, Plus, Trophy } from "lucide-react";
+import { useState, type FC } from "react";
 import { Button } from "../../ui/button";
 import { Notice } from "../../ui/feedback";
 import { Page } from "../../ui/page";
@@ -16,10 +16,23 @@ import { ArchiveTaskButton } from "./archiveButton";
 import { Badge } from "../../ui/badge";
 import { describeTaskPolicy } from "~/lib/taskLabels";
 import type { TaskGroup } from "./workspaceState";
+import type { RecognitionBadge } from "~/core/ports/recognition";
+import { RecognitionForm } from "../recognitionForm";
+import { BadgeManagementDialog } from "../badgeManagementDialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "../../ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 
 interface Props {
   readonly categories: Array<CategoryView>;
   readonly groups: Array<TaskGroup>;
+  readonly recipients: ReadonlyArray<{ id: string; displayName: string }>;
+  readonly badges: ReadonlyArray<RecognitionBadge>;
   readonly search: string;
   readonly showArchived: boolean;
   readonly archivedCount: number;
@@ -33,6 +46,8 @@ interface Props {
 export const TaskWorkspaceView: FC<Props> = ({
   categories,
   groups,
+  recipients,
+  badges,
   search,
   showArchived,
   archivedCount,
@@ -42,6 +57,11 @@ export const TaskWorkspaceView: FC<Props> = ({
   onCreate,
   onEdit,
 }) => {
+  const [recognitionMenuOpen, setRecognitionMenuOpen] = useState(false);
+  const [recognitionDialogOpen, setRecognitionDialogOpen] = useState(false);
+  const [badgeDialogOpen, setBadgeDialogOpen] = useState(false);
+  const [badgeCatalog, setBadgeCatalog] = useState([...badges]);
+
   return (
     <Page
       title="Manage tasks"
@@ -77,28 +97,67 @@ export const TaskWorkspaceView: FC<Props> = ({
             <span className="hidden sm:inline">Archived ({archivedCount})</span>
           </Button>
         )}
-        <Button
-          variant="outline"
-          className="max-sm:w-11 max-sm:px-0"
-          aria-label="Manage categories"
-          title="Manage categories"
-          onClick={onManageCategories}
-        >
-          <Tags aria-hidden />
-          <span className="hidden sm:inline">Categories</span>
-        </Button>
-        <Button
-          className="max-sm:w-11 max-sm:px-0"
-          aria-label="New task"
-          title="New task"
-          onClick={() => {
-            onCreate();
-          }}
-          disabled={categories.length === 0}
-        >
-          <Plus aria-hidden />
-          <span className="hidden sm:inline">New task</span>
-        </Button>
+        <div className="relative flex rounded-xl shadow-hard has-[>button:first-child:active]:translate-x-0.5 has-[>button:first-child:active]:translate-y-0.5 has-[>button:first-child:active]:shadow-hard-sm motion-safe:transition-[transform,box-shadow] motion-safe:duration-150 motion-safe:ease-out">
+          <Button
+            className="h-11 min-h-11 rounded-r-none border-2 border-r-0 border-foreground shadow-none active:translate-x-0 active:translate-y-0 active:shadow-none max-sm:w-11 max-sm:px-0"
+            aria-label="New task"
+            title="New task"
+            onClick={() => {
+              onCreate();
+            }}
+            disabled={categories.length === 0}
+          >
+            <Plus aria-hidden />
+            <span className="hidden sm:inline">New task</span>
+          </Button>
+          <Popover open={recognitionMenuOpen} onOpenChange={setRecognitionMenuOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                className="h-11 min-h-11 rounded-l-none border-2 border-foreground px-3 shadow-none transition-transform duration-100 active:translate-x-0 active:translate-y-0 active:scale-95 active:shadow-none"
+                aria-label="More task actions"
+                title="More task actions"
+              >
+                <ChevronDown
+                  aria-hidden
+                  className={`transition-transform duration-150 ${recognitionMenuOpen ? "rotate-180" : ""}`}
+                />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="min-w-56">
+              <button
+                type="button"
+                onClick={() => {
+                  setRecognitionMenuOpen(false);
+                  onManageCategories();
+                }}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-muted"
+              >
+                <FolderTree aria-hidden /> Manage categories
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecognitionMenuOpen(false);
+                  setRecognitionDialogOpen(true);
+                }}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-muted"
+              >
+                <Trophy aria-hidden /> Recognize a contribution
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecognitionMenuOpen(false);
+                  setBadgeDialogOpen(true);
+                }}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-muted"
+              >
+                <Medal aria-hidden /> Manage badges
+              </button>
+            </PopoverContent>
+          </Popover>
+        </div>
       </TaskToolbar>
 
       <TaskGroups
@@ -182,6 +241,46 @@ export const TaskWorkspaceView: FC<Props> = ({
           />
         ))}
       </TaskGroups>
+
+      <Dialog open={recognitionDialogOpen} onOpenChange={setRecognitionDialogOpen}>
+        <DialogContent className="max-h-[min(90dvh,850px)] max-w-2xl overflow-y-auto">
+          <header className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <DialogTitle className="text-xl font-black">Recognize a contribution</DialogTitle>
+              <DialogDescription className="mt-1">
+                Publish recognition and award points to an eligible member.
+              </DialogDescription>
+            </div>
+            <DialogClose asChild>
+              <Button type="button" size="sm" variant="ghost">
+                Close
+              </Button>
+            </DialogClose>
+          </header>
+          <RecognitionForm
+            recipients={recipients}
+            badges={badgeCatalog}
+            onPublished={() => {
+              setRecognitionDialogOpen(false);
+            }}
+            onBadgeCreated={(badge) => {
+              setBadgeCatalog((current) =>
+                [...current, badge].sort((a, b) => a.label.localeCompare(b.label)),
+              );
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+      <BadgeManagementDialog
+        open={badgeDialogOpen}
+        badges={badgeCatalog}
+        onOpenChange={setBadgeDialogOpen}
+        onBadgeCreated={(badge) => {
+          setBadgeCatalog((current) =>
+            [...current, badge].sort((a, b) => a.label.localeCompare(b.label)),
+          );
+        }}
+      />
     </Page>
   );
 };

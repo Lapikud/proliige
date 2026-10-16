@@ -7,13 +7,16 @@ import { CategoryManagementDialog } from "../category/managementDialog";
 import { type TaskDialog, TaskEditorDialog } from "./taskEditorDialog";
 import { TaskWorkspaceView } from "./workspaceView";
 import { groupWorkspaceTasks } from "./workspaceState";
+import type { RecognitionBadge } from "~/core/ports/recognition";
 
 interface Props {
   readonly tasks: Array<TaskView>;
   readonly categories: Array<CategoryView>;
+  readonly recipients: ReadonlyArray<{ id: string; displayName: string }>;
+  readonly badges: ReadonlyArray<RecognitionBadge>;
 }
 
-export const TaskManager: FC<Props> = ({ tasks, categories }) => {
+export const TaskManager: FC<Props> = ({ tasks, categories, recipients, badges }) => {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [showArchived, setShowArchived] = useState(() => searchParams.get("archived") === "1");
@@ -52,6 +55,8 @@ export const TaskManager: FC<Props> = ({ tasks, categories }) => {
       <TaskWorkspaceView
         categories={categories}
         groups={groups}
+        recipients={recipients}
+        badges={badges}
         search={search}
         showArchived={showArchived}
         archivedCount={archivedCount}
