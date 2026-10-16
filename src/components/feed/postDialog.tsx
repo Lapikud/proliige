@@ -68,12 +68,15 @@ export const PostDialog: FC<Props> = ({ entry, post, canReact, title, subtitle, 
         </DialogClose>
         {hasPhotos && viewer("hidden md:flex md:h-full md:min-w-0 md:flex-1")}
         <section
-          className={cn("flex min-h-0 flex-1 flex-col", hasPhotos && "md:w-96 md:flex-none")}
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col",
+            hasPhotos && "md:w-96 md:flex-none",
+          )}
         >
           <div className="min-h-0 flex-1 overflow-y-auto">
             {hasPhotos && viewer("aspect-square md:hidden")}
             <PostHeader entry={entry} subtitle={subtitle} className="pr-14" />
-            <div className="flex flex-col gap-3 px-4 pb-4">
+            <div className="flex min-w-0 flex-col gap-3 px-4 pb-4">
               {children}
               <section aria-label="Comments" className="flex flex-col gap-3 pt-1">
                 <CommentSection

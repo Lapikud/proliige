@@ -22,7 +22,7 @@ export const UserText: FC<{ text: string; markdown: boolean; className?: string 
 export const MarkdownPreview: FC<{ source: string }> = ({ source }) => (
   <section
     aria-label="Preview"
-    className="rounded-xl border border-dashed border-border px-3 py-2 text-sm leading-relaxed"
+    className="min-w-0 rounded-xl border border-dashed border-border px-3 py-2 text-sm leading-relaxed"
   >
     <p className="mb-1 text-xs font-bold text-muted-foreground">Preview</p>
     <Markdown source={source} />
@@ -33,7 +33,7 @@ export const Markdown: FC<{ source: string; className?: string | undefined }> = 
   source,
   className,
 }) => (
-  <div className={cn("flex flex-col gap-2 wrap-break-word", className)}>
+  <div className={cn("flex max-w-full min-w-0 flex-col gap-2 wrap-break-word", className)}>
     {parseMarkdown(source).map((block, index) => {
       switch (block.type) {
         case "heading": {
@@ -66,7 +66,7 @@ export const Markdown: FC<{ source: string; className?: string | undefined }> = 
           return (
             <pre
               key={index}
-              className="overflow-x-auto rounded-lg bg-muted px-3 py-2 font-mono text-[0.875em]"
+              className="max-w-full overflow-x-auto rounded-lg bg-muted px-3 py-2 font-mono text-[0.875em] whitespace-pre"
             >
               <code>{block.text}</code>
             </pre>

@@ -32,7 +32,7 @@ export const ClampedText: FC<Props> = ({ text, markdown, className, onMore }) =>
 
   return (
     <div
-      className={cn("cursor-pointer", className)}
+      className={cn("min-w-0 cursor-pointer", className)}
       onClick={(event) => {
         if (!(event.target instanceof Element && event.target.closest("a"))) onMore();
       }}
