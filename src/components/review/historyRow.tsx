@@ -3,6 +3,7 @@ import type { FC } from "react";
 import type { ProofWithContext } from "~/core/ports/proof";
 import { formatRelative } from "~/lib/utils";
 import { UserAvatar } from "../ui/avatar";
+import { PhotoGallery } from "../proof/photoGallery";
 import { Badge } from "../ui/badge";
 
 interface Props {
@@ -10,7 +11,16 @@ interface Props {
 }
 
 export const HistoryRow: FC<Props> = ({
-  entry: { proof, taskTitle, taskPoints, ownTask, categoryName, userDisplayName, reviewedByName },
+  entry: {
+    proof,
+    taskTitle,
+    taskPoints,
+    ownTask,
+    categoryName,
+    userDisplayName,
+    reviewedByName,
+    photos,
+  },
 }) => (
   <div className="flex items-start gap-3 px-2 py-3">
     <Link href={`/users/${proof.userId}`} aria-hidden="true" tabIndex={-1}>
@@ -39,6 +49,16 @@ export const HistoryRow: FC<Props> = ({
           </>
         )}
       </p>
+      {proof.textAnswer && (
+        <blockquote className="mt-2 rounded-xl border border-border bg-muted px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap">
+          {proof.textAnswer}
+        </blockquote>
+      )}
+      <PhotoGallery
+        urls={photos.map((photo) => `/api/photos/${proof.id}/${photo.id}`)}
+        alt={`Proof submitted by ${userDisplayName}`}
+        size="sm"
+      />
       {proof.rejectionReason && (
         <p className="mt-1 rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive">
           {proof.rejectionReason}
