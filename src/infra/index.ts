@@ -18,6 +18,7 @@ import { env, garageEnv } from "~/env.config";
 import { type ClockPort, systemClock } from "~/core/ports/clock";
 import type { ObjectStoragePort } from "~/core/ports/objectStorage";
 import { createFreeipaAuthentication } from "./auth/freeipa";
+import { createSeedAuthentication } from "./auth/seed";
 import { createCookieSession } from "./auth/session";
 import { createCategoryRepository } from "./db/category/repo";
 import { getDatabase } from "./db/client";
@@ -109,7 +110,8 @@ const push: PushPort = webPush ?? disabledPush;
 const notificationPort = withPush(createNotificationAdapter(db), push);
 const objectStorage = objectStorageFor(env);
 const session = createCookieSession(userRepository);
-const authentication = createFreeipaAuthentication();
+const authentication =
+  env.AUTH_DRIVER === "seed" ? createSeedAuthentication(db) : createFreeipaAuthentication();
 const clock: ClockPort = systemClock;
 const photoBackupLog = createPhotoBackupLog(db);
 const backupDestination = backupDestinationFor(env);
