@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { FeedRepository } from "~/core/ports/feed";
 import { recognitionFilter } from "~/domain/feed";
@@ -40,8 +40,8 @@ export function createFeedRepository(db: Database): FeedRepository {
               textAnswer: proofs.textAnswer,
               textMarkdown: proofs.textMarkdown,
               points: pointsLedger.points,
-              taskRemoved: sql<boolean>`${tasks.removedAt} IS NOT NULL`,
-              pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL AND ${pointsLedger.points} > 0`,
+              taskRemovedAt: tasks.removedAt,
+              reversalId: reversal.id,
               categoryName: categories.name,
               userId: users.id,
               displayName: users.displayName,
@@ -111,19 +111,21 @@ export function createFeedRepository(db: Database): FeedRepository {
                     isNull(proofComments.deletedAt),
                   ),
                 ),
-                likedByUser: viewerId
-                  ? exists(
-                      db
-                        .select({ id: proofLikes.id })
-                        .from(proofLikes)
-                        .where(
-                          and(
-                            eq(proofLikes.recognitionId, recognitions.id),
-                            eq(proofLikes.userId, viewerId),
+                ...(viewerId
+                  ? {
+                      likedByUser: exists(
+                        db
+                          .select({ id: proofLikes.id })
+                          .from(proofLikes)
+                          .where(
+                            and(
+                              eq(proofLikes.recognitionId, recognitions.id),
+                              eq(proofLikes.userId, viewerId),
+                            ),
                           ),
-                        ),
-                    )
-                  : sql<boolean>`false`,
+                      ),
+                    }
+                  : {}),
               })
               .from(recognitions)
               .innerJoin(recipient, eq(recipient.id, recognitions.recipientId))
@@ -162,8 +164,8 @@ export function createFeedRepository(db: Database): FeedRepository {
                   textMarkdown: row.textMarkdown,
                   categoryName: row.categoryName,
                   points: row.points ?? 0,
-                  taskRemoved: row.taskRemoved,
-                  pointsReversed: row.pointsReversed,
+                  taskRemoved: row.taskRemovedAt !== null,
+                  pointsReversed: row.reversalId !== null && (row.points ?? 0) > 0,
                   user: {
                     id: row.userId,
                     displayName: row.displayName,
@@ -193,7 +195,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           approvedAt: row.createdAt,
           likeCount: row.likeCount,
           commentCount: row.commentCount,
-          likedByUser: Boolean(row.likedByUser),
+          likedByUser: "likedByUser" in row && Boolean(row.likedByUser),
           photoIds: [],
           recognitionDescription: row.description,
           reviewer: {

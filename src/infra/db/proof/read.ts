@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { ProofRepository, ProofWithContext } from "~/core/ports/proof";
 import { standingOf } from "~/domain/completionPolicy";
@@ -108,12 +108,13 @@ function selectWithContext(db: Database) {
       proofPolicy: proofs.policy,
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
-      taskPoints: sql<number>`coalesce(${pointsLedger.points}, ${tasks.points})`,
+      ledgerPoints: pointsLedger.points,
+      taskPoints: tasks.points,
       taskRemoved: tasks.removedAt,
       taskRemovedByName: remover.displayName,
       pointsAwardedAt: pointsLedger.awardedAt,
       pointsReversedAt: reversal.createdAt,
-      pointsReversed: sql<boolean>`${reversal.id} IS NOT NULL AND ${pointsLedger.points} > 0`,
+      reversalId: reversal.id,
       categoryName: categories.name,
       userDisplayName: users.displayName,
       reviewedByName: reviewer.displayName,
@@ -137,12 +138,13 @@ interface ContextRow {
   proofPolicy: ProofRow["policy"];
   taskDescription: string;
   taskCreatedBy: string | null;
+  ledgerPoints: number | null;
   taskPoints: number;
   taskRemoved: Date | null;
   taskRemovedByName: string | null;
   pointsAwardedAt: Date | null;
   pointsReversedAt: Date | null;
-  pointsReversed: boolean;
+  reversalId: string | null;
   categoryName: string;
   userDisplayName: string;
   reviewedByName: string | null;
@@ -189,11 +191,11 @@ async function attachDetails(
     proofPolicy: row.proofPolicy,
     taskDescription: row.taskDescription,
     ownTask: row.taskCreatedBy !== null,
-    taskPoints: row.taskPoints,
+    taskPoints: row.ledgerPoints ?? row.taskPoints,
     taskRemoved: row.taskRemoved !== null,
     taskRemovedAt: row.taskRemoved,
     taskRemovedByName: row.taskRemovedByName,
-    pointsReversed: row.pointsReversed,
+    pointsReversed: row.reversalId !== null && (row.ledgerPoints ?? 0) > 0,
     pointsAwardedAt: row.pointsAwardedAt,
     pointsReversedAt: row.pointsReversedAt,
     categoryName: row.categoryName,

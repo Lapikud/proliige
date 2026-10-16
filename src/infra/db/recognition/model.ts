@@ -9,7 +9,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { gt } from "drizzle-orm";
+import { predicate } from "../predicate";
 import { users } from "../user/model";
 
 export interface AchievementLink {
@@ -37,6 +38,6 @@ export const recognitions = pgTable(
   (t) => [
     index("recognitions_recipient_created_idx").on(t.recipientId, t.createdAt.desc()),
     index("recognitions_created_idx").on(t.createdAt.desc(), t.id.desc()),
-    check("recognitions_points_positive_check", sql`${t.points} > 0`),
+    check("recognitions_points_positive_check", predicate(gt(t.points, 0))),
   ],
 );

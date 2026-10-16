@@ -23,7 +23,10 @@ export async function requirePost(
   const recognition = await recognitions.findById(id);
   if (recognition !== null) {
     return {
-      post: { kind: "recognition", id },
+      post: {
+        kind: "recognition",
+        id,
+      },
       ownerId: recognition.recipientId,
       taskId: null,
     };
@@ -31,7 +34,10 @@ export async function requirePost(
   const proof = await requireApprovedProof(proofs, id);
 
   return {
-    post: { kind: "proof", id },
+    post: {
+      kind: "proof",
+      id,
+    },
     ownerId: proof.userId,
     taskId: proof.taskId,
   };

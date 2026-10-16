@@ -94,17 +94,19 @@ export function createTaskRepository(db: Database): TaskRepository {
           .from(pointsLedger)
           .innerJoin(proofs, eq(pointsLedger.proofId, proofs.id))
           .where(and(eq(proofs.taskId, taskId), isNull(pointsLedger.reversalOf)));
-        for (const credit of credits) {
+        if (credits.length > 0) {
           await tx
             .insert(pointsLedger)
-            .values({
-              userId: credit.userId,
-              proofId: credit.proofId,
-              points: -credit.points,
-              awardedAt: credit.awardedAt,
-              createdAt: now,
-              reversalOf: credit.id,
-            })
+            .values(
+              credits.map((credit) => ({
+                userId: credit.userId,
+                proofId: credit.proofId,
+                points: -credit.points,
+                awardedAt: credit.awardedAt,
+                createdAt: now,
+                reversalOf: credit.id,
+              })),
+            )
             .onConflictDoNothing();
         }
 
@@ -233,24 +235,30 @@ export function createTaskRepository(db: Database): TaskRepository {
         }
 
         const fromCategoryIds = new Set(moves.map(({ fromCategoryId }) => fromCategoryId));
-        for (const fromCategoryId of fromCategoryIds) {
-          const groupIds = moves
-            .filter((move) => move.fromCategoryId === fromCategoryId)
-            .map(({ taskId }) => taskId);
-          try {
-            await tx
-              .update(tasks)
-              .set({
-                categoryId: fromCategoryId,
-                updatedAt: new Date(),
-              })
-              .where(inArray(tasks.id, groupIds));
-          } catch (error) {
-            if (isForeignKeyViolation(error)) {
-              throw conflict("The original category no longer exists; no changes were made.");
-            }
-            throw error;
+        try {
+          await Promise.all(
+            [...fromCategoryIds].map((fromCategoryId) =>
+              tx
+                .update(tasks)
+                .set({
+                  categoryId: fromCategoryId,
+                  updatedAt: new Date(),
+                })
+                .where(
+                  inArray(
+                    tasks.id,
+                    moves
+                      .filter((move) => move.fromCategoryId === fromCategoryId)
+                      .map(({ taskId }) => taskId),
+                  ),
+                ),
+            ),
+          );
+        } catch (error) {
+          if (isForeignKeyViolation(error)) {
+            throw conflict("The original category no longer exists; no changes were made.");
           }
+          throw error;
         }
       });
     },

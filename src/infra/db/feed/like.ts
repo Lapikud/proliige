@@ -39,10 +39,7 @@ export function createLikeRepository(db: Database): LikeRepository {
         }
 
         const { count: likeCount } = onlyRow(
-          await tx
-            .select({ count: count() })
-            .from(proofLikes)
-            .where(eq(target, post.id)),
+          await tx.select({ count: count() }).from(proofLikes).where(eq(target, post.id)),
         );
 
         return {

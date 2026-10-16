@@ -9,8 +9,7 @@ import { onlyRow } from "../rows";
 export function createCommentRepository(db: Database): CommentRepository {
   return {
     async listComments(post) {
-      const target =
-        post.kind === "proof" ? proofComments.proofId : proofComments.recognitionId;
+      const target = post.kind === "proof" ? proofComments.proofId : proofComments.recognitionId;
       const rows = await db
         .select({
           id: proofComments.id,

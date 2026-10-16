@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { and, isNotNull, isNull, or } from "drizzle-orm";
 import {
   check,
   index,
@@ -9,6 +9,7 @@ import {
   uuid,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import { predicate } from "../predicate";
 import { proofs } from "../proof/model";
 import { recognitions } from "../recognition/model";
 import { users } from "../user/model";
@@ -34,17 +35,22 @@ export const pointsLedger = pgTable(
   (t) => [
     uniqueIndex("points_ledger_proof_key")
       .on(t.proofId)
-      .where(sql`${t.proofId} IS NOT NULL AND ${t.reversalOf} IS NULL`),
+      .where(predicate(and(isNotNull(t.proofId), isNull(t.reversalOf)))),
     uniqueIndex("points_ledger_recognition_key")
       .on(t.recognitionId)
-      .where(sql`${t.recognitionId} IS NOT NULL`),
+      .where(predicate(isNotNull(t.recognitionId))),
     uniqueIndex("points_ledger_reversal_of_key")
       .on(t.reversalOf)
-      .where(sql`${t.reversalOf} IS NOT NULL`),
+      .where(predicate(isNotNull(t.reversalOf))),
     index("points_ledger_user_idx").on(t.userId),
     check(
       "points_ledger_source_check",
-      sql`(${t.proofId} IS NOT NULL AND ${t.recognitionId} IS NULL) OR (${t.proofId} IS NULL AND ${t.recognitionId} IS NOT NULL AND ${t.reversalOf} IS NULL)`,
+      predicate(
+        or(
+          and(isNotNull(t.proofId), isNull(t.recognitionId)),
+          and(isNull(t.proofId), isNotNull(t.recognitionId), isNull(t.reversalOf)),
+        ),
+      ),
     ),
   ],
 );

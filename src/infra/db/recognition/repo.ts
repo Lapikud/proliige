@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, arrayOverlaps, eq, inArray } from "drizzle-orm";
 import type { RecognitionRepository } from "~/core/ports/recognition";
 import { conflict } from "~/domain/errors";
 import type { Database } from "../client";
@@ -12,11 +12,10 @@ export function createRecognitionRepository(
   db: Database,
   memberGroups: ReadonlyArray<string>,
 ): RecognitionRepository {
-  const allowedGroups = sql`ARRAY[${sql.join(
-    memberGroups.map((group) => sql`${group}`),
-    sql`, `,
-  )}]::text[]`;
-  const eligible = and(eq(users.excluded, false), sql`${users.freeipaGroups} && ${allowedGroups}`);
+  const eligible = and(
+    eq(users.excluded, false),
+    arrayOverlaps(users.freeipaGroups, [...memberGroups]),
+  );
 
   return {
     async listEligibleRecipients() {
@@ -63,6 +62,7 @@ export function createRecognitionRepository(
         .insert(recognitionBadges)
         .values({
           label,
+          labelKey: label.toLowerCase(),
           imageUrl,
           createdBy,
           createdAt: now,
