@@ -8,7 +8,10 @@ export const taskSchema = z.object({
   categoryId: z.string().min(1, "Pick a category."),
   points: z.number("Enter a number.").int().min(0, "Points cannot be negative."),
   policy: z.enum(taskPolicies),
-  cooldownSeconds: z.number("Enter a number.").int().min(0, "Cooldown cannot be negative."),
+  cooldownSeconds: z
+    .number("Enter a duration like 2m or 1d 4h.")
+    .int()
+    .min(0, "Cooldown cannot be negative."),
   photoRequired: z.boolean(),
   photoInstructions: z.string().trim().max(200),
   textRequired: z.boolean(),
