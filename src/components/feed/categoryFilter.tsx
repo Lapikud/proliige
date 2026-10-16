@@ -42,7 +42,7 @@ export const CategoryFilter: FC<Props> = ({ categories, current, keep = {} }) =>
                 scroll={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-9 items-center rounded-full border-2 px-3.5 text-sm font-bold",
+                  "inline-flex min-h-11 items-center rounded-full border-2 px-3.5 text-sm font-bold",
                   active
                     ? "border-foreground bg-primary text-primary-foreground shadow-hard-sm"
                     : "border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground",

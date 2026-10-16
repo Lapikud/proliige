@@ -90,7 +90,7 @@ export const TabBar: FC<{ items: ReadonlyArray<NavItem> }> = ({ items }) => {
             href={item.href}
             aria-current={current ? "page" : undefined}
             className={cn(
-              "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[11px] font-bold",
+              "flex min-h-12 flex-col items-center justify-center gap-0.5 text-xs font-bold",
               current ? "text-foreground" : "text-muted-foreground",
             )}
           >

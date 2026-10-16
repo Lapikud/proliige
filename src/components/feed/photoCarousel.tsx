@@ -1,9 +1,11 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { type FC, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
+import { Button } from "../ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "../ui/dialog";
 
 interface Props {
   urls: ReadonlyArray<string>;
@@ -13,6 +15,7 @@ interface Props {
 export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
   const track = useRef<HTMLUListElement>(null);
   const [current, setCurrent] = useState(0);
+  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
   if (urls.length === 0) {
     return null;
@@ -42,7 +45,14 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
       >
         {urls.map((url, index) => (
           <li key={url} className="w-full shrink-0 snap-center">
-            <a href={url} target="_blank" rel="noreferrer" className="block bg-photo-placeholder">
+            <button
+              type="button"
+              aria-label={`View photo full screen (${index + 1} of ${urls.length})`}
+              onClick={() => {
+                setSelectedPhoto(index);
+              }}
+              className="block w-full bg-photo-placeholder focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+            >
               <Image
                 src={url}
                 alt={`${alt} (${index + 1} of ${urls.length})`}
@@ -51,10 +61,41 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
                 unoptimized
                 className="aspect-square w-full object-cover"
               />
-            </a>
+            </button>
           </li>
         ))}
       </ul>
+
+      <Dialog
+        open={selectedPhoto !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedPhoto(null);
+        }}
+      >
+        <DialogContent className="h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-none overflow-hidden border-0 bg-black p-2 text-white shadow-none sm:h-[calc(100dvh-3rem)] sm:w-[calc(100%-3rem)]">
+          <DialogTitle className="sr-only">{alt}</DialogTitle>
+          <DialogClose asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label="Close photo"
+              className="absolute top-2 right-2 z-10 size-11 p-0 text-white hover:bg-white/20 hover:text-white"
+            >
+              <X aria-hidden="true" className="size-5" />
+            </Button>
+          </DialogClose>
+          {selectedPhoto !== null && (
+            <Image
+              src={urls[selectedPhoto] ?? urls[0] ?? ""}
+              alt={`${alt} (${selectedPhoto + 1} of ${urls.length})`}
+              width={1440}
+              height={1440}
+              unoptimized
+              className="h-full w-full object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {urls.length > 1 && (
         <>

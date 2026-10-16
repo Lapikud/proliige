@@ -41,7 +41,7 @@ export const PeriodToggle: FC<Props> = ({ current, keep = {} }) => (
           scroll={false}
           aria-current={current === period ? "page" : undefined}
           className={cn(
-            "inline-flex min-h-8 items-center text-xs",
+            "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg px-2 text-sm",
             current === period
               ? "font-bold text-foreground"
               : "text-muted-foreground hover:text-foreground",
