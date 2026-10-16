@@ -56,20 +56,35 @@ export const ProofForm: FC<Props> = ({
       className="gap-5 rounded-2xl border border-border bg-card p-4 shadow-card sm:p-5"
     >
       <h2 className="text-lg font-bold">Submit proof</h2>
-      {textRequired && (
-        <Field name="textAnswer" label="Your answer">
-          {(control) => <Textarea rows={4} maxLength={2000} {...control} />}
-        </Field>
-      )}
-      {photoRequired && (
-        <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-bold">
-            Photos{" "}
+      <Field
+        name="textAnswer"
+        label={
+          <>
+            Your answer
+            {textRequired && (
+              <span className="ml-1 text-brand-ink" aria-hidden="true">
+                *
+              </span>
+            )}
+          </>
+        }
+      >
+        {(control) => <Textarea required={textRequired} rows={4} maxLength={2000} {...control} />}
+      </Field>
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-bold">
+          Photos
+          {photoRequired && (
+            <span className="ml-1 text-brand-ink" aria-hidden="true">
+              *
+            </span>
+          )}{" "}
+          {photoRequired && (
             <span className="font-normal text-muted-foreground">· at least one required</span>
-          </h3>
-          <PhotoPicker proofRef={proofRef} instructions={photoInstructions} />
-        </section>
-      )}
+          )}
+        </h3>
+        <PhotoPicker proofRef={proofRef} instructions={photoInstructions} />
+      </section>
       {reviewers.length > 0 && <ReviewerPicker reviewers={reviewers} />}
       <FormError />
       <FormActions className="justify-end border-t border-border pt-4">
@@ -92,7 +107,7 @@ export const ReviewerPicker: FC<{ reviewers: ReadonlyArray<PublicUserView> }> = 
   return (
     <details className="group rounded-xl border border-border">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-        Notify a reviewer
+        Notify a reviewer{" "}
         <span className="font-normal text-muted-foreground">· optional</span>
         <ChevronDown
           className="ml-auto size-4 transition-transform group-open:rotate-180"

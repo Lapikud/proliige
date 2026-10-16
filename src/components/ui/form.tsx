@@ -37,7 +37,7 @@ export const Form: FC<FormProps> = ({ form, onSubmit, className, children }) => 
 
 interface FieldProps {
   name: string;
-  label: string;
+  label: ReactNode;
   hint?: string;
   hideLabel?: boolean;
   inline?: boolean;
