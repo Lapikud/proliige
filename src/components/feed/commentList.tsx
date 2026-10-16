@@ -35,7 +35,7 @@ export const CommentList: FC<Props> = ({ comments, onDeleted }) => {
   };
 
   if (comments.length === 0) {
-    return <p className="text-sm text-muted-foreground">No comments yet.</p>;
+    return <p className="text-sm text-muted-foreground">Be the first to comment.</p>;
   }
 
   return (

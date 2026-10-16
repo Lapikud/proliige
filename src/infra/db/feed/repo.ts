@@ -103,6 +103,27 @@ export function createFeedRepository(db: Database): FeedRepository {
                 recipientName: recipient.displayName,
                 reviewerId: reviewer.id,
                 reviewerName: reviewer.displayName,
+                likeCount: db.$count(proofLikes, eq(proofLikes.recognitionId, recognitions.id)),
+                commentCount: db.$count(
+                  proofComments,
+                  and(
+                    eq(proofComments.recognitionId, recognitions.id),
+                    isNull(proofComments.deletedAt),
+                  ),
+                ),
+                likedByUser: viewerId
+                  ? exists(
+                      db
+                        .select({ id: proofLikes.id })
+                        .from(proofLikes)
+                        .where(
+                          and(
+                            eq(proofLikes.recognitionId, recognitions.id),
+                            eq(proofLikes.userId, viewerId),
+                          ),
+                        ),
+                    )
+                  : sql<boolean>`false`,
               })
               .from(recognitions)
               .innerJoin(recipient, eq(recipient.id, recognitions.recipientId))
@@ -170,9 +191,9 @@ export function createFeedRepository(db: Database): FeedRepository {
             displayName: row.recipientName,
           },
           approvedAt: row.createdAt,
-          likeCount: 0,
-          commentCount: 0,
-          likedByUser: false,
+          likeCount: row.likeCount,
+          commentCount: row.commentCount,
+          likedByUser: Boolean(row.likedByUser),
           photoIds: [],
           recognitionDescription: row.description,
           reviewer: {

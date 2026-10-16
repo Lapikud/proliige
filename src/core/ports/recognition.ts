@@ -20,6 +20,7 @@ export interface RecognitionInput {
 
 export interface RecognitionRepository {
   listEligibleRecipients(): Promise<Array<{ id: string; displayName: string }>>;
+  findById(id: string): Promise<{ id: string; recipientId: string } | null>;
   listBadges(): Promise<Array<RecognitionBadge>>;
   listEarnedBadges(userId: string): Promise<Array<RecognitionBadge>>;
   createBadge(input: {

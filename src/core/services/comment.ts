@@ -13,21 +13,29 @@ import type { ClockPort } from "../ports/clock";
 import type { CommentRepository } from "../ports/comment";
 import type { NotificationPort } from "../ports/notification";
 import type { ProofRepository } from "../ports/proof";
-import { requireApprovedProof } from "./proofGuards";
+import type { RecognitionRepository } from "../ports/recognition";
+import { requirePost } from "./proofGuards";
 
 interface Deps {
   readonly comments: CommentRepository;
   readonly proofs: ProofRepository;
+  readonly recognitions: RecognitionRepository;
   readonly notifications: NotificationPort;
   readonly clock: ClockPort;
 }
 
-export function createCommentService({ comments, proofs, notifications, clock }: Deps) {
+export function createCommentService({
+  comments,
+  proofs,
+  recognitions,
+  notifications,
+  clock,
+}: Deps) {
   return {
     listComments: guard(userCanViewFeed, async (_user, proofId: string) => {
-      await requireApprovedProof(proofs, proofId);
+      const { post } = await requirePost(proofs, recognitions, proofId);
 
-      return comments.listComments(proofId);
+      return comments.listComments(post);
     }),
 
     addComment: guard(
@@ -39,7 +47,8 @@ export function createCommentService({ comments, proofs, notifications, clock }:
           body: string;
         },
       ) => {
-        const proof = await requireApprovedProof(proofs, input.proofId);
+        const { post, ownerId, taskId } = await requirePost(proofs, recognitions, input.proofId);
+        const proofId = post.kind === "proof" ? post.id : null;
 
         const failure = validateCommentBody(input.body);
         if (failure !== null) {
@@ -57,22 +66,22 @@ export function createCommentService({ comments, proofs, notifications, clock }:
           });
         }
 
-        const earlier = await comments.listComments(input.proofId);
+        const earlier = await comments.listComments(post);
         const comment = await comments.addComment({
-          proofId: input.proofId,
+          post,
           userId: user.id,
           body: normaliseCommentBody(input.body),
           now,
         });
 
-        if (proof.userId !== user.id) {
+        if (ownerId !== user.id) {
           await notifications.publish({
-            recipientUserId: proof.userId,
+            recipientUserId: ownerId,
             type: "proof_commented",
             title: "New comment",
-            message: `${user.displayName} commented on your completed task.`,
-            proofId: proof.id,
-            taskId: proof.taskId,
+            message: `${user.displayName} commented on your ${post.kind === "proof" ? "completed task" : "recognition"}.`,
+            proofId,
+            taskId,
           });
         }
 
@@ -80,7 +89,7 @@ export function createCommentService({ comments, proofs, notifications, clock }:
           earlier
             .filter((earlierComment) => earlierComment.deletedAt === null)
             .map((earlierComment) => earlierComment.author.id)
-            .filter((authorId) => authorId !== user.id && authorId !== proof.userId),
+            .filter((authorId) => authorId !== user.id && authorId !== ownerId),
         );
         await notifications.publishMany(
           [...thread].map((recipientUserId) => ({
@@ -88,8 +97,8 @@ export function createCommentService({ comments, proofs, notifications, clock }:
             type: "proof_commented" as const,
             title: "New reply",
             message: `${user.displayName} replied in a thread you commented on.`,
-            proofId: proof.id,
-            taskId: proof.taskId,
+            proofId,
+            taskId,
           })),
         );
 

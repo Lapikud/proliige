@@ -102,7 +102,7 @@ export const FeedList: FC<Props> = ({
         {entries.map((entry) => (
           <li key={entry.proofId}>
             {entry.kind === "recognition" ? (
-              <RecognitionCard entry={entry} />
+              <RecognitionCard entry={entry} canReact={canReact} />
             ) : (
               <FeedCard entry={entry} canReact={canReact} />
             )}

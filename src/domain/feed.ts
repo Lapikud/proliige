@@ -2,6 +2,11 @@ import type { PublicUserView } from "./user";
 
 export const recognitionFilter = "recognitions";
 
+export interface PostRef {
+  readonly kind: "proof" | "recognition";
+  readonly id: string;
+}
+
 export interface EarnedBadge {
   readonly id: string;
   readonly label: string;

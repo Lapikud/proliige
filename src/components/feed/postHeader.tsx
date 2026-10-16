@@ -6,11 +6,14 @@ import { UserAvatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import type { FeedEntryView } from "./model";
 
-export const PostHeader: FC<{ entry: FeedEntryView; className?: string; children?: ReactNode }> = ({
-  entry,
-  className,
-  children,
-}) => (
+interface Props {
+  entry: FeedEntryView;
+  subtitle?: ReactNode;
+  className?: string;
+  children?: ReactNode;
+}
+
+export const PostHeader: FC<Props> = ({ entry, subtitle, className, children }) => (
   <header className={cn("flex items-center gap-3 px-4 py-3", className)}>
     <Link href={`/users/${entry.user.id}`} aria-hidden="true" tabIndex={-1}>
       <UserAvatar name={entry.user.displayName} className="size-9 text-xs" />
@@ -26,9 +29,13 @@ export const PostHeader: FC<{ entry: FeedEntryView; className?: string; children
         <EarnedBadges badges={entry.authorBadges} compact />
       </div>
       <span className="truncate text-xs text-muted-foreground">
-        <time dateTime={entry.approvedAt}>{formatRelative(entry.approvedAt)}</time>
-        {" · "}
-        {entry.categoryName}
+        {subtitle ?? (
+          <>
+            <time dateTime={entry.approvedAt}>{formatRelative(entry.approvedAt)}</time>
+            {" · "}
+            {entry.categoryName}
+          </>
+        )}
       </span>
     </div>
     {entry.taskRemoved && <Badge variant="neutral">Removed task</Badge>}

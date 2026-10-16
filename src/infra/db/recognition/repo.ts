@@ -30,6 +30,19 @@ export function createRecognitionRepository(
         .orderBy(users.displayName);
     },
 
+    async findById(id) {
+      const [row] = await db
+        .select({
+          id: recognitions.id,
+          recipientId: recognitions.recipientId,
+        })
+        .from(recognitions)
+        .where(eq(recognitions.id, id))
+        .limit(1);
+
+      return row ?? null;
+    },
+
     async listBadges() {
       return db
         .select({

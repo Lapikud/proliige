@@ -153,6 +153,7 @@ export const leaderboardService = createLeaderboardService({ leaderboard: leader
 export const commentService = createCommentService({
   comments: commentRepository,
   proofs: proofRepository,
+  recognitions: recognitionRepository,
   notifications: notificationPort,
   clock,
 });
@@ -160,6 +161,7 @@ export const commentService = createCommentService({
 export const likeService = createLikeService({
   likes: likeRepository,
   proofs: proofRepository,
+  recognitions: recognitionRepository,
   clock,
 });
 

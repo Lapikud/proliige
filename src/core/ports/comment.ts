@@ -1,10 +1,10 @@
-import type { FeedComment } from "~/domain/feed";
+import type { FeedComment, PostRef } from "~/domain/feed";
 
 export interface CommentRepository {
-  listComments(proofId: string): Promise<Array<FeedComment>>;
+  listComments(post: PostRef): Promise<Array<FeedComment>>;
 
   addComment(input: {
-    proofId: string;
+    post: PostRef;
     userId: string;
     body: string;
     now: Date;

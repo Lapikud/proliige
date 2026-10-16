@@ -25,7 +25,7 @@ export const PhotoViewer: FC<Props> = ({ urls, alt, index, onIndexChange, classN
     />
     {urls.length > 1 && (
       <>
-        <span className="absolute top-3 left-3 rounded-md bg-white/20 px-2 py-0.5 font-mono text-[11px]">
+        <span className="absolute top-3 left-3 rounded-md bg-black/50 px-2 py-0.5 font-mono text-[11px]">
           {index + 1}/{urls.length}
         </span>
         {index > 0 && (

@@ -1,14 +1,19 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { createCommentService } from "~/core/services/comment";
+import { createLikeService } from "~/core/services/like";
 import { createRecognitionService } from "~/core/services/recognition";
 import { recognitionFilter } from "~/domain/feed";
 import { createCategoryRepository } from "~/infra/db/category/repo";
+import { createCommentRepository } from "~/infra/db/feed/comment";
+import { createLikeRepository } from "~/infra/db/feed/like";
 import { createFeedRepository } from "~/infra/db/feed/repo";
+import { createProofRepository } from "~/infra/db/proof/repo";
 import { createLeaderboardRepository } from "~/infra/db/points/repo";
 import { pointsLedger } from "~/infra/db/points/model";
 import { createRecognitionRepository } from "~/infra/db/recognition/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
-import { connect, seedUsers, truncateAll } from "./helpers";
+import { connect, fakeNotificationPort, seedUsers, truncateAll } from "./helpers";
 
 const { client, db } = connect();
 const users = createUserRepository(db);
@@ -123,6 +128,71 @@ describe("contribution recognition", () => {
     });
     expect(page.entries).toHaveLength(3);
     expect(page.entries.map(({ authorBadges }) => authorBadges)).toEqual([earned, earned, earned]);
+  });
+
+  it("lets members like and comment on a recognition and notifies the recipient", async () => {
+    const { admin, alice, bob } = await seedUsers(users);
+    await service.publish(admin, {
+      recipientId: alice.id,
+      description: "Ran the workshop.",
+      points: 2,
+      badgeIds: [],
+      links: [],
+    });
+    const [post] = (
+      await feed.listFeed({
+        cursor: null,
+        limit: 10,
+        includeExcludedAuthor: false,
+        viewerId: null,
+      })
+    ).entries;
+    const notifications = fakeNotificationPort();
+    const deps = {
+      proofs: createProofRepository(db),
+      recognitions,
+      clock: { now: () => now },
+    };
+    const likes = createLikeService({
+      ...deps,
+      likes: createLikeRepository(db),
+    });
+    const comments = createCommentService({
+      ...deps,
+      comments: createCommentRepository(db),
+      notifications,
+    });
+    const postId = post?.proofId ?? "";
+
+    expect(await likes.toggleLike(bob, postId)).toEqual({
+      liked: true,
+      likeCount: 1,
+    });
+    await comments.addComment(bob, {
+      proofId: postId,
+      body: "Great workshop!",
+    });
+    expect(await comments.listComments(null, postId)).toMatchObject([{ body: "Great workshop!" }]);
+    expect(notifications.publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recipientUserId: alice.id,
+        proofId: null,
+      }),
+    );
+    expect(
+      (
+        await feed.listFeed({
+          cursor: null,
+          limit: 10,
+          includeExcludedAuthor: false,
+          viewerId: bob.id,
+        })
+      ).entries[0],
+    ).toMatchObject({
+      likeCount: 1,
+      commentCount: 1,
+      likedByUser: true,
+    });
   });
 
   it("shows recognitions under their own feed filter and not under task categories", async () => {

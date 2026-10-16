@@ -9,6 +9,7 @@ import { createProofRepository } from "~/infra/db/proof/repo";
 import { createFeedRepository } from "~/infra/db/feed/repo";
 import { createCommentRepository } from "~/infra/db/feed/comment";
 import { createLikeRepository } from "~/infra/db/feed/like";
+import { createRecognitionRepository } from "~/infra/db/recognition/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { createLeaderboardRepository } from "~/infra/db/points/repo";
 import { createTaskRepository } from "~/infra/db/task/repo";
@@ -23,6 +24,7 @@ const proofs = createProofRepository(db);
 const likeRepository = createLikeRepository(db);
 const commentRepository = createCommentRepository(db);
 const feedRepo = createFeedRepository(db);
+const recognitions = createRecognitionRepository(db, ["members", "pixels"]);
 const leaderboard = createLeaderboardRepository(db);
 const feed = createFeedService({ feed: feedRepo });
 const profiles = createUserService({ users });
@@ -100,11 +102,13 @@ function service(clock = fixedClock(new Date("2026-09-18T12:00:00Z"))) {
     likes: createLikeService({
       likes: likeRepository,
       proofs,
+      recognitions,
       clock,
     }),
     comments: createCommentService({
       comments: commentRepository,
       proofs,
+      recognitions,
       notifications,
       clock,
     }),
@@ -422,7 +426,12 @@ describe("comment moderation", () => {
     });
     await comments.deleteComment(bob, comment.id);
 
-    const stored = first(await commentRepository.listComments(proof.id));
+    const stored = first(
+      await commentRepository.listComments({
+        kind: "proof",
+        id: proof.id,
+      }),
+    );
     expect(stored.deletedAt).not.toBeNull();
     expect(stored.body).toBe("[comment removed]");
   });
