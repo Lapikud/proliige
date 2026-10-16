@@ -10,18 +10,35 @@ const linkSchema = z.object({
 });
 
 export const createRecognitionBadgeSchema = z.object({
-  label: z.string().trim().min(1).max(60),
-  imageUrl: z.union([z.literal(""), z.url().max(2000)]).transform((value) => value || null),
+  label: z
+    .string()
+    .trim()
+    .min(1, "Give the badge a name.")
+    .max(60, "Keep the badge name under 60 characters."),
+  imageUrl: z
+    .union([
+      z.literal(""),
+      z.url("The image must be a full URL like https://example.com/badge.png.").max(2000),
+    ])
+    .transform((value) => value || null),
 });
 
 export const publishRecognitionSchema = z.object({
-  recipientId: z.uuid(),
-  description: z.string().trim().min(1).max(2000),
+  recipientId: z.uuid("Choose a member to recognize."),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Describe the contribution.")
+    .max(2000, "Keep the description under 2000 characters."),
   descriptionMarkdown: z.boolean(),
-  points: z.number().int().positive().max(100000),
+  points: z
+    .number("Enter a number.")
+    .int("Points must be a whole number.")
+    .positive("Points must be more than 0.")
+    .max(100000, "Points can be at most 100000."),
   badgeIds: z
     .array(z.uuid())
-    .max(10)
+    .max(10, "Choose at most 10 badges.")
     .refine((ids) => new Set(ids).size === ids.length, "Choose each badge only once."),
-  links: z.array(linkSchema).max(10),
+  links: z.array(linkSchema).max(10, "Add at most 10 achievement links."),
 });

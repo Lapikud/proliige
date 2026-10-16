@@ -2,7 +2,11 @@ import { z } from "zod";
 import type { CategoryInput } from "~/core/services/category";
 
 export const categorySchema = z.object({
-  name: z.string().trim().min(1, "Give the category a name.").max(60),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give the category a name.")
+    .max(60, "Keep the name under 60 characters."),
 }) satisfies z.ZodType<CategoryInput>;
 
 export const createCategorySchema = z.object({ category: categorySchema });
