@@ -14,6 +14,7 @@ import { UserPicker } from "~/components/profile/userPicker";
 import { UserAvatar } from "~/components/ui/avatar";
 import { Card, CardContent } from "~/components/ui/card";
 import { Page } from "~/components/ui/page";
+import { pointsConfig } from "~/config/points";
 import { env } from "~/env.config";
 import type { LeaderboardRow } from "~/domain/points";
 import { feedService, leaderboardService, recognitionService, userService } from "~/infra";
@@ -58,6 +59,8 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
   const rank = ranking.findIndex((row) => row.user.id === userId) + 1;
   const standing = ranking[rank - 1];
   const isOwnProfile = viewer?.id === profile.id;
+  const crowned = rank === 1 && (standing?.totalPoints ?? 0) > 0;
+  const points = standing?.totalPoints ?? 0;
   const ipaUrl = new URL(`https://${env.FREEIPA_SERVER}`);
   const people = ranking.map((row) => row.user);
   const profileCanAppearInPicker = !profile.excluded;
@@ -82,6 +85,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
           <UserAvatar
             name={profile.displayName}
             className="size-14 text-lg ring-2 ring-foreground"
+            crowned={crowned}
           />
         </div>
       }
@@ -102,9 +106,42 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
                 {rank > 0 ? `#${String(rank)}` : "-"}
                 <span className="text-xs font-normal"> of {ranking.length}</span>
               </Stat>
-              <Stat label="Points">{standing?.totalPoints ?? 0}</Stat>
+              <Stat label="Points">{points}</Stat>
               <Stat label="Tasks done">{standing?.approvedProofs ?? 0}</Stat>
             </dl>
+          )}
+
+          {!profile.excluded && (
+            <Card>
+              <CardContent className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-base font-black">Goal</h2>
+                  <span className="font-mono text-sm tabular-nums">
+                    {points} / {pointsConfig.goal}
+                  </span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-label={`Points toward the ${String(pointsConfig.goal)}-point goal`}
+                  aria-valuemin={0}
+                  aria-valuemax={pointsConfig.goal}
+                  aria-valuenow={Math.min(points, pointsConfig.goal)}
+                  className="h-3 overflow-hidden rounded-full bg-muted"
+                >
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{
+                      width: `${String(Math.min(100, (points / pointsConfig.goal) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {points >= pointsConfig.goal
+                    ? "Goal reached."
+                    : `${String(pointsConfig.goal - points)} points to go.`}
+                </p>
+              </CardContent>
+            </Card>
           )}
 
           {!profile.excluded && (

@@ -9,11 +9,12 @@ import { Card } from "../ui/card";
 interface Props {
   rows: ReadonlyArray<LeaderboardRow>;
   currentUserId: string | null;
+  leaderId: string | null;
   period: LeaderboardPeriod;
   keep?: Record<string, string>;
 }
 
-export const LeaderboardPanel: FC<Props> = ({ rows, currentUserId, period, keep }) => (
+export const LeaderboardPanel: FC<Props> = ({ rows, currentUserId, leaderId, period, keep }) => (
   <Card className="overflow-hidden">
     <h2 className="border-b border-border px-4 py-3 font-heading text-sm font-bold tracking-wide uppercase">
       Leaderboard
@@ -50,7 +51,11 @@ export const LeaderboardPanel: FC<Props> = ({ rows, currentUserId, period, keep 
                 >
                   {rank}
                 </span>
-                <UserAvatar name={row.user.displayName} className="size-8" />
+                <UserAvatar
+                  name={row.user.displayName}
+                  className="size-8"
+                  crowned={row.user.id === leaderId}
+                />
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-bold">
                     {row.user.displayName}

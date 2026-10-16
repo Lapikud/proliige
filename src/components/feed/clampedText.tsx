@@ -31,27 +31,23 @@ export const ClampedText: FC<Props> = ({ text, markdown, className, onMore }) =>
   }, [text]);
 
   return (
-    <div className={className}>
+    <div
+      className={cn("cursor-pointer", className)}
+      onClick={(event) => {
+        if (!(event.target instanceof Element && event.target.closest("a"))) onMore();
+      }}
+    >
       <div
         ref={box}
         className={cn(
           "leading-relaxed text-pretty",
-          markdown ? "max-h-[6lh] overflow-hidden" : "line-clamp-4",
-          markdown && clamped && "[mask-image:linear-gradient(to_bottom,black_75%,transparent)]",
+          "overflow-hidden",
+          markdown ? "max-h-[6lh]" : "max-h-[4lh]",
+          clamped && "[mask-image:linear-gradient(to_bottom,black_50%,transparent)]",
         )}
       >
         <UserText text={text} markdown={markdown} />
       </div>
-      {clamped && (
-        <button
-          type="button"
-          aria-haspopup="dialog"
-          onClick={onMore}
-          className="text-sm font-bold text-muted-foreground hover:text-foreground"
-        >
-          more<span className="sr-only">: read the full post</span>
-        </button>
-      )}
     </div>
   );
 };

@@ -13,6 +13,7 @@ interface Props {
   canReact: boolean;
   categoryId: string | null;
   categoryName: string | null;
+  leaderId: string | null;
 }
 
 interface FeedPage {
@@ -26,6 +27,7 @@ export const FeedList: FC<Props> = ({
   canReact,
   categoryId,
   categoryName,
+  leaderId,
 }) => {
   const [entries, setEntries] = useState(initialEntries);
   const [cursor, setCursor] = useState(initialCursor);
@@ -102,9 +104,21 @@ export const FeedList: FC<Props> = ({
         {entries.map((entry) => (
           <li key={entry.proofId}>
             {entry.kind === "recognition" ? (
-              <RecognitionCard entry={entry} canReact={canReact} />
+              <RecognitionCard
+                entry={{
+                  ...entry,
+                  crowned: entry.user.id === leaderId,
+                }}
+                canReact={canReact}
+              />
             ) : (
-              <FeedCard entry={entry} canReact={canReact} />
+              <FeedCard
+                entry={{
+                  ...entry,
+                  crowned: entry.user.id === leaderId,
+                }}
+                canReact={canReact}
+              />
             )}
           </li>
         ))}

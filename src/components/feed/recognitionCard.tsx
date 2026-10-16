@@ -83,10 +83,10 @@ const RecognitionExtras: FC<{ entry: FeedEntryView }> = ({ entry }) => (
                 <Image
                   src={badge.imageUrl}
                   alt=""
-                  width={24}
-                  height={24}
+                  width={16}
+                  height={16}
                   unoptimized
-                  className="size-6 rounded-full object-cover"
+                  className="size-4 rounded-full object-cover"
                 />
               )}
               {badge.label}

@@ -5,6 +5,7 @@ import type { User } from "~/domain/user";
 
 export type FeedEntryView = Omit<FeedEntry, "approvedAt"> & {
   approvedAt: string;
+  crowned?: boolean;
 };
 
 export const commentViewSchema = z.object({

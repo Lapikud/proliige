@@ -22,7 +22,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
   const keepPeriod = period === "month" ? { period } : undefined;
   const user = await getUser();
 
-  const [page, ranking, categories] = await Promise.all([
+  const [page, ranking, categories, [leader]] = await Promise.all([
     feedService.listFeed(user, {
       cursor: null,
       categoryId,
@@ -32,7 +32,9 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
       since: period === "month" ? startOfMonthInTallinn() : null,
     }),
     categoryService.listFeedCategories(user),
+    leaderboardService.listLeaderboard(user, { limit: 1 }),
   ]);
+  const leaderId = leader && leader.totalPoints > 0 ? leader.user.id : null;
 
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
@@ -43,6 +45,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           <LeaderboardPanel
             rows={ranking}
             currentUserId={user?.id ?? null}
+            leaderId={leaderId}
             period={period}
             {...(keepCategory ? { keep: keepCategory } : {})}
           />
@@ -56,6 +59,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
         <div className="lg:hidden">
           <LeaderboardStories
             rows={ranking}
+            leaderId={leaderId}
             period={period}
             {...(keepCategory ? { keep: keepCategory } : {})}
           />
@@ -70,6 +74,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           initialEntries={page.entries.map(toFeedEntryView)}
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
           canReact={userCanReactToProofs(user)}
+          leaderId={leaderId}
           categoryId={categoryId}
           categoryName={
             categoryId === recognitionFilter

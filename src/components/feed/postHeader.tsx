@@ -16,7 +16,11 @@ interface Props {
 export const PostHeader: FC<Props> = ({ entry, subtitle, className, children }) => (
   <header className={cn("flex items-center gap-3 px-4 py-3", className)}>
     <Link href={`/users/${entry.user.id}`} aria-hidden="true" tabIndex={-1}>
-      <UserAvatar name={entry.user.displayName} className="size-9 text-xs" />
+      <UserAvatar
+        name={entry.user.displayName}
+        className="size-9 text-xs"
+        crowned={entry.crowned === true}
+      />
     </Link>
     <div className="flex min-w-0 flex-1 flex-col">
       <div className="flex min-w-0 items-center gap-1.5">

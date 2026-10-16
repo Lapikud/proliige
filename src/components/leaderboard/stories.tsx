@@ -7,11 +7,12 @@ import { UserAvatar } from "../ui/avatar";
 
 interface Props {
   rows: ReadonlyArray<LeaderboardRow>;
+  leaderId: string | null;
   period: LeaderboardPeriod;
   keep?: Record<string, string>;
 }
 
-export const LeaderboardStories: FC<Props> = ({ rows, period, keep }) => (
+export const LeaderboardStories: FC<Props> = ({ rows, leaderId, period, keep }) => (
   <section aria-label="Leaderboard" className="flex flex-col gap-1">
     <div className="flex min-h-11 items-center justify-between gap-2">
       <h2 className="text-sm font-bold">Leaderboard</h2>
@@ -22,7 +23,7 @@ export const LeaderboardStories: FC<Props> = ({ rows, period, keep }) => (
         {period === "month" ? "No points yet this month." : "No points yet."}
       </p>
     ) : (
-      <ol className="flex [scrollbar-width:none] list-none gap-2 overflow-x-auto p-0 pb-1">
+      <ol className="flex [scrollbar-width:none] list-none gap-2 overflow-x-auto p-0 pt-3 pb-1 pl-1">
         {rows.map((row, index) => (
           <li key={row.user.id} className="shrink-0">
             <Link
@@ -38,6 +39,7 @@ export const LeaderboardStories: FC<Props> = ({ rows, period, keep }) => (
                 <UserAvatar
                   name={row.user.displayName}
                   className="size-full bg-card text-sm text-foreground ring-2 ring-card"
+                  crowned={row.user.id === leaderId}
                 />
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-md bg-foreground px-1.5 font-mono text-xs text-primary">
                   #{index + 1}

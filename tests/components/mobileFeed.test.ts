@@ -10,6 +10,7 @@ describe("mobile feed controls", () => {
     const html = renderToStaticMarkup(
       createElement(LeaderboardStories, {
         rows: [],
+        leaderId: null,
         period: "month",
       }),
     );
