@@ -21,7 +21,7 @@ describe("user public-view exclusion", () => {
       ipaUniqueId: "ipa-target",
       uid: "target",
       displayName: "Target",
-      groups: ["members"],
+      groups: ["pixels"],
     });
     const admin = await users.upsertFromIdentity({
       ipaUniqueId: "ipa-admin",
@@ -33,7 +33,7 @@ describe("user public-view exclusion", () => {
       ipaUniqueId: "ipa-member",
       uid: "member",
       displayName: "Member",
-      groups: ["members"],
+      groups: ["pixels"],
     });
 
     await expect(userService.setExcluded(member, target.id, true)).rejects.toMatchObject({
@@ -56,7 +56,7 @@ describe("user public-view exclusion", () => {
       ipaUniqueId: "ipa-exclusion",
       uid: "exclusion",
       displayName: "Excluded candidate",
-      groups: ["members"],
+      groups: ["pixels"],
     });
 
     expect(await users.findById(user.id)).toMatchObject({
@@ -84,7 +84,7 @@ describe("user public-view exclusion", () => {
       id: user.id,
       displayName: "Excluded candidate",
       excluded: true,
-      roles: ["member"],
+      roles: ["member", "pixel"],
     });
   });
 
@@ -93,7 +93,7 @@ describe("user public-view exclusion", () => {
       ipaUniqueId: "ipa-exclusion",
       uid: "exclusion",
       displayName: "Before",
-      groups: ["members"],
+      groups: ["pixels"],
     });
 
     await users.setExcluded({
@@ -104,7 +104,7 @@ describe("user public-view exclusion", () => {
       ipaUniqueId: "ipa-exclusion",
       uid: "exclusion",
       displayName: "After",
-      groups: ["members"],
+      groups: ["pixels"],
     });
 
     expect(updated.id).toBe(user.id);

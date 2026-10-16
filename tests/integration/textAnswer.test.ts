@@ -44,7 +44,7 @@ async function seed(textRequired: boolean) {
     ipaUniqueId: "ipa-alice",
     uid: "alice",
     displayName: "Alice",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const task = await tasks.create({
     title: "Write a blog post",

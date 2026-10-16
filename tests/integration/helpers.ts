@@ -77,8 +77,8 @@ export async function seedUsers(users: UserRepository) {
     });
 
   return {
-    alice: await signUp("alice", "Alice", ["members"]),
-    bob: await signUp("bob", "Bob", ["members"]),
+    alice: await signUp("alice", "Alice", ["pixels"]),
+    bob: await signUp("bob", "Bob", ["pixels"]),
     admin: await signUp("boss", "Boss", ["team_juhatus"]),
     outsider: await signUp("outsider", "Outsider", ["guests"]),
   };

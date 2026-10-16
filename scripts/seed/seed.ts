@@ -102,7 +102,7 @@ const userRepository = createUserRepository(db);
 const categoryRepository = createCategoryRepository(db);
 const taskRepository = createTaskRepository(db);
 const proofRepository = createProofRepository(db);
-const recognitionRepository = createRecognitionRepository(db, accessConfig.memberGroups);
+const recognitionRepository = createRecognitionRepository(db, accessConfig.pixelGroups);
 const commentRepository = createCommentRepository(db);
 const likeRepository = createLikeRepository(db);
 const leaderboardRepository = createLeaderboardRepository(db);
@@ -355,7 +355,7 @@ async function seed() {
   await clearAll();
 
   const members = await Promise.all(
-    [1, 2, 3, 4, 5, 6].map((i) => signUp(`seed-member-${i}`, `Seed Member ${i}`, ["members"])),
+    [3, 4, 5, 6, 7, 8].map((i) => signUp(`seed-pixel-${i}`, `Seed Pixel ${i}`, ["pixels"])),
   );
   const [m1, m2, m3, m4, m5, m6] = members as [
     Account,
@@ -369,9 +369,11 @@ async function seed() {
   const pixel2 = await signUp("seed-pixel-2", "Seed Pixel 2", ["pixels"]);
   const admin1 = await signUp("seed-admin-1", "Seed Admin 1", [...accessConfig.adminGroups]);
   const admin2 = await signUp("seed-admin-2", "Seed Admin 2", [...accessConfig.adminGroups]);
+  const member1 = await signUp("seed-member-1", "Seed Member 1", ["members"]);
+  const member2 = await signUp("seed-member-2", "Seed Member 2", ["members"]);
   const noGroup = await signUp("seed-no-group", "Seed No Group", []);
-  const excluded = await signUp("seed-excluded", "Seed Excluded Member", ["members"]);
-  const everyone = [...members, pixel1, pixel2, admin1, admin2, noGroup];
+  const excluded = await signUp("seed-excluded", "Seed Excluded Pixel", ["pixels"]);
+  const everyone = [...members, pixel1, pixel2, member1, member2, admin1, admin2, noGroup];
 
   const category = (name: string) =>
     categoryRepository.create({
@@ -631,6 +633,15 @@ async function seed() {
     points: 30,
     objectKeys: await uploadAll(pixel1, photosEnabled ? [photo.tall] : []),
     reviewerIds: [admin2.id],
+  });
+  at(2);
+  await proofService.addOwnTask(member1, {
+    title: "Korraldasin lauamänguõhtu",
+    description: "Tõin mängud kaasa ja kutsusin uued liikmed.",
+    categoryId: events.id,
+    points: 40,
+    objectKeys: [],
+    reviewerIds: [],
   });
   at(7);
   const ownRejected = await proofService.addOwnTask(pixel2, {

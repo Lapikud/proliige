@@ -541,7 +541,7 @@ describe("leaderboard ordering", () => {
         ipaUniqueId: `ipa-${person.uid}`,
         uid: person.uid,
         displayName: person.name,
-        groups: ["members"],
+        groups: ["pixels"],
       });
       for (let i = 0; i < person.approvals; i += 1) {
         const proof = await proofs.createPendingProof({

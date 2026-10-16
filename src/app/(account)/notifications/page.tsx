@@ -7,7 +7,7 @@ import { EmptyState } from "~/components/ui/feedback";
 import { Page } from "~/components/ui/page";
 import { notificationService } from "~/infra";
 import { cn, formatDateTime } from "~/lib/utils";
-import { userCanReadNotifications, userCanReviewProofs, userCanSubmitProof } from "~/domain/rules";
+import { userCanReadNotifications, userCanReviewProofs, userCanTrackProofs } from "~/domain/rules";
 import type { User } from "~/domain/user";
 import { requireUser } from "~/lib/user";
 
@@ -56,7 +56,7 @@ function whatYouWillHear(user: User): string {
   if (userCanReviewProofs(user)) {
     return "You will be notified when someone asks you to review a proof.";
   }
-  if (userCanSubmitProof(user)) {
+  if (userCanTrackProofs(user)) {
     return "You will be notified when your proofs are approved or rejected, and when someone comments on them.";
   }
 

@@ -8,7 +8,7 @@ import { EmptyState } from "~/components/ui/feedback";
 import { Page } from "~/components/ui/page";
 import type { ProofStatus } from "~/domain/proof";
 import { proofService } from "~/infra";
-import { userCanSubmitProof } from "~/domain/rules";
+import { userCanBrowseTasks, userCanTrackProofs } from "~/domain/rules";
 import { requireUser } from "~/lib/user";
 
 export const metadata: Metadata = { title: "My proofs" };
@@ -29,7 +29,9 @@ const sections: ReadonlyArray<{ status: ProofStatus; title: string }> = [
 ];
 
 const ProofsPage: FC = async () => {
-  const entries = await proofService.listMyProofs(await requireUser(userCanSubmitProof));
+  const user = await requireUser(userCanTrackProofs);
+  const entries = await proofService.listMyProofs(user);
+  const canBrowse = userCanBrowseTasks(user);
   const groups = sections
     .map((section) => ({
       ...section,
@@ -42,10 +44,16 @@ const ProofsPage: FC = async () => {
       {entries.length === 0 && (
         <EmptyState
           title="You have not submitted anything yet"
-          description="Pick something from the task list to get started."
+          description={
+            canBrowse
+              ? "Pick something from the task list to get started."
+              : "Suggest a task you did to get started."
+          }
         >
           <Button asChild variant="outline">
-            <Link href="/tasks">Browse tasks</Link>
+            <Link href={canBrowse ? "/tasks" : "/tasks/new"}>
+              {canBrowse ? "Browse tasks" : "Suggest a task"}
+            </Link>
           </Button>
         </EmptyState>
       )}

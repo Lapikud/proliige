@@ -57,13 +57,13 @@ async function seedApprovedProof(clockAt = new Date("2026-09-18T12:00:00Z")) {
     ipaUniqueId: "ipa-alice",
     uid: "alice",
     displayName: "Alice",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const bobUser = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-bob",
     uid: "bob",
     displayName: "Bob",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const bossUser = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-boss",

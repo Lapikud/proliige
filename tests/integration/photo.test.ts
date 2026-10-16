@@ -51,13 +51,13 @@ async function seed() {
     ipaUniqueId: "ipa-alice",
     uid: "alice",
     displayName: "Alice",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const bob = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-bob",
     uid: "bob",
     displayName: "Bob",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const boss = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-boss",

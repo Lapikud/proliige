@@ -1,5 +1,5 @@
 export const accessConfig = {
-  memberGroups: ["pixels", "members"],
+  memberGroups: ["members"],
   pixelGroups: ["pixels"],
   adminGroups: ["team_juhatus"],
 } satisfies AccessConfig;
