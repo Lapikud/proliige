@@ -16,8 +16,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "garage:setup": "bash scripts/garage/setup.sh",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:generate": "drizzle-kit generate --name",
+    "db:check": "bash scripts/db/check-migrations.sh",
+    "db:migrate": "pnpm db:check && drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

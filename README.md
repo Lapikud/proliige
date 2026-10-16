@@ -23,17 +23,18 @@ pnpm dev               # http://localhost:3000
 
 ## Everyday commands
 
-| Command                          | What it does                                         |
-| -------------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                       | Run the app with hot reload                          |
-| `pnpm test`                      | Run all tests (uses its own `lapikud_test` database) |
-| `pnpm typecheck`                 | Check types                                          |
-| `pnpm lint`                      | Check code rules                                     |
-| `pnpm format`                    | Format everything with Prettier                      |
-| `pnpm build`                     | Production build                                     |
-| `pnpm db:generate`               | Write a migration after changing a `model.ts`        |
-| `pnpm db:migrate`                | Apply migrations                                     |
-| `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS    |
+| Command                          | What it does                                                    |
+| -------------------------------- | --------------------------------------------------------------- |
+| `pnpm dev`                       | Run the app with hot reload                                     |
+| `pnpm test`                      | Run all tests (uses its own `lapikud_test` database)            |
+| `pnpm typecheck`                 | Check types                                                     |
+| `pnpm lint`                      | Check code rules                                                |
+| `pnpm format`                    | Format everything with Prettier                                 |
+| `pnpm build`                     | Production build                                                |
+| `pnpm db:generate <name>`        | Write a named migration after changing a `model.ts`             |
+| `pnpm db:migrate`                | Apply migrations; stops if a `model.ts` change has no migration |
+| `pnpm db:check`                  | Check that every `model.ts` change has a migration              |
+| `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS               |
 
 Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks, plus a build, on every pull request.
 

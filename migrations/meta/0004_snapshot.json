@@ -1,5 +1,5 @@
 {
-  "id": "d1f3a30d-16ba-4305-8286-43cfd46d0a10",
+  "id": "949db008-0ec3-4d63-9891-1281273faf63",
   "prevId": "044509c9-7236-48bb-a9b5-e429ca2825a7",
   "version": "7",
   "dialect": "postgresql",
@@ -1040,7 +1040,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"points_ledger\".\"reversal_of\" IS NULL",
+          "where": "\"points_ledger\".\"reversal_of\" is null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1056,7 +1056,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"points_ledger\".\"reversal_of\" IS NOT NULL",
+          "where": "\"points_ledger\".\"reversal_of\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}

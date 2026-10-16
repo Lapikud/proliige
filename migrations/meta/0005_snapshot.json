@@ -1,6 +1,6 @@
 {
-  "id": "58b8fa3f-297c-4bb8-a5c5-328b8abf8c07",
-  "prevId": "d1f3a30d-16ba-4305-8286-43cfd46d0a10",
+  "id": "ebb00c7f-adcf-4272-9f32-e427d9a5f280",
+  "prevId": "949db008-0ec3-4d63-9891-1281273faf63",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -304,6 +304,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "text_markdown": {
+          "name": "text_markdown",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "rejection_reason": {
           "name": "rejection_reason",
           "type": "text",
@@ -533,7 +540,13 @@
           "name": "proof_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "recognition_id": {
+          "name": "recognition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -567,6 +580,27 @@
           "columns": [
             {
               "expression": "proof_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "proof_comments_recognition_idx": {
+          "name": "proof_comments_recognition_idx",
+          "columns": [
+            {
+              "expression": "recognition_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -619,6 +653,19 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "proof_comments_recognition_id_recognitions_id_fk": {
+          "name": "proof_comments_recognition_id_recognitions_id_fk",
+          "tableFrom": "proof_comments",
+          "tableTo": "recognitions",
+          "columnsFrom": [
+            "recognition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "proof_comments_user_id_users_id_fk": {
           "name": "proof_comments_user_id_users_id_fk",
           "tableFrom": "proof_comments",
@@ -636,7 +683,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "proof_comments_target_check": {
+          "name": "proof_comments_target_check",
+          "value": "((\"proof_comments\".\"proof_id\" is not null and \"proof_comments\".\"recognition_id\" is null) or (\"proof_comments\".\"proof_id\" is null and \"proof_comments\".\"recognition_id\" is not null))"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.proof_likes": {
@@ -654,7 +706,13 @@
           "name": "proof_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "recognition_id": {
+          "name": "recognition_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "user_id": {
           "name": "user_id",
@@ -691,6 +749,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "proof_likes_recognition_user_key": {
+          "name": "proof_likes_recognition_user_key",
+          "columns": [
+            {
+              "expression": "recognition_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -700,6 +779,19 @@
           "tableTo": "proofs",
           "columnsFrom": [
             "proof_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "proof_likes_recognition_id_recognitions_id_fk": {
+          "name": "proof_likes_recognition_id_recognitions_id_fk",
+          "tableFrom": "proof_likes",
+          "tableTo": "recognitions",
+          "columnsFrom": [
+            "recognition_id"
           ],
           "columnsTo": [
             "id"
@@ -724,7 +816,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "proof_likes_target_check": {
+          "name": "proof_likes_target_check",
+          "value": "((\"proof_likes\".\"proof_id\" is not null and \"proof_likes\".\"recognition_id\" is null) or (\"proof_likes\".\"proof_id\" is null and \"proof_likes\".\"recognition_id\" is not null))"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.users": {
@@ -1046,7 +1143,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"points_ledger\".\"proof_id\" IS NOT NULL AND \"points_ledger\".\"reversal_of\" IS NULL",
+          "where": "(\"points_ledger\".\"proof_id\" is not null and \"points_ledger\".\"reversal_of\" is null)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1062,7 +1159,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"points_ledger\".\"recognition_id\" IS NOT NULL",
+          "where": "\"points_ledger\".\"recognition_id\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1078,7 +1175,7 @@
             }
           ],
           "isUnique": true,
-          "where": "\"points_ledger\".\"reversal_of\" IS NOT NULL",
+          "where": "\"points_ledger\".\"reversal_of\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1156,7 +1253,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "points_ledger_source_check": {
+          "name": "points_ledger_source_check",
+          "value": "((\"points_ledger\".\"proof_id\" is not null and \"points_ledger\".\"recognition_id\" is null) or (\"points_ledger\".\"proof_id\" is null and \"points_ledger\".\"recognition_id\" is not null and \"points_ledger\".\"reversal_of\" is null))"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.recognitions": {
@@ -1187,6 +1289,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "description_markdown": {
+          "name": "description_markdown",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "points": {
           "name": "points",
@@ -1291,7 +1400,113 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "recognitions_points_positive_check": {
+          "name": "recognitions_points_positive_check",
+          "value": "\"recognitions\".\"points\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.recognition_badges": {
+      "name": "recognition_badges",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label_key": {
+          "name": "label_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "recognition_badges_label_key_key": {
+          "name": "recognition_badges_label_key_key",
+          "columns": [
+            {
+              "expression": "label_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "recognition_badges_created_idx": {
+          "name": "recognition_badges_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "recognition_badges_created_by_users_id_fk": {
+          "name": "recognition_badges_created_by_users_id_fk",
+          "tableFrom": "recognition_badges",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "recognition_badges_label_nonempty_check": {
+          "name": "recognition_badges_label_nonempty_check",
+          "value": "\"recognition_badges\".\"label\" <> ''"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.tasks": {

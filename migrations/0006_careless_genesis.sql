@@ -1,2 +1,0 @@
-ALTER TABLE "points_ledger" ADD CONSTRAINT "points_ledger_source_check" CHECK (("points_ledger"."proof_id" IS NOT NULL AND "points_ledger"."recognition_id" IS NULL) OR ("points_ledger"."proof_id" IS NULL AND "points_ledger"."recognition_id" IS NOT NULL AND "points_ledger"."reversal_of" IS NULL));--> statement-breakpoint
-ALTER TABLE "recognitions" ADD CONSTRAINT "recognitions_points_positive_check" CHECK ("recognitions"."points" > 0);
