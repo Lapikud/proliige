@@ -6,6 +6,7 @@ import type { FC } from "react";
 import { cn, formatRelative } from "~/lib/utils";
 import { EarnedBadges } from "../badges/earnedBadges";
 import { UserAvatar } from "../ui/avatar";
+import { UserText } from "../ui/markdown";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -63,14 +64,14 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
       <PhotoCarousel urls={entry.photoUrls} alt={`Photo for ${entry.taskTitle}`} />
 
       {entry.textAnswer && (
-        <p
+        <UserText
+          text={entry.textAnswer}
+          markdown={entry.textMarkdown}
           className={cn(
-            "px-4 leading-relaxed text-pretty wrap-break-word whitespace-pre-wrap",
+            "px-4 leading-relaxed text-pretty",
             entry.photoUrls.length === 0 ? "pt-2 text-lg sm:text-xl md:text-2xl" : "pt-1 text-base",
           )}
-        >
-          {entry.textAnswer}
-        </p>
+        />
       )}
 
       <p

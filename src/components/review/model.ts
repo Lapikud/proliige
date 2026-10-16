@@ -10,6 +10,7 @@ export interface PendingProofView {
   userDisplayName: string;
   submittedAt: string;
   textAnswer: string | null;
+  textMarkdown: boolean;
   photoUrls: Array<string>;
   requestedReviewers: ReadonlyArray<PublicUserView>;
   requestedFromMe: boolean;

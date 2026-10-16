@@ -65,7 +65,16 @@ export function createRecognitionRepository(
       return badge;
     },
 
-    async publish({ recipientId, reviewerId, description, points, badgeIds, links, now }) {
+    async publish({
+      recipientId,
+      reviewerId,
+      description,
+      descriptionMarkdown = false,
+      points,
+      badgeIds,
+      links,
+      now,
+    }) {
       await db.transaction(async (tx) => {
         const [recipient] = await tx
           .select({ id: users.id })
@@ -91,6 +100,7 @@ export function createRecognitionRepository(
             recipientId,
             reviewerId,
             description,
+            descriptionMarkdown,
             points,
             badges: selectedBadges.map(({ label }) => label),
             links: [...links],

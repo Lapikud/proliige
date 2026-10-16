@@ -12,7 +12,15 @@ import { onlyRow } from "../rows";
 
 export function createProofSubmit(db: Database): Pick<ProofRepository, "createPendingProof"> {
   return {
-    async createPendingProof({ taskId, userId, photos, textAnswer = null, reviewerIds = [], now }) {
+    async createPendingProof({
+      taskId,
+      userId,
+      photos,
+      textAnswer = null,
+      textMarkdown = false,
+      reviewerIds = [],
+      now,
+    }) {
       return db.transaction(async (tx) => {
         const [task] = await tx
           .select()
@@ -61,6 +69,7 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
                 policy: task.policy,
                 status: "pending",
                 textAnswer: task.textRequired ? textAnswer : null,
+                textMarkdown: task.textRequired && textMarkdown,
                 submittedAt: now,
               })
               .returning(),

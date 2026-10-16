@@ -34,6 +34,7 @@ export function createProofService({
       input: {
         taskId: string;
         textAnswer?: string;
+        textMarkdown?: boolean;
         objectKeys: ReadonlyArray<string>;
         reviewerIds?: ReadonlyArray<string>;
       },
@@ -96,6 +97,7 @@ export function createProofService({
         userId: user.id,
         photos: verified,
         textAnswer: task.textRequired ? textAnswer : null,
+        textMarkdown: input.textMarkdown ?? false,
         reviewerIds,
         now: clock.now(),
       });

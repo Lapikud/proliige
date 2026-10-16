@@ -6,6 +6,7 @@ import type { FeedEntryView } from "./model";
 import { formatRelative } from "~/lib/utils";
 import { EarnedBadges } from "../badges/earnedBadges";
 import { UserAvatar } from "../ui/avatar";
+import { UserText } from "../ui/markdown";
 import { Badge } from "../ui/badge";
 import { Card } from "../ui/card";
 
@@ -36,9 +37,11 @@ export const RecognitionCard: FC<{ entry: FeedEntryView }> = ({ entry }) => (
       <div className="mb-2 flex items-center gap-2 text-sm font-bold text-brand-ink">
         <Award aria-hidden="true" className="size-4" /> Contribution recognized
       </div>
-      <p className="leading-relaxed text-pretty whitespace-pre-wrap">
-        {entry.recognitionDescription}
-      </p>
+      <UserText
+        text={entry.recognitionDescription ?? ""}
+        markdown={entry.textMarkdown}
+        className="leading-relaxed text-pretty"
+      />
       {!!entry.badges?.length && (
         <ul aria-label="Earned badges" className="mt-3 flex list-none flex-wrap gap-2 p-0">
           {entry.badges.map((badge) => (

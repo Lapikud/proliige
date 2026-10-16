@@ -106,7 +106,8 @@ describe("text answers", () => {
     const { task, alice } = await seed(true);
     const proof = await proofService.submitProof(alice, {
       taskId: task.id,
-      textAnswer: "https://example.com/post",
+      textAnswer: "**Done**",
+      textMarkdown: true,
       objectKeys: [],
     });
     await proofs.approve({
@@ -116,6 +117,9 @@ describe("text answers", () => {
     });
 
     const [entry] = (await feed.listFeed(null, { cursor: null })).entries;
-    expect(entry?.textAnswer).toBe("https://example.com/post");
+    expect(entry).toMatchObject({
+      textAnswer: "**Done**",
+      textMarkdown: true,
+    });
   });
 });

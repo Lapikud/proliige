@@ -11,6 +11,7 @@ const entry: ProofWithContext = {
     userId: "member-1",
     status: "approved",
     textAnswer: "I organized the community meetup.",
+    textMarkdown: false,
     rejectionReason: null,
     submittedAt: new Date("2026-10-15T10:00:00Z"),
     reviewedAt: new Date("2026-10-15T12:00:00Z"),

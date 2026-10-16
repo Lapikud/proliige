@@ -17,6 +17,7 @@ export const createRecognitionBadgeSchema = z.object({
 export const publishRecognitionSchema = z.object({
   recipientId: z.uuid(),
   description: z.string().trim().min(1).max(2000),
+  descriptionMarkdown: z.boolean(),
   points: z.number().int().positive().max(100000),
   badgeIds: z
     .array(z.uuid())

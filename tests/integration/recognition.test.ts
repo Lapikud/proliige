@@ -133,7 +133,8 @@ describe("contribution recognition", () => {
     });
     await service.publish(admin, {
       recipientId: alice.id,
-      description: "Fixed the projector.",
+      description: "Fixed the **projector**.",
+      descriptionMarkdown: true,
       points: 3,
       badgeIds: [],
       links: [],
@@ -147,7 +148,12 @@ describe("contribution recognition", () => {
         viewerId: null,
       });
 
-    expect((await list(recognitionFilter)).entries).toMatchObject([{ kind: "recognition" }]);
+    expect((await list(recognitionFilter)).entries).toMatchObject([
+      {
+        kind: "recognition",
+        textMarkdown: true,
+      },
+    ]);
     expect((await list(category.id)).entries).toEqual([]);
   });
 

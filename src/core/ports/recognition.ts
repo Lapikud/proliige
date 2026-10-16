@@ -12,6 +12,7 @@ export interface RecognitionBadge {
 export interface RecognitionInput {
   recipientId: string;
   description: string;
+  descriptionMarkdown?: boolean;
   points: number;
   badgeIds: ReadonlyArray<string>;
   links: ReadonlyArray<AchievementLink>;

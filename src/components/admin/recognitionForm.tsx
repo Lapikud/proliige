@@ -8,8 +8,9 @@ import type { RecognitionBadge } from "~/core/ports/recognition";
 import { useAction } from "~/lib/form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { Input, Label, Select, Textarea } from "~/components/ui/formControls";
+import { Input, Label, Select, Switch, Textarea } from "~/components/ui/formControls";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { MarkdownPreview } from "~/components/ui/markdown";
 import { BadgeCreator } from "./badgeCreator";
 
 interface Props {
@@ -23,6 +24,7 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
   const [availableBadges, setAvailableBadges] = useState([...badges]);
   const [recipientId, setRecipientId] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionMarkdown, setDescriptionMarkdown] = useState(false);
   const [points, setPoints] = useState("5");
   const [badgeIds, setBadgeIds] = useState<Array<string>>([]);
   const [badgePickerOpen, setBadgePickerOpen] = useState(false);
@@ -31,6 +33,7 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
     onSuccess: () => {
       setRecipientId("");
       setDescription("");
+      setDescriptionMarkdown(false);
       setPoints("5");
       setBadgeIds([]);
       setLinks("");
@@ -40,26 +43,11 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
 
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const parsedLinks = links
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const separator = line.indexOf("|");
-
-        return separator < 0
-          ? {
-              title: line.slice(0, 100),
-              url: line,
-            }
-          : {
-              title: line.slice(0, separator).trim(),
-              url: line.slice(separator + 1).trim(),
-            };
-      });
+    const parsedLinks = parseLinks(links);
     action.run({
       recipientId,
       description,
+      descriptionMarkdown,
       points: Number(points),
       badgeIds,
       links: parsedLinks,
@@ -108,6 +96,17 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
               }}
               placeholder="Describe what they contributed and why it mattered."
             />
+            <div className="mt-1 flex items-center gap-2">
+              <Switch
+                id="recognition-markdown"
+                checked={descriptionMarkdown}
+                onChange={(event) => {
+                  setDescriptionMarkdown(event.target.checked);
+                }}
+              />
+              <Label htmlFor="recognition-markdown">Use markdown</Label>
+            </div>
+            {descriptionMarkdown && description.trim() && <MarkdownPreview source={description} />}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="recognition-points">Points</Label>
@@ -197,7 +196,9 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
               onChange={(event) => {
                 setLinks(event.target.value);
               }}
-              placeholder={"One per line: https://example.com or Title | https://example.com"}
+              placeholder={
+                "Separate with commas or new lines: https://example.com, [Recap](https://example.com/recap)"
+              }
             />
           </div>
           {action.error && (
@@ -212,4 +213,32 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
       </CardContent>
     </Card>
   );
+}
+
+const markdownLink = /^\[([^\]]+)\]\((\S+)\)$/;
+
+function parseLinks(value: string) {
+  return value
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const markdown = markdownLink.exec(entry);
+      if (markdown)
+        return {
+          title: markdown[1]?.trim() ?? "",
+          url: markdown[2] ?? "",
+        };
+      const separator = entry.indexOf("|");
+
+      return separator < 0
+        ? {
+            title: entry.slice(0, 100),
+            url: entry,
+          }
+        : {
+            title: entry.slice(0, separator).trim(),
+            url: entry.slice(separator + 1).trim(),
+          };
+    });
 }

@@ -2,6 +2,7 @@ import type { FC } from "react";
 import type { FeedEntry } from "~/domain/feed";
 import { formatDate } from "~/lib/utils";
 import { Badge } from "../ui/badge";
+import { UserText } from "../ui/markdown";
 
 export const CompletedTasks: FC<{ entries: ReadonlyArray<FeedEntry> }> = ({ entries }) => {
   if (entries.length === 0) {
@@ -28,9 +29,11 @@ export const CompletedTasks: FC<{ entries: ReadonlyArray<FeedEntry> }> = ({ entr
               <time dateTime={entry.approvedAt.toISOString()}>{formatDate(entry.approvedAt)}</time>
             </span>
             {entry.kind === "recognition" && (
-              <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                {entry.recognitionDescription}
-              </span>
+              <UserText
+                text={entry.recognitionDescription ?? ""}
+                markdown={entry.textMarkdown}
+                className="mt-1 line-clamp-2 text-sm text-muted-foreground"
+              />
             )}
           </div>
           {entry.kind === "proof" && entry.pointsReversed ? (

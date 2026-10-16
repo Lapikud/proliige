@@ -29,6 +29,7 @@ export interface ProofRepository {
     userId: string;
     photos: ReadonlyArray<PhotoRef>;
     textAnswer?: string | null;
+    textMarkdown?: boolean;
     reviewerIds?: ReadonlyArray<string>;
     now: Date;
   }): Promise<Proof>;

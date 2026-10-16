@@ -13,6 +13,7 @@ export interface FeedEntry {
   readonly proofId: string;
   readonly taskTitle: string;
   readonly textAnswer: string | null;
+  readonly textMarkdown: boolean;
   readonly categoryName: string;
   readonly points: number;
   readonly taskRemoved: boolean;

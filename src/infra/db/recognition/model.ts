@@ -1,4 +1,14 @@
-import { check, index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "../user/model";
 
@@ -18,6 +28,7 @@ export const recognitions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
     description: text("description").notNull(),
+    descriptionMarkdown: boolean("description_markdown").notNull().default(false),
     points: integer("points").notNull(),
     badges: text("badges").array().notNull().default([]),
     links: jsonb("links").$type<Array<AchievementLink>>().notNull().default([]),

@@ -7,6 +7,7 @@ import { formatDateTime } from "~/lib/utils";
 import { UserAvatar } from "../ui/avatar";
 import { PhotoGallery } from "../proof/photoGallery";
 import { Badge } from "../ui/badge";
+import { UserText } from "../ui/markdown";
 import { ProofStatusBadge } from "../proof/statusBadge";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
@@ -154,9 +155,11 @@ export const HistoryRow: FC<Props> = ({ entry }) => {
           {proof.textAnswer && (
             <section className="mt-5">
               <h3 className="mb-2 text-sm font-bold">Member’s written proof</h3>
-              <p className="rounded-xl border border-border bg-muted px-3 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
-                {proof.textAnswer}
-              </p>
+              <UserText
+                text={proof.textAnswer}
+                markdown={proof.textMarkdown}
+                className="rounded-xl border border-border bg-muted px-3 py-3 text-sm leading-relaxed"
+              />
             </section>
           )}
 
