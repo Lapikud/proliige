@@ -68,8 +68,8 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
                 userId,
                 policy: task.policy,
                 status: "pending",
-                textAnswer: task.textRequired ? textAnswer : null,
-                textMarkdown: task.textRequired && textMarkdown,
+                textAnswer,
+                textMarkdown: textAnswer !== null && textMarkdown,
                 submittedAt: now,
               })
               .returning(),

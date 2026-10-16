@@ -70,10 +70,10 @@ export function createProofService({
       const objectKeys = [...new Set(input.objectKeys)];
       let verified: ReadonlyArray<PhotoRef> = [];
 
-      if (task.photoRequired) {
-        if (objectKeys.length === 0) {
-          throw validation("This task requires at least one photo.");
-        }
+      if (task.photoRequired && objectKeys.length === 0) {
+        throw validation("This task requires at least one photo.");
+      }
+      if (objectKeys.length > 0) {
         if (objectKeys.length > photoLimits.maxPhotosPerProof) {
           throw validation(`Attach at most ${photoLimits.maxPhotosPerProof} photos.`);
         }
@@ -83,8 +83,6 @@ export function createProofService({
           }
         }
         verified = await photos.verifyPhotos(objectKeys);
-      } else if (objectKeys.length > 0) {
-        throw validation("This task does not accept photo uploads.");
       }
 
       const textAnswer = input.textAnswer?.trim() ?? "";
@@ -96,7 +94,7 @@ export function createProofService({
         taskId: task.id,
         userId: user.id,
         photos: verified,
-        textAnswer: task.textRequired ? textAnswer : null,
+        textAnswer: textAnswer || null,
         textMarkdown: input.textMarkdown ?? false,
         reviewerIds,
         now: clock.now(),

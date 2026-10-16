@@ -90,16 +90,16 @@ describe("text answers", () => {
     expect((await proofs.findById(proof.id))?.textAnswer).toBe("https://example.com/post");
   });
 
-  it("drops an answer sent to a task that does not ask for one", async () => {
+  it("keeps an optional answer on a task that does not require one", async () => {
     const { task, alice } = await seed(false);
 
     const proof = await proofService.submitProof(alice, {
       taskId: task.id,
-      textAnswer: "unexpected",
+      textAnswer: "optional",
       objectKeys: [],
     });
 
-    expect((await proofs.findById(proof.id))?.textAnswer).toBeNull();
+    expect((await proofs.findById(proof.id))?.textAnswer).toBe("optional");
   });
 
   it("shows the answer on the feed once approved", async () => {

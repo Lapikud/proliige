@@ -194,18 +194,19 @@ describe("photos validation", () => {
     ).rejects.toThrow(/requires at least one photo/i);
   });
 
-  it("refuses uploads on a task that does not require photos", async () => {
+  it("keeps optional photos on a task that does not require them", async () => {
     const { plainTask, alice } = await seed();
     const key = `photos/${alice.id}/draft/photo.jpg`;
     const storage = storageWith({ [key]: JPEG });
     const { proofService } = services(storage);
 
-    await expect(
-      proofService.submitProof(alice, {
-        taskId: plainTask.id,
-        objectKeys: [key],
-      }),
-    ).rejects.toThrow(/does not accept photo uploads/i);
+    const proof = await proofService.submitProof(alice, {
+      taskId: plainTask.id,
+      objectKeys: [key],
+    });
+
+    expect(proof.taskId).toBe(plainTask.id);
+    expect((await proofs.findWithContext(proof.id))?.photos).toHaveLength(1);
   });
 
   it("makes no object-storage calls at all for a task without photos", async () => {
