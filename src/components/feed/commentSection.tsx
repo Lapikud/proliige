@@ -10,9 +10,15 @@ interface CommentSectionProps {
   proofId: string;
   canReact: boolean;
   section: ReturnType<typeof useFeedComments>;
+  hideForm?: boolean;
 }
 
-export const CommentSection: FC<CommentSectionProps> = ({ proofId, canReact, section }) => {
+export const CommentSection: FC<CommentSectionProps> = ({
+  proofId,
+  canReact,
+  section,
+  hideForm = false,
+}) => {
   if (section.status === "loading") {
     return (
       <div className="flex flex-col gap-2" aria-busy="true">
@@ -41,7 +47,12 @@ export const CommentSection: FC<CommentSectionProps> = ({ proofId, canReact, sec
   return (
     <>
       <CommentList comments={section.comments} onDeleted={section.onDeleted} />
-      {canReact ? <CommentForm proofId={proofId} onPosted={section.onPosted} /> : <SignInPrompt />}
+      {!hideForm &&
+        (canReact ? (
+          <CommentForm proofId={proofId} onPosted={section.onPosted} />
+        ) : (
+          <SignInPrompt />
+        ))}
     </>
   );
 };

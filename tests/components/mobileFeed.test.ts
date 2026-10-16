@@ -47,10 +47,11 @@ describe("mobile feed controls", () => {
       createElement(PhotoCarousel, {
         urls: ["/photo/1"],
         alt: "Proof photo",
+        onOpen: () => undefined,
       }),
     );
 
     expect(html).not.toContain('target="_blank"');
-    expect(html).toContain("View photo full screen");
+    expect(html).toContain("Open photo 1 of 1");
   });
 });

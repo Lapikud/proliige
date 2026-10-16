@@ -17,28 +17,16 @@ const flip = ({ liked, count }: LikeState): LikeState => ({
   count: count + (liked ? -1 : 1),
 });
 
-interface Props {
-  proofId: string;
-  liked: boolean;
-  count: number;
-  disabled: boolean;
-}
-
-export const LikeButton: FC<Props> = ({
-  proofId,
-  liked: initialLiked,
-  count: initialCount,
-  disabled,
-}) => {
+export function useLike(proofId: string, liked: boolean, count: number) {
   const [state, setState] = useState<LikeState>({
-    liked: initialLiked,
-    count: initialCount,
+    liked,
+    count,
   });
   const { run, pending } = useAction(toggleLikeAction, {
-    onSuccess: ({ liked, likeCount }) => {
+    onSuccess: (result) => {
       setState({
-        liked,
-        count: likeCount,
+        liked: result.liked,
+        count: result.likeCount,
       });
     },
     onError: () => {
@@ -51,19 +39,30 @@ export const LikeButton: FC<Props> = ({
     run({ proofId });
   };
 
-  return (
-    <Button
-      variant="ghost"
-      onClick={toggle}
-      disabled={disabled || pending}
-      aria-pressed={state.liked}
-      aria-label={state.liked ? "Remove your like" : "Like this proof"}
-    >
-      <Heart
-        aria-hidden="true"
-        className={cn("size-5!", state.liked && "fill-primary text-primary")}
-      />
-      <span className="tabular-nums">{state.count}</span>
-    </Button>
-  );
-};
+  return {
+    ...state,
+    pending,
+    toggle,
+  };
+}
+
+interface Props {
+  like: ReturnType<typeof useLike>;
+  disabled: boolean;
+}
+
+export const LikeButton: FC<Props> = ({ like, disabled }) => (
+  <Button
+    variant="ghost"
+    onClick={like.toggle}
+    disabled={disabled || like.pending}
+    aria-pressed={like.liked}
+    aria-label={like.liked ? "Remove your like" : "Like this proof"}
+  >
+    <Heart
+      aria-hidden="true"
+      className={cn("size-5!", like.liked && "fill-primary text-primary")}
+    />
+    <span className="tabular-nums">{like.count}</span>
+  </Button>
+);

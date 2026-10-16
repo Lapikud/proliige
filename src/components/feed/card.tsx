@@ -1,19 +1,17 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import Link from "next/link";
-import type { FC } from "react";
-import { cn, formatRelative } from "~/lib/utils";
-import { EarnedBadges } from "../badges/earnedBadges";
-import { UserAvatar } from "../ui/avatar";
+import { type FC, useLayoutEffect, useRef, useState } from "react";
+import { cn } from "~/lib/utils";
 import { UserText } from "../ui/markdown";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { CommentSection } from "./commentSection";
-import { LikeButton } from "./likeButton";
+import { LikeButton, useLike } from "./likeButton";
 import type { FeedEntryView } from "./model";
 import { PhotoCarousel } from "./photoCarousel";
+import { PostDialog } from "./postDialog";
+import { PostHeader } from "./postHeader";
 import { useFeedComments } from "./useFeedComments";
 
 interface Props {
@@ -23,6 +21,22 @@ interface Props {
 
 export const FeedCard: FC<Props> = ({ entry, canReact }) => {
   const commentSection = useFeedComments(entry.proofId, entry.commentCount);
+  const like = useLike(entry.proofId, entry.likedByUser, entry.likeCount);
+  const [postOpen, setPostOpen] = useState(false);
+  const [photo, setPhoto] = useState(0);
+  const [clamped, setClamped] = useState(false);
+  const text = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const element = text.current;
+    if (element) setClamped(element.scrollHeight > element.clientHeight + 1);
+  }, [entry.textAnswer]);
+
+  const openPost = (index = 0) => {
+    setPhoto(index);
+    setPostOpen(true);
+    void commentSection.retry();
+  };
 
   return (
     <Card
@@ -31,47 +45,43 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
         entry.photoUrls.length === 0 && !commentSection.open && "pb-4",
       )}
     >
-      <header className="flex items-center gap-3 px-4 py-3">
-        <Link href={`/users/${entry.user.id}`} aria-hidden="true" tabIndex={-1}>
-          <UserAvatar name={entry.user.displayName} className="size-9 text-xs" />
-        </Link>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Link
-              href={`/users/${entry.user.id}`}
-              className="truncate text-sm font-bold text-foreground hover:text-brand-ink"
-            >
-              {entry.user.displayName}
-            </Link>
-            <EarnedBadges badges={entry.authorBadges} compact />
-          </div>
-          <span className="truncate text-xs text-muted-foreground">
-            <time dateTime={entry.approvedAt}>{formatRelative(entry.approvedAt)}</time>
-            {" · "}
-            {entry.categoryName}
-          </span>
-        </div>
-        {entry.taskRemoved && <Badge variant="neutral">Removed task</Badge>}
-        {entry.pointsReversed ? (
-          <Badge variant="neutral">Points reversed</Badge>
-        ) : entry.points > 0 ? (
-          <Badge variant="points" className="tabular-nums">
-            +{entry.points}
-          </Badge>
-        ) : null}
-      </header>
+      <PostHeader entry={entry} />
 
-      <PhotoCarousel urls={entry.photoUrls} alt={`Photo for ${entry.taskTitle}`} />
+      <PhotoCarousel
+        urls={entry.photoUrls}
+        alt={`Photo for ${entry.taskTitle}`}
+        onOpen={openPost}
+      />
 
       {entry.textAnswer && (
-        <UserText
-          text={entry.textAnswer}
-          markdown={entry.textMarkdown}
-          className={cn(
-            "px-4 leading-relaxed text-pretty",
-            entry.photoUrls.length === 0 ? "pt-2 text-lg sm:text-xl md:text-2xl" : "pt-1 text-base",
+        <>
+          <div
+            ref={text}
+            className={cn(
+              "px-4 leading-relaxed text-pretty",
+              entry.textMarkdown ? "max-h-[6lh] overflow-hidden" : "line-clamp-4",
+              entry.textMarkdown &&
+                clamped &&
+                "[mask-image:linear-gradient(to_bottom,black_60%,transparent)]",
+              entry.photoUrls.length === 0
+                ? "pt-2 text-lg sm:text-xl md:text-2xl"
+                : "pt-1 text-base",
+            )}
+          >
+            <UserText text={entry.textAnswer} markdown={entry.textMarkdown} />
+          </div>
+          {clamped && (
+            <button
+              type="button"
+              onClick={() => {
+                openPost();
+              }}
+              className="self-start px-4 text-sm font-bold text-muted-foreground hover:text-foreground"
+            >
+              more
+            </button>
           )}
-        />
+        </>
       )}
 
       <p
@@ -82,17 +92,22 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
           "pt-1 pb-4 text-sm": !entry.textAnswer && entry.photoUrls.length > 0,
         })}
       >
-        Completed <span className="font-bold text-brand-ink">{entry.taskTitle}</span>
+        Completed{" "}
+        <button
+          type="button"
+          onClick={() => {
+            openPost();
+          }}
+          aria-haspopup="dialog"
+          className="text-left font-bold text-brand-ink hover:underline"
+        >
+          {entry.taskTitle}
+        </button>
         {entry.taskRemoved ? " (removed)" : ""}.
       </p>
 
       <div className="flex items-center gap-1 px-2 pt-1">
-        <LikeButton
-          proofId={entry.proofId}
-          liked={entry.likedByUser}
-          count={entry.likeCount}
-          disabled={!canReact}
-        />
+        <LikeButton like={like} disabled={!canReact} />
         <Button variant="ghost" aria-expanded={commentSection.open} onClick={commentSection.toggle}>
           <MessageCircle aria-hidden="true" className="size-5!" />
           <span className="tabular-nums">{commentSection.count}</span>
@@ -105,6 +120,16 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
           <CommentSection proofId={entry.proofId} canReact={canReact} section={commentSection} />
         </div>
       )}
+      <PostDialog
+        entry={entry}
+        canReact={canReact}
+        open={postOpen}
+        onOpenChange={setPostOpen}
+        like={like}
+        comments={commentSection}
+        photo={photo}
+        onPhotoChange={setPhoto}
+      />
     </Card>
   );
 };

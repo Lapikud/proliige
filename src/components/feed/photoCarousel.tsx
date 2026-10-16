@@ -1,21 +1,19 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { type FC, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
-import { Button } from "../ui/button";
-import { Dialog, DialogClose, DialogContent, DialogTitle } from "../ui/dialog";
+import { CarouselButton } from "./photoViewer";
 
 interface Props {
   urls: ReadonlyArray<string>;
   alt: string;
+  onOpen: (index: number) => void;
 }
 
-export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
+export const PhotoCarousel: FC<Props> = ({ urls, alt, onOpen }) => {
   const track = useRef<HTMLUListElement>(null);
   const [current, setCurrent] = useState(0);
-  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
   if (urls.length === 0) {
     return null;
@@ -47,9 +45,9 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
           <li key={url} className="w-full shrink-0 snap-center">
             <button
               type="button"
-              aria-label={`View photo full screen (${index + 1} of ${urls.length})`}
+              aria-label={`Open photo ${index + 1} of ${urls.length}`}
               onClick={() => {
-                setSelectedPhoto(index);
+                onOpen(index);
               }}
               className="block w-full bg-photo-placeholder focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
             >
@@ -65,37 +63,6 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
           </li>
         ))}
       </ul>
-
-      <Dialog
-        open={selectedPhoto !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedPhoto(null);
-        }}
-      >
-        <DialogContent className="h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-none overflow-hidden border-0 bg-black p-2 text-white shadow-none sm:h-[calc(100dvh-3rem)] sm:w-[calc(100%-3rem)]">
-          <DialogTitle className="sr-only">{alt}</DialogTitle>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              aria-label="Close photo"
-              className="absolute top-2 right-2 z-10 size-11 p-0 text-white hover:bg-white/20 hover:text-white"
-            >
-              <X aria-hidden="true" className="size-5" />
-            </Button>
-          </DialogClose>
-          {selectedPhoto !== null && (
-            <Image
-              src={urls[selectedPhoto] ?? urls[0] ?? ""}
-              alt={`${alt} (${selectedPhoto + 1} of ${urls.length})`}
-              width={1440}
-              height={1440}
-              unoptimized
-              className="h-full w-full object-contain"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       {urls.length > 1 && (
         <>
@@ -137,31 +104,5 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
         </>
       )}
     </div>
-  );
-};
-
-interface CarouselButtonProps {
-  label: string;
-  side: "left" | "right";
-  onClick: () => void;
-}
-
-const CarouselButton: FC<CarouselButtonProps> = ({ label, side, onClick }) => {
-  const Icon = side === "left" ? ChevronLeft : ChevronRight;
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className={cn(
-        "absolute top-1/2 flex size-11 -translate-y-1/2 items-center justify-center",
-        side === "left" ? "left-1" : "right-1",
-      )}
-    >
-      <span className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md">
-        <Icon aria-hidden="true" className="size-5" />
-      </span>
-    </button>
   );
 };
