@@ -16,6 +16,7 @@ const isAdmin = (user: User | null): boolean => hasRole(user, "admin");
 export const userCanViewLeaderboard: PublicRule = everyone;
 export const userCanViewFeed: PublicRule = everyone;
 export const userCanViewProfiles: PublicRule = everyone;
+export const userCanFindProfilesByUsername: Rule = signedIn;
 
 export const userCanReadNotifications: Rule = signedIn;
 export const userCanReactToProofs: Rule = signedIn;

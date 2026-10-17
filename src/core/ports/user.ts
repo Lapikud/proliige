@@ -13,5 +13,7 @@ export interface UserRepository {
 
   findById(id: string, options?: UserLookupOptions): Promise<User | null>;
 
+  findByUid(uid: string, options?: UserLookupOptions): Promise<User | null>;
+
   setExcluded(input: { userId: string; excluded: boolean }): Promise<User | null>;
 }

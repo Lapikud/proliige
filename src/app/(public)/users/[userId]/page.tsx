@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { FC, ReactNode } from "react";
 import { z } from "zod";
 import { SignOutButton } from "~/components/auth/signOutButton";
@@ -24,11 +24,20 @@ import { formatDate } from "~/lib/utils";
 const CHART_SIZE = 8;
 
 async function findProfile(userId: string) {
+  const viewer = await getUser();
   if (!z.uuid().safeParse(userId).success) {
+    const profile =
+      viewer === null
+        ? null
+        : await userService.findProfileByUid(viewer, userId, { includeExcluded: true });
+    if (profile !== null) {
+      permanentRedirect(`/users/${profile.id}`);
+    }
+
     return null;
   }
 
-  return userService.findProfile(await getUser(), userId, { includeExcluded: true });
+  return userService.findProfile(viewer, userId, { includeExcluded: true });
 }
 
 export async function generateMetadata({

@@ -1,22 +1,11 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { UserLookupOptions, UserRepository } from "~/core/ports/user";
-import { rolesForGroups, type User } from "~/domain/user";
+import type { User } from "~/domain/user";
 import type { Database } from "../client";
+import { findUser } from "./find";
+import { toUser } from "./map";
 import { users } from "./model";
 import { onlyRow } from "../rows";
-
-type Row = typeof users.$inferSelect;
-
-function toUser(row: Row): User {
-  return {
-    id: row.id,
-    ipaUniqueId: row.ipaUniqueId,
-    uid: row.uid,
-    displayName: row.displayName,
-    excluded: row.excluded,
-    roles: rolesForGroups(row.freeipaGroups),
-  };
-}
 
 export function createUserRepository(db: Database): UserRepository {
   return {
@@ -48,20 +37,12 @@ export function createUserRepository(db: Database): UserRepository {
       return toUser(row);
     },
 
-    async findById(id: string, options: UserLookupOptions = {}): Promise<User | null> {
-      const conditions = [eq(users.id, id)];
-      const applyPublicVisibilityFilter = options.includeExcluded !== true;
-      if (applyPublicVisibilityFilter) {
-        conditions.push(eq(users.excluded, false));
-      }
+    findById(id: string, options: UserLookupOptions = {}): Promise<User | null> {
+      return findUser(db, eq(users.id, id), options);
+    },
 
-      const [row] = await db
-        .select()
-        .from(users)
-        .where(and(...conditions))
-        .limit(1);
-
-      return row === undefined ? null : toUser(row);
+    findByUid(uid: string, options: UserLookupOptions = {}): Promise<User | null> {
+      return findUser(db, eq(users.uid, uid), options);
     },
 
     async setExcluded({ userId, excluded }) {

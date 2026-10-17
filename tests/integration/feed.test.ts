@@ -651,6 +651,14 @@ describe("user pages", () => {
     ).toEqual([proof.id]);
   });
 
+  it("finds a profile by username for signed-in people only", async () => {
+    const { alice, bob } = await seedApprovedProof();
+
+    expect(await profiles.findProfileByUid(bob, "alice")).toMatchObject({ id: alice.id });
+    expect(await profiles.findProfileByUid(bob, "nobody")).toBeNull();
+    await expect(profiles.findProfileByUid(null, "alice")).rejects.toThrow();
+  });
+
   it("shows anyone's public profile to visitors, and nothing for an unknown id", async () => {
     const { alice } = await seedApprovedProof();
 

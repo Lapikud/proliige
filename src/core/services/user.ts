@@ -1,5 +1,9 @@
 import { notFound } from "~/domain/errors";
-import { userCanExcludeOtherUsers, userCanViewProfiles } from "~/domain/rules";
+import {
+  userCanExcludeOtherUsers,
+  userCanFindProfilesByUsername,
+  userCanViewProfiles,
+} from "~/domain/rules";
 import { toProfileView, type UserProfileView } from "~/domain/user";
 import { guard } from "../guard";
 import type { UserLookupOptions, UserRepository } from "../ports/user";
@@ -18,6 +22,19 @@ export function createUserService({ users }: Deps) {
         options: UserLookupOptions = {},
       ): Promise<UserProfileView | null> => {
         const user = await users.findById(userId, options);
+
+        return user === null ? null : toProfileView(user);
+      },
+    ),
+
+    findProfileByUid: guard(
+      userCanFindProfilesByUsername,
+      async (
+        _viewer,
+        uid: string,
+        options: UserLookupOptions = {},
+      ): Promise<UserProfileView | null> => {
+        const user = await users.findByUid(uid, options);
 
         return user === null ? null : toProfileView(user);
       },
