@@ -1,6 +1,9 @@
 "use client";
 
 import { type FC, useCallback, useRef, useState } from "react";
+import { toast } from "sonner";
+import { removeTaskAction } from "~/actions/task";
+import { useAction } from "~/lib/form";
 import { Button } from "../../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../ui/dialog";
 import { EmptyState } from "../../ui/feedback";
@@ -20,12 +23,21 @@ interface Props {
 export const TaskEditorDialog: FC<Props> = ({ dialog, task, categories, onClose }) => {
   const dirty = useRef(false);
   const [pending, setPending] = useState(false);
+  const remove = useAction(removeTaskAction, {
+    onSuccess: () => {
+      dirty.current = false;
+      setPending(false);
+      onClose();
+      toast.success("Task removed. Its proofs and history were retained.");
+    },
+    onError: (message) => toast.error(message),
+  });
   const onDirtyChange = useCallback((value: boolean) => {
     dirty.current = value;
   }, []);
 
   const close = () => {
-    if (pending) return;
+    if (pending || remove.pending) return;
     if (dirty.current && !window.confirm("Discard your unsaved task changes?")) return;
     dirty.current = false;
     onClose();
@@ -53,12 +65,28 @@ export const TaskEditorDialog: FC<Props> = ({ dialog, task, categories, onClose 
               Set the task details, points, category, and completion policy.
             </DialogDescription>
           </div>
+          {dialog?.kind === "edit" && task && !task.removed && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={pending || remove.pending}
+              onClick={() => {
+                const confirmed = window.confirm(
+                  "Remove this task? Editing or archiving may be enough. Its proofs will remain, pending proofs will close, and credited points will be reversed.",
+                );
+                if (confirmed) remove.run({ taskId: task.id });
+              }}
+            >
+              Remove task
+            </Button>
+          )}
           <Button
             type="button"
             size="sm"
             variant="ghost"
             onClick={close}
-            disabled={pending}
+            disabled={pending || remove.pending}
             aria-label="Close task editor"
           >
             Close

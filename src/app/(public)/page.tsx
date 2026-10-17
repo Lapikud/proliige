@@ -4,9 +4,9 @@ import { CategoryFilter } from "~/components/feed/categoryFilter";
 import { FeedList } from "~/components/feed/list";
 import { toFeedEntryView } from "~/components/feed/model";
 import { LeaderboardPanel } from "~/components/leaderboard/panel";
-import { leaderboardPeriod, PeriodToggle } from "~/components/leaderboard/periodToggle";
+import { leaderboardPeriod } from "~/components/leaderboard/periodToggle";
 import { LeaderboardStories } from "~/components/leaderboard/stories";
-import { encodeFeedCursor } from "~/domain/feed";
+import { encodeFeedCursor, recognitionFilter } from "~/domain/feed";
 import { userCanReactToProofs } from "~/domain/rules";
 import { categoryService, feedService, leaderboardService } from "~/infra";
 import { getUser } from "~/lib/user";
@@ -22,7 +22,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
   const keepPeriod = period === "month" ? { period } : undefined;
   const user = await getUser();
 
-  const [page, ranking, categories] = await Promise.all([
+  const [page, ranking, categories, [leader]] = await Promise.all([
     feedService.listFeed(user, {
       cursor: null,
       categoryId,
@@ -32,7 +32,9 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
       since: period === "month" ? startOfMonthInTallinn() : null,
     }),
     categoryService.listFeedCategories(user),
+    leaderboardService.listLeaderboard(user, { limit: 1 }),
   ]);
+  const leaderId = leader && leader.totalPoints > 0 ? leader.user.id : null;
 
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:gap-10">
@@ -43,6 +45,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           <LeaderboardPanel
             rows={ranking}
             currentUserId={user?.id ?? null}
+            leaderId={leaderId}
             period={period}
             {...(keepCategory ? { keep: keepCategory } : {})}
           />
@@ -51,11 +54,15 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
 
       <section
         aria-label="Feed"
-        className="mx-auto flex w-full max-w-xl min-w-0 flex-col gap-5 lg:col-span-8"
+        className="mx-auto flex w-full max-w-xl min-w-0 flex-col gap-2 lg:col-span-8 lg:gap-5"
       >
-        <div className="flex flex-col gap-3 lg:hidden">
-          <PeriodToggle current={period} {...(keepCategory ? { keep: keepCategory } : {})} />
-          <LeaderboardStories rows={ranking} />
+        <div className="lg:hidden">
+          <LeaderboardStories
+            rows={ranking}
+            leaderId={leaderId}
+            period={period}
+            {...(keepCategory ? { keep: keepCategory } : {})}
+          />
         </div>
         <CategoryFilter
           categories={categories}
@@ -67,8 +74,13 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           initialEntries={page.entries.map(toFeedEntryView)}
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
           canReact={userCanReactToProofs(user)}
+          leaderId={leaderId}
           categoryId={categoryId}
-          categoryName={categories.find((category) => category.id === categoryId)?.name ?? null}
+          categoryName={
+            categoryId === recognitionFilter
+              ? "Recognitions"
+              : (categories.find((category) => category.id === categoryId)?.name ?? null)
+          }
         />
       </section>
     </div>

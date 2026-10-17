@@ -44,7 +44,7 @@ async function seed(textRequired: boolean) {
     ipaUniqueId: "ipa-alice",
     uid: "alice",
     displayName: "Alice",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const task = await tasks.create({
     title: "Write a blog post",
@@ -90,23 +90,24 @@ describe("text answers", () => {
     expect((await proofs.findById(proof.id))?.textAnswer).toBe("https://example.com/post");
   });
 
-  it("drops an answer sent to a task that does not ask for one", async () => {
+  it("keeps an optional answer on a task that does not require one", async () => {
     const { task, alice } = await seed(false);
 
     const proof = await proofService.submitProof(alice, {
       taskId: task.id,
-      textAnswer: "unexpected",
+      textAnswer: "optional",
       objectKeys: [],
     });
 
-    expect((await proofs.findById(proof.id))?.textAnswer).toBeNull();
+    expect((await proofs.findById(proof.id))?.textAnswer).toBe("optional");
   });
 
   it("shows the answer on the feed once approved", async () => {
     const { task, alice } = await seed(true);
     const proof = await proofService.submitProof(alice, {
       taskId: task.id,
-      textAnswer: "https://example.com/post",
+      textAnswer: "**Done**",
+      textMarkdown: true,
       objectKeys: [],
     });
     await proofs.approve({
@@ -116,6 +117,9 @@ describe("text answers", () => {
     });
 
     const [entry] = (await feed.listFeed(null, { cursor: null })).entries;
-    expect(entry?.textAnswer).toBe("https://example.com/post");
+    expect(entry).toMatchObject({
+      textAnswer: "**Done**",
+      textMarkdown: true,
+    });
   });
 });

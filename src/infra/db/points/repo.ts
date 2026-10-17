@@ -13,7 +13,8 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
           id: users.id,
           displayName: users.displayName,
           totalPoints,
-          approvedProofs: count(pointsLedger.id),
+          proofEntries: count(pointsLedger.proofId),
+          reversals: count(pointsLedger.reversalOf),
         })
         .from(pointsLedger)
         .innerJoin(users, eq(users.id, pointsLedger.userId))
@@ -32,7 +33,7 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
           displayName: row.displayName,
         },
         totalPoints: row.totalPoints,
-        approvedProofs: row.approvedProofs,
+        approvedProofs: row.proofEntries - row.reversals,
       }));
     },
   };

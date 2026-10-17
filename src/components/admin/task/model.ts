@@ -13,6 +13,9 @@ export interface TaskView {
   photoInstructions: string | null;
   textRequired: boolean;
   archived: boolean;
+  removed: boolean;
+  suggestedBy: string | null;
+  suggestionPending: boolean;
 }
 
 export interface CategoryView {

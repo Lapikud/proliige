@@ -12,7 +12,15 @@ import { onlyRow } from "../rows";
 
 export function createProofSubmit(db: Database): Pick<ProofRepository, "createPendingProof"> {
   return {
-    async createPendingProof({ taskId, userId, photos, textAnswer = null, reviewerIds = [], now }) {
+    async createPendingProof({
+      taskId,
+      userId,
+      photos,
+      textAnswer = null,
+      textMarkdown = false,
+      reviewerIds = [],
+      now,
+    }) {
       return db.transaction(async (tx) => {
         const [task] = await tx
           .select()
@@ -24,6 +32,8 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
         if (task === undefined) {
           throw notFound("That task does not exist.");
         }
+        if (task.removedAt !== null)
+          throw conflict("This task has been removed and no longer accepts proof.");
 
         const snapshots = await tx
           .select({
@@ -36,7 +46,7 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
         // Rechecked here because the task row is locked, so two submissions cannot both pass.
         const refusal = findRefusal({
           policy: task.policy,
-          taskArchived: task.archivedAt !== null,
+          taskArchived: task.archivedAt !== null || task.suggestionPending,
           cooldownSeconds: task.cooldownSeconds,
           now,
           ...standingOf(snapshots, userId),
@@ -58,7 +68,8 @@ export function createProofSubmit(db: Database): Pick<ProofRepository, "createPe
                 userId,
                 policy: task.policy,
                 status: "pending",
-                textAnswer: task.textRequired ? textAnswer : null,
+                textAnswer,
+                textMarkdown: textAnswer !== null && textMarkdown,
                 submittedAt: now,
               })
               .returning(),

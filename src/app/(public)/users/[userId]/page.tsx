@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { FC, ReactNode } from "react";
 import { z } from "zod";
 import { SignOutButton } from "~/components/auth/signOutButton";
+import { EarnedBadges } from "~/components/badges/earnedBadges";
 import { DesktopNotifications } from "~/components/notifications/desktop";
 import { CompletedTasks } from "~/components/profile/completedTasks";
 import { ExclusionControl } from "~/components/profile/exclusionControl";
@@ -13,20 +14,32 @@ import { UserPicker } from "~/components/profile/userPicker";
 import { UserAvatar } from "~/components/ui/avatar";
 import { Card, CardContent } from "~/components/ui/card";
 import { Page } from "~/components/ui/page";
+import { pointsConfig } from "~/config/points";
 import { env } from "~/env.config";
 import type { LeaderboardRow } from "~/domain/points";
-import { feedService, leaderboardService, userService } from "~/infra";
+import { feedService, leaderboardService, recognitionService, userService } from "~/infra";
 import { getUser } from "~/lib/user";
 import { formatDate } from "~/lib/utils";
 
 const CHART_SIZE = 8;
 
 async function findProfile(userId: string) {
+  const viewer = await getUser();
   if (!z.uuid().safeParse(userId).success) {
+    const profile =
+      viewer === null
+        ? null
+        : await userService.findProfileByUid(viewer, userId.toLowerCase(), {
+            includeExcluded: true,
+          });
+    if (profile !== null) {
+      redirect(`/users/${profile.id}`);
+    }
+
     return null;
   }
 
-  return userService.findProfile(await getUser(), userId, { includeExcluded: true });
+  return userService.findProfile(viewer, userId, { includeExcluded: true });
 }
 
 export async function generateMetadata({
@@ -45,17 +58,20 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
   }
 
   const viewer = await getUser();
-  const [ranking, completed] = await Promise.all([
+  const [ranking, completed, badges] = await Promise.all([
     leaderboardService.listLeaderboard(viewer, { limit: 1000 }),
     feedService.listFeed(viewer, {
       cursor: null,
       authorId: userId,
       includeExcludedAuthor: true,
     }),
+    recognitionService.listEarnedBadges(viewer, userId),
   ]);
   const rank = ranking.findIndex((row) => row.user.id === userId) + 1;
   const standing = ranking[rank - 1];
   const isOwnProfile = viewer?.id === profile.id;
+  const crowned = rank === 1 && (standing?.totalPoints ?? 0) > 0;
+  const points = standing?.totalPoints ?? 0;
   const ipaUrl = new URL(`https://${env.FREEIPA_SERVER}`);
   const people = ranking.map((row) => row.user);
   const profileCanAppearInPicker = !profile.excluded;
@@ -80,21 +96,63 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
           <UserAvatar
             name={profile.displayName}
             className="size-14 text-lg ring-2 ring-foreground"
+            crowned={crowned}
           />
         </div>
       }
     >
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
+          {badges.length > 0 && (
+            <Card>
+              <CardContent className="flex flex-col gap-3">
+                <h2 className="text-base font-black">Badges</h2>
+                <EarnedBadges badges={badges} />
+              </CardContent>
+            </Card>
+          )}
           {!profile.excluded && (
             <dl className="grid grid-cols-3 gap-3">
               <Stat label="Rank" highlight>
                 {rank > 0 ? `#${String(rank)}` : "-"}
                 <span className="text-xs font-normal"> of {ranking.length}</span>
               </Stat>
-              <Stat label="Points">{standing?.totalPoints ?? 0}</Stat>
+              <Stat label="Points">{points}</Stat>
               <Stat label="Tasks done">{standing?.approvedProofs ?? 0}</Stat>
             </dl>
+          )}
+
+          {!profile.excluded && (
+            <Card>
+              <CardContent className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-base font-black">Goal</h2>
+                  <span className="font-mono text-sm tabular-nums">
+                    {points} / {pointsConfig.goal}
+                  </span>
+                </div>
+                <div
+                  role="progressbar"
+                  aria-label={`Points toward the ${String(pointsConfig.goal)}-point goal`}
+                  aria-valuemin={0}
+                  aria-valuemax={pointsConfig.goal}
+                  aria-valuenow={Math.min(points, pointsConfig.goal)}
+                  className="h-3 overflow-hidden rounded-full bg-muted"
+                >
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{
+                      width: `${String(Math.min(100, (points / pointsConfig.goal) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {points >= pointsConfig.goal
+                    ? "Goal reached."
+                    : `${String(pointsConfig.goal - points)} points to go.`}
+                </p>
+              </CardContent>
+            </Card>
           )}
 
           {!profile.excluded && (
@@ -117,7 +175,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
           )}
           <Card>
             <CardContent className="flex flex-col gap-2">
-              <h2 className="text-base font-black">Completed tasks</h2>
+              <h2 className="text-base font-black">History</h2>
               <CompletedTasks entries={completed.entries} />
             </CardContent>
           </Card>

@@ -12,6 +12,7 @@ export function toProof(row: ProofRow): Proof {
     userId: row.userId,
     status: row.status,
     textAnswer: row.textAnswer,
+    textMarkdown: row.textMarkdown,
     rejectionReason: row.rejectionReason,
     submittedAt: row.submittedAt,
     reviewedAt: row.reviewedAt,

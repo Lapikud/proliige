@@ -1,11 +1,28 @@
 import type { PublicUserView } from "./user";
 
+export const recognitionFilter = "recognitions";
+
+export interface PostRef {
+  readonly kind: "proof" | "recognition";
+  readonly id: string;
+}
+
+export interface EarnedBadge {
+  readonly id: string;
+  readonly label: string;
+  readonly imageUrl: string | null;
+}
+
 export interface FeedEntry {
+  readonly kind: "proof" | "recognition";
   readonly proofId: string;
   readonly taskTitle: string;
   readonly textAnswer: string | null;
+  readonly textMarkdown: boolean;
   readonly categoryName: string;
   readonly points: number;
+  readonly taskRemoved: boolean;
+  readonly pointsReversed: boolean;
   readonly user: PublicUserView;
   readonly approvedAt: Date;
   readonly photoUrls: ReadonlyArray<string>;
@@ -13,6 +30,11 @@ export interface FeedEntry {
   readonly commentCount: number;
 
   readonly likedByUser: boolean;
+  readonly recognitionDescription?: string;
+  readonly reviewer?: PublicUserView;
+  readonly badges?: ReadonlyArray<EarnedBadge>;
+  readonly authorBadges: ReadonlyArray<EarnedBadge>;
+  readonly achievementLinks?: ReadonlyArray<{ readonly title: string; readonly url: string }>;
 }
 
 export interface FeedComment {

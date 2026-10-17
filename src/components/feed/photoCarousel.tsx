@@ -1,16 +1,17 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { type FC, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
+import { CarouselButton } from "./photoViewer";
 
 interface Props {
   urls: ReadonlyArray<string>;
   alt: string;
+  onOpen: (index: number) => void;
 }
 
-export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
+export const PhotoCarousel: FC<Props> = ({ urls, alt, onOpen }) => {
   const track = useRef<HTMLUListElement>(null);
   const [current, setCurrent] = useState(0);
 
@@ -42,7 +43,14 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
       >
         {urls.map((url, index) => (
           <li key={url} className="w-full shrink-0 snap-center">
-            <a href={url} target="_blank" rel="noreferrer" className="block bg-photo-placeholder">
+            <button
+              type="button"
+              aria-label={`Open photo ${index + 1} of ${urls.length}`}
+              onClick={() => {
+                onOpen(index);
+              }}
+              className="block w-full bg-photo-placeholder focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+            >
               <Image
                 src={url}
                 alt={`${alt} (${index + 1} of ${urls.length})`}
@@ -51,7 +59,7 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
                 unoptimized
                 className="aspect-square w-full object-cover"
               />
-            </a>
+            </button>
           </li>
         ))}
       </ul>
@@ -96,31 +104,5 @@ export const PhotoCarousel: FC<Props> = ({ urls, alt }) => {
         </>
       )}
     </div>
-  );
-};
-
-interface CarouselButtonProps {
-  label: string;
-  side: "left" | "right";
-  onClick: () => void;
-}
-
-const CarouselButton: FC<CarouselButtonProps> = ({ label, side, onClick }) => {
-  const Icon = side === "left" ? ChevronLeft : ChevronRight;
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className={cn(
-        "absolute top-1/2 flex size-11 -translate-y-1/2 items-center justify-center",
-        side === "left" ? "left-1" : "right-1",
-      )}
-    >
-      <span className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md">
-        <Icon aria-hidden="true" className="size-5" />
-      </span>
-    </button>
   );
 };

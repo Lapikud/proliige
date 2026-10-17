@@ -4,6 +4,8 @@ export * from "./feed/model";
 export * from "./user/model";
 export * from "./notification/model";
 export * from "./points/model";
+export * from "./recognition/model";
+export * from "./recognition/badgeModel";
 export * from "./task/model";
 export * from "./push/model";
 export * from "./backup/model";

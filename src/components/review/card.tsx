@@ -13,6 +13,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { ErrorState } from "../ui/feedback";
 import { Input, Label } from "../ui/formControls";
+import { UserText } from "../ui/markdown";
 import type { PendingProofView } from "./model";
 import { RejectForm } from "./rejectForm";
 import { ReviewerList } from "./reviewers";
@@ -73,9 +74,11 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
         )}
 
         {proof.textAnswer && (
-          <blockquote className="rounded-xl border border-border bg-muted px-4 py-3 text-sm leading-relaxed break-words whitespace-pre-wrap">
-            {proof.textAnswer}
-          </blockquote>
+          <UserText
+            text={proof.textAnswer}
+            markdown={proof.textMarkdown}
+            className="rounded-xl border border-border bg-muted px-4 py-3 text-sm leading-relaxed"
+          />
         )}
 
         <PhotoGallery

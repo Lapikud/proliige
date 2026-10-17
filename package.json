@@ -16,9 +16,11 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "garage:setup": "bash scripts/garage/setup.sh",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "drizzle-kit generate --name",
+    "db:check": "bash scripts/db/check-migrations.sh",
+    "db:migrate": "pnpm db:check && drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx --env-file-if-exists=.env scripts/seed/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1134.0",

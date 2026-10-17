@@ -9,6 +9,7 @@ import { createProofRepository } from "~/infra/db/proof/repo";
 import { createFeedRepository } from "~/infra/db/feed/repo";
 import { createCommentRepository } from "~/infra/db/feed/comment";
 import { createLikeRepository } from "~/infra/db/feed/like";
+import { createRecognitionRepository } from "~/infra/db/recognition/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { createLeaderboardRepository } from "~/infra/db/points/repo";
 import { createTaskRepository } from "~/infra/db/task/repo";
@@ -23,6 +24,7 @@ const proofs = createProofRepository(db);
 const likeRepository = createLikeRepository(db);
 const commentRepository = createCommentRepository(db);
 const feedRepo = createFeedRepository(db);
+const recognitions = createRecognitionRepository(db, ["members", "pixels"]);
 const leaderboard = createLeaderboardRepository(db);
 const feed = createFeedService({ feed: feedRepo });
 const profiles = createUserService({ users });
@@ -55,13 +57,13 @@ async function seedApprovedProof(clockAt = new Date("2026-09-18T12:00:00Z")) {
     ipaUniqueId: "ipa-alice",
     uid: "alice",
     displayName: "Alice",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const bobUser = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-bob",
     uid: "bob",
     displayName: "Bob",
-    groups: ["members"],
+    groups: ["pixels"],
   });
   const bossUser = await users.upsertFromIdentity({
     ipaUniqueId: "ipa-boss",
@@ -100,11 +102,13 @@ function service(clock = fixedClock(new Date("2026-09-18T12:00:00Z"))) {
     likes: createLikeService({
       likes: likeRepository,
       proofs,
+      recognitions,
       clock,
     }),
     comments: createCommentService({
       comments: commentRepository,
       proofs,
+      recognitions,
       notifications,
       clock,
     }),
@@ -422,7 +426,12 @@ describe("comment moderation", () => {
     });
     await comments.deleteComment(bob, comment.id);
 
-    const stored = first(await commentRepository.listComments(proof.id));
+    const stored = first(
+      await commentRepository.listComments({
+        kind: "proof",
+        id: proof.id,
+      }),
+    );
     expect(stored.deletedAt).not.toBeNull();
     expect(stored.body).toBe("[comment removed]");
   });
@@ -484,6 +493,38 @@ describe("comment moderation", () => {
 });
 
 describe("public feed reading", () => {
+  it("retains removed-task feed history and reflects the point reversal", async () => {
+    const { task, admin, alice } = await seedApprovedProof(new Date("2026-09-18T12:00:00Z"));
+    await tasks.removeWithHistory({
+      taskId: task.id,
+      removedBy: admin.id,
+      now: new Date("2026-10-16T12:00:00Z"),
+    });
+
+    const entry = (await feed.listFeed(null, { cursor: null })).entries[0];
+    expect(entry).toMatchObject({
+      taskRemoved: true,
+      pointsReversed: true,
+      points: 10,
+      taskTitle: task.title,
+    });
+    expect(await leaderboard.leaderboard()).toMatchObject([
+      {
+        user: { id: alice.id },
+        totalPoints: 0,
+        approvedProofs: 1,
+      },
+    ]);
+    expect(
+      await leaderboard.leaderboard({ since: new Date("2026-09-01T00:00:00Z") }),
+    ).toMatchObject([
+      {
+        totalPoints: 0,
+        approvedProofs: 1,
+      },
+    ]);
+  });
+
   it("is readable without authentication", async () => {
     const { proof, bob } = await seedApprovedProof();
     const { likes, comments } = service();
@@ -608,6 +649,14 @@ describe("user pages", () => {
         })
       ).entries.map((entry) => entry.proofId),
     ).toEqual([proof.id]);
+  });
+
+  it("finds a profile by username for signed-in people only", async () => {
+    const { alice, bob } = await seedApprovedProof();
+
+    expect(await profiles.findProfileByUid(bob, "alice")).toMatchObject({ id: alice.id });
+    expect(await profiles.findProfileByUid(bob, "nobody")).toBeNull();
+    await expect(profiles.findProfileByUid(null, "alice")).rejects.toThrow();
   });
 
   it("shows anyone's public profile to visitors, and nothing for an unknown id", async () => {

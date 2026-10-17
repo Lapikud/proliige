@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { ProofRepository, ProofWithContext } from "~/core/ports/proof";
 import { standingOf } from "~/domain/completionPolicy";
@@ -7,6 +7,7 @@ import type { PublicUserView } from "~/domain/user";
 import { categories } from "../category/model";
 import type { Database } from "../client";
 import { users } from "../user/model";
+import { pointsLedger } from "../points/model";
 import { tasks } from "../task/model";
 import { proofPhotos, proofReviewRequests, proofs } from "./model";
 import { toProof, toPhoto, type ProofRow } from "./map";
@@ -96,15 +97,24 @@ export function createProofRead(
 }
 
 const reviewer = alias(users, "reviewer");
+const remover = alias(users, "task_remover");
+const reversal = alias(pointsLedger, "reversal");
 
 function selectWithContext(db: Database) {
   return db
     .select({
       proof: proofs,
       taskTitle: tasks.title,
+      proofPolicy: proofs.policy,
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
+      ledgerPoints: pointsLedger.points,
       taskPoints: tasks.points,
+      taskRemoved: tasks.removedAt,
+      taskRemovedByName: remover.displayName,
+      pointsAwardedAt: pointsLedger.awardedAt,
+      pointsReversedAt: reversal.createdAt,
+      reversalId: reversal.id,
       categoryName: categories.name,
       userDisplayName: users.displayName,
       reviewedByName: reviewer.displayName,
@@ -113,15 +123,28 @@ function selectWithContext(db: Database) {
     .innerJoin(tasks, eq(tasks.id, proofs.taskId))
     .innerJoin(categories, eq(categories.id, tasks.categoryId))
     .innerJoin(users, eq(users.id, proofs.userId))
-    .leftJoin(reviewer, eq(reviewer.id, proofs.reviewedBy));
+    .leftJoin(reviewer, eq(reviewer.id, proofs.reviewedBy))
+    .leftJoin(remover, eq(remover.id, tasks.removedBy))
+    .leftJoin(
+      pointsLedger,
+      and(eq(pointsLedger.proofId, proofs.id), isNull(pointsLedger.reversalOf)),
+    )
+    .leftJoin(reversal, eq(reversal.reversalOf, pointsLedger.id));
 }
 
 interface ContextRow {
   proof: ProofRow;
   taskTitle: string;
+  proofPolicy: ProofRow["policy"];
   taskDescription: string;
   taskCreatedBy: string | null;
+  ledgerPoints: number | null;
   taskPoints: number;
+  taskRemoved: Date | null;
+  taskRemovedByName: string | null;
+  pointsAwardedAt: Date | null;
+  pointsReversedAt: Date | null;
+  reversalId: string | null;
   categoryName: string;
   userDisplayName: string;
   reviewedByName: string | null;
@@ -165,9 +188,16 @@ async function attachDetails(
   return rows.map((row) => ({
     proof: toProof(row.proof),
     taskTitle: row.taskTitle,
+    proofPolicy: row.proofPolicy,
     taskDescription: row.taskDescription,
     ownTask: row.taskCreatedBy !== null,
-    taskPoints: row.taskPoints,
+    taskPoints: row.ledgerPoints ?? row.taskPoints,
+    taskRemoved: row.taskRemoved !== null,
+    taskRemovedAt: row.taskRemoved,
+    taskRemovedByName: row.taskRemovedByName,
+    pointsReversed: row.reversalId !== null && (row.ledgerPoints ?? 0) > 0,
+    pointsAwardedAt: row.pointsAwardedAt,
+    pointsReversedAt: row.pointsReversedAt,
     categoryName: row.categoryName,
     userDisplayName: row.userDisplayName,
     photos: byProof.get(row.proof.id) ?? [],

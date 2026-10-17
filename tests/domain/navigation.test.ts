@@ -14,6 +14,7 @@ const person = (roles: User["roles"]): User => ({
 const visitor = null;
 const ipauser = person([]);
 const member = person(["member"]);
+const pixel = person(["member", "pixel"]);
 const admin = person(["admin"]);
 
 const links = (user: User | null, where: "desktop" | "mobile") =>
@@ -25,14 +26,15 @@ describe("navItemsFor", () => {
   it.each([
     ["a visitor", visitor, ["/", "/login"]],
     ["a signed-in account in no group", ipauser, ["/", "/users/u1"]],
-    ["a member", member, ["/", "/tasks", "/proofs", "/users/u1"]],
+    ["a member", member, ["/", "/tasks/suggest", "/users/u1"]],
+    ["a pixel", pixel, ["/", "/tasks", "/proofs", "/users/u1"]],
     ["an admin", admin, ["/", "/admin/review", "/admin/tasks", "/users/u1"]],
   ] as const)("gives %s their phone tabs", (_who, user, expected) => {
     expect(links(user, "mobile")).toEqual(expected);
   });
 
   it("keeps the phone tab bar to five tabs or fewer for every role", () => {
-    for (const user of [visitor, ipauser, member, admin]) {
+    for (const user of [visitor, ipauser, member, pixel, admin]) {
       expect(links(user, "mobile").length).toBeLessThanOrEqual(5);
     }
   });
@@ -50,7 +52,8 @@ describe("navItemsFor", () => {
 describe("startPageFor", () => {
   it.each([
     ["an admin", admin, "/admin/review"],
-    ["a member", member, "/tasks"],
+    ["a member", member, "/"],
+    ["a pixel", pixel, "/tasks"],
     ["a signed-in account in no group", ipauser, "/"],
   ] as const)("sends %s to the page their role is for", (_who, user, expected) => {
     expect(startPageFor(user)).toBe(expected);

@@ -9,6 +9,7 @@ import { createLikeService } from "~/core/services/like";
 import { createNotificationService } from "~/core/services/notification";
 import { createPhotoService } from "~/core/services/photo";
 import { createProofService } from "~/core/services/proof";
+import { createRecognitionService } from "~/core/services/recognition";
 import { createTaskService } from "~/core/services/task";
 import { createUserService } from "~/core/services/user";
 import { accessConfig } from "~/config/access";
@@ -17,6 +18,7 @@ import { env, garageEnv } from "~/env.config";
 import { type ClockPort, systemClock } from "~/core/ports/clock";
 import type { ObjectStoragePort } from "~/core/ports/objectStorage";
 import { createFreeipaAuthentication } from "./auth/freeipa";
+import { createSeedAuthentication } from "./auth/seed";
 import { createCookieSession } from "./auth/session";
 import { createCategoryRepository } from "./db/category/repo";
 import { getDatabase } from "./db/client";
@@ -28,6 +30,7 @@ import { createUserRepository } from "./db/user/repo";
 import { createNotificationAdapter } from "./db/notification/repo";
 import { createLeaderboardRepository } from "./db/points/repo";
 import { createProofRepository } from "./db/proof/repo";
+import { createRecognitionRepository } from "./db/recognition/repo";
 import { createTaskRepository } from "./db/task/repo";
 import { createGarageObjectStorage } from "./storage/garage";
 import { createMemoryObjectStorage } from "./storage/memory";
@@ -96,6 +99,7 @@ const userRepository = createUserRepository(db);
 const categoryRepository = createCategoryRepository(db);
 const taskRepository = createTaskRepository(db);
 const proofRepository = createProofRepository(db);
+const recognitionRepository = createRecognitionRepository(db, accessConfig.pixelGroups);
 const leaderboardRepository = createLeaderboardRepository(db);
 const feedRepository = createFeedRepository(db);
 const likeRepository = createLikeRepository(db);
@@ -106,7 +110,8 @@ const push: PushPort = webPush ?? disabledPush;
 const notificationPort = withPush(createNotificationAdapter(db), push);
 const objectStorage = objectStorageFor(env);
 const session = createCookieSession(userRepository);
-const authentication = createFreeipaAuthentication();
+const authentication =
+  env.AUTH_DRIVER === "seed" ? createSeedAuthentication(db) : createFreeipaAuthentication();
 const clock: ClockPort = systemClock;
 const photoBackupLog = createPhotoBackupLog(db);
 const backupDestination = backupDestinationFor(env);
@@ -117,13 +122,21 @@ export const authService = createAuthService({
   users: userRepository,
 });
 
-export const taskService = createTaskService({ tasks: taskRepository });
+export const taskService = createTaskService({
+  tasks: taskRepository,
+  clock,
+});
 
 export const categoryService = createCategoryService({ categories: categoryRepository });
 
 export const photoService = createPhotoService({
   storage: objectStorage,
   proofs: proofRepository,
+});
+
+export const recognitionService = createRecognitionService({
+  recognitions: recognitionRepository,
+  clock,
 });
 
 export const proofService = createProofService({
@@ -142,6 +155,7 @@ export const leaderboardService = createLeaderboardService({ leaderboard: leader
 export const commentService = createCommentService({
   comments: commentRepository,
   proofs: proofRepository,
+  recognitions: recognitionRepository,
   notifications: notificationPort,
   clock,
 });
@@ -149,6 +163,7 @@ export const commentService = createCommentService({
 export const likeService = createLikeService({
   likes: likeRepository,
   proofs: proofRepository,
+  recognitions: recognitionRepository,
   clock,
 });
 

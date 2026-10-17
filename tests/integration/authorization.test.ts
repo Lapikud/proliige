@@ -19,7 +19,10 @@ const proofs = createProofRepository(db);
 const leaderboard = createLeaderboardRepository(db);
 
 const categoryService = createCategoryService({ categories });
-const taskService = createTaskService({ tasks });
+const taskService = createTaskService({
+  tasks,
+  clock: { now: () => new Date() },
+});
 const proofService = createProofService({
   proofs,
   tasks,
@@ -160,6 +163,9 @@ describe("task and category management is admin-only", () => {
       code: "FORBIDDEN",
     });
     await expect(taskService.archiveTask(alice, task.id, true)).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(taskService.removeTask(alice, task.id)).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
   });

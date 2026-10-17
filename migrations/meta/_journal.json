@@ -29,6 +29,27 @@
       "when": 1792052207229,
       "tag": "0003_sloppy_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792192451338,
+      "tag": "0004_task_removal",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792192481426,
+      "tag": "0005_recognitions_and_markdown",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792193990692,
+      "tag": "0006_task_suggestions",
+      "breakpoints": true
     }
   ]
 }

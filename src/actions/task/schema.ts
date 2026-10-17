@@ -3,14 +3,24 @@ import type { TaskInput } from "~/core/services/task";
 import { taskPolicies } from "~/domain/task";
 
 export const taskSchema = z.object({
-  title: z.string().trim().min(1, "A task needs a title.").max(120),
-  description: z.string().trim().max(2000),
+  title: z
+    .string()
+    .trim()
+    .min(1, "A task needs a title.")
+    .max(120, "Keep the title under 120 characters."),
+  description: z.string().trim().max(2000, "Keep the description under 2000 characters."),
   categoryId: z.string().min(1, "Pick a category."),
-  points: z.number("Enter a number.").int().min(0, "Points cannot be negative."),
-  policy: z.enum(taskPolicies),
-  cooldownSeconds: z.number("Enter a number.").int().min(0, "Cooldown cannot be negative."),
+  points: z
+    .number("Enter a number.")
+    .int("Points must be a whole number.")
+    .min(0, "Points cannot be negative."),
+  policy: z.enum(taskPolicies, "Pick how often the task can be done."),
+  cooldownSeconds: z
+    .number("Enter a duration like 2m or 1d 4h.")
+    .int("Enter a duration like 2m or 1d 4h.")
+    .min(0, "Cooldown cannot be negative."),
   photoRequired: z.boolean(),
-  photoInstructions: z.string().trim().max(200),
+  photoInstructions: z.string().trim().max(200, "Keep photo instructions under 200 characters."),
   textRequired: z.boolean(),
 }) satisfies z.ZodType<TaskInput>;
 
@@ -25,6 +35,10 @@ export const archiveTaskSchema = z.object({
   taskId: z.string().min(1),
   archived: z.boolean(),
 });
+
+export const removeTaskSchema = z.object({ taskId: z.uuid() });
+
+export const suggestionSchema = z.object({ taskId: z.uuid() });
 
 const taskIdsSchema = z
   .array(z.uuid())

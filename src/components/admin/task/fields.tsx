@@ -1,11 +1,16 @@
 "use client";
 
-import type { FC } from "react";
+import { type ChangeEvent, type FC, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { TaskValues } from "~/actions/task/schema";
 import { completionPolicy } from "~/domain/completionPolicy";
 import { taskPolicies } from "~/domain/task";
 import { describeTaskPolicy } from "~/lib/taskLabels";
+import {
+  describeCooldownDuration,
+  formatCooldownInput,
+  parseCooldownInput,
+} from "~/lib/taskDuration";
 import { Field } from "../../ui/form";
 import { Checkbox, Input, Select, Textarea } from "../../ui/formControls";
 import type { CategoryView, TaskView } from "./model";
@@ -15,11 +20,12 @@ interface Props {
 }
 
 export const TaskFields: FC<Props> = ({ categories }) => {
-  const { control } = useFormContext<{ task: TaskValues }>();
-  const [policy, photoRequired] = useWatch({
+  const { control, setValue } = useFormContext<{ task: TaskValues }>();
+  const [policy, photoRequired, cooldownSeconds] = useWatch({
     control,
-    name: ["task.policy", "task.photoRequired"],
+    name: ["task.policy", "task.photoRequired", "task.cooldownSeconds"],
   });
+  const [cooldownInput, setCooldownInput] = useState(() => formatCooldownInput(cooldownSeconds));
 
   return (
     <>
@@ -57,13 +63,33 @@ export const TaskFields: FC<Props> = ({ categories }) => {
           )}
         </Field>
         {completionPolicy(policy).usesCooldown && (
-          <Field
-            name="task.cooldownSeconds"
-            label="Cooldown (seconds)"
-            hint="Measured from the user's last approved proof."
-            options={{ valueAsNumber: true }}
-          >
-            {(control) => <Input type="number" min={0} step={1} {...control} />}
+          <Field name="task.cooldownSeconds" label="Cooldown">
+            {(field) => (
+              <>
+                <Input
+                  {...field}
+                  type="text"
+                  inputMode="text"
+                  autoComplete="off"
+                  placeholder="e.g. 1y 2mo 3d 4h 5m 6s"
+                  value={cooldownInput}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const value = event.target.value;
+                    setCooldownInput(value);
+                    const parsed = parseCooldownInput(value);
+                    setValue("task.cooldownSeconds", parsed ?? Number.NaN, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+                {Number.isSafeInteger(cooldownSeconds) && cooldownSeconds >= 0 && (
+                  <p className="text-sm text-muted-foreground" aria-live="polite">
+                    {describeCooldownDuration(cooldownSeconds)}
+                  </p>
+                )}
+              </>
+            )}
           </Field>
         )}
       </div>

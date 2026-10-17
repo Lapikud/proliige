@@ -6,6 +6,7 @@ import { addCommentAction } from "~/actions/feed";
 import { commentSchema } from "~/actions/feed/schema";
 import { feedConfig } from "~/config/feed";
 import { useActionForm } from "~/lib/form";
+import { cn } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Field, Form, FormActions, FormError } from "../ui/form";
 import { Textarea } from "../ui/formControls";
@@ -14,9 +15,10 @@ import type { CommentView } from "./model";
 interface Props {
   proofId: string;
   onPosted: (comment: CommentView) => void;
+  compact?: boolean;
 }
 
-export const CommentForm: FC<Props> = ({ proofId, onPosted }) => {
+export const CommentForm: FC<Props> = ({ proofId, onPosted, compact = false }) => {
   const defaultValues = {
     proofId,
     body: "",
@@ -38,7 +40,8 @@ export const CommentForm: FC<Props> = ({ proofId, onPosted }) => {
       <Field name="body" label="Add a comment" hideLabel>
         {(control) => (
           <Textarea
-            rows={2}
+            rows={compact ? 1 : 2}
+            className={cn(compact && "field-sizing-content max-h-32 min-h-11 resize-none")}
             maxLength={feedConfig.maxCommentLength}
             placeholder="Say something kind…"
             {...control}
@@ -48,9 +51,10 @@ export const CommentForm: FC<Props> = ({ proofId, onPosted }) => {
       <FormError />
       <FormActions className="justify-between">
         <span className="text-xs text-muted-foreground tabular-nums">
-          {body.trim().length}/{feedConfig.maxCommentLength}
+          {(!compact || body.trim().length > feedConfig.maxCommentLength * 0.8) &&
+            `${body.trim().length}/${feedConfig.maxCommentLength}`}
         </span>
-        <Button type="submit" size="sm" disabled={pending}>
+        <Button type="submit" size="sm" disabled={pending || (compact && !body.trim())}>
           Post comment
         </Button>
       </FormActions>

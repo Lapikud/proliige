@@ -34,6 +34,9 @@ const tasks: Array<TaskView> = [
     photoInstructions: null,
     textRequired: false,
     archived: false,
+    removed: false,
+    suggestedBy: null,
+    suggestionPending: false,
   },
   {
     id: "task-2",
@@ -48,6 +51,26 @@ const tasks: Array<TaskView> = [
     photoInstructions: null,
     textRequired: false,
     archived: true,
+    removed: false,
+    suggestedBy: null,
+    suggestionPending: false,
+  },
+  {
+    id: "task-3",
+    title: "Retired task",
+    description: "Historical",
+    categoryId: "food",
+    categoryName: "Food",
+    points: 2,
+    policy: "repeatable",
+    cooldownSeconds: null,
+    photoRequired: false,
+    photoInstructions: null,
+    textRequired: false,
+    archived: true,
+    removed: true,
+    suggestedBy: null,
+    suggestionPending: false,
   },
 ];
 
@@ -58,7 +81,7 @@ describe("task workspace grouping", () => {
     expect(
       groups.map(({ category, tasks: groupTasks }) => [category.name, groupTasks.length]),
     ).toEqual([
-      ["Food", 1],
+      ["Food", 2],
       ["Home", 0],
       ["Empty", 0],
     ]);
@@ -69,6 +92,11 @@ describe("task workspace grouping", () => {
 
     expect(groups.map(({ category }) => category.name)).toEqual(["Food"]);
     expect(groups[0]?.tasks.map(({ id }) => id)).toEqual(["task-1"]);
+  });
+
+  it("keeps removed tasks visible regardless of archive visibility", () => {
+    const groups = groupWorkspaceTasks(tasks, categories, "", false);
+    expect(groups[0]?.tasks.map(({ id }) => id)).toEqual(["task-1", "task-3"]);
   });
 
   it("shows archived tasks only when archive visibility is enabled", () => {

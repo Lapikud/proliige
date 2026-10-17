@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  userCanAddOwnTask,
   userCanBrowseTasks,
   userCanDeleteComment,
   userCanManageCategories,
@@ -8,6 +9,7 @@ import {
   userCanReadNotifications,
   userCanReviewProofs,
   userCanSubmitProof,
+  userCanSuggestTasks,
   userCanViewFeed,
   userCanViewLeaderboard,
   userCanViewProfiles,
@@ -28,22 +30,25 @@ const visitor = null;
 const ipauser = person("guest", []);
 const alice = person("alice", ["member"]);
 const bob = person("bob", ["member"]);
+const pixel = person("pixel", ["member", "pixel"]);
 const boss = person("boss", ["admin"]);
 
 describe("capability rules", () => {
   it.each([
-    ["userCanViewLeaderboard", userCanViewLeaderboard, [true, true, true, true]],
-    ["userCanViewFeed", userCanViewFeed, [true, true, true, true]],
-    ["userCanViewProfiles", userCanViewProfiles, [true, true, true, true]],
-    ["userCanReadNotifications", userCanReadNotifications, [false, true, true, true]],
-    ["userCanReactToProofs", userCanReactToProofs, [false, true, true, true]],
-    ["userCanBrowseTasks", userCanBrowseTasks, [false, false, true, false]],
-    ["userCanSubmitProof", userCanSubmitProof, [false, false, true, false]],
-    ["userCanManageTasks", userCanManageTasks, [false, false, false, true]],
-    ["userCanManageCategories", userCanManageCategories, [false, false, false, true]],
-    ["userCanReviewProofs", userCanReviewProofs, [false, false, false, true]],
-  ] as const)("%s: visitor / ipauser / member / admin", (_name, rule, expected) => {
-    expect([rule(visitor), rule(ipauser), rule(alice), rule(boss)]).toEqual(expected);
+    ["userCanViewLeaderboard", userCanViewLeaderboard, [true, true, true, true, true]],
+    ["userCanViewFeed", userCanViewFeed, [true, true, true, true, true]],
+    ["userCanViewProfiles", userCanViewProfiles, [true, true, true, true, true]],
+    ["userCanReadNotifications", userCanReadNotifications, [false, true, true, true, true]],
+    ["userCanReactToProofs", userCanReactToProofs, [false, true, true, true, true]],
+    ["userCanBrowseTasks", userCanBrowseTasks, [false, false, false, true, false]],
+    ["userCanSubmitProof", userCanSubmitProof, [false, false, false, true, false]],
+    ["userCanAddOwnTask", userCanAddOwnTask, [false, false, false, true, false]],
+    ["userCanSuggestTasks", userCanSuggestTasks, [false, false, true, true, false]],
+    ["userCanManageTasks", userCanManageTasks, [false, false, false, false, true]],
+    ["userCanManageCategories", userCanManageCategories, [false, false, false, false, true]],
+    ["userCanReviewProofs", userCanReviewProofs, [false, false, false, false, true]],
+  ] as const)("%s: visitor / ipauser / member / pixel / admin", (_name, rule, expected) => {
+    expect([rule(visitor), rule(ipauser), rule(alice), rule(pixel), rule(boss)]).toEqual(expected);
   });
 });
 

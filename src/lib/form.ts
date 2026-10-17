@@ -69,8 +69,9 @@ export function useAction<Input, Result>(
 
         return;
       }
-      setError(result.error);
-      onError?.(result.error, input);
+      const message = Object.values(result.fieldErrors ?? {})[0] ?? result.error;
+      setError(message);
+      onError?.(message, input);
     });
   };
 

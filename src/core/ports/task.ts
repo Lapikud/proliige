@@ -23,6 +23,7 @@ export interface TaskRepository {
     Array<{
       task: Task;
       categoryName: string;
+      suggestedByName: string | null;
     }>
   >;
   findById(id: string): Promise<Task | null>;
@@ -30,7 +31,10 @@ export interface TaskRepository {
   create(input: NewTaskInput): Promise<Task>;
   update(id: string, input: NewTaskInput): Promise<Task>;
   setArchived(id: string, archived: boolean): Promise<Task>;
+  removeWithHistory(input: { taskId: string; removedBy: string; now: Date }): Promise<void>;
   remove(id: string): Promise<void>;
+  publishSuggestion(id: string): Promise<void>;
+  declineSuggestion(id: string): Promise<void>;
   moveMany(ids: ReadonlyArray<string>, categoryId: string): Promise<Array<TaskMove>>;
   undoMoveMany(moves: ReadonlyArray<TaskMove>): Promise<void>;
   setArchivedMany(ids: ReadonlyArray<string>, archived: boolean): Promise<Array<string>>;
@@ -47,4 +51,6 @@ export interface NewTaskInput {
   readonly photoInstructions: string | null;
   readonly textRequired: boolean;
   readonly createdBy?: string | null;
+  readonly suggestedBy?: string | null;
+  readonly suggestionPending?: boolean;
 }

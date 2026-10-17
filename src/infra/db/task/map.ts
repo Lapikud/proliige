@@ -16,7 +16,11 @@ export function toTask(row: TaskRow): Task {
     photoInstructions: row.photoInstructions,
     textRequired: row.textRequired,
     createdBy: row.createdBy,
+    suggestedBy: row.suggestedBy,
+    suggestionPending: row.suggestionPending,
     archivedAt: row.archivedAt,
+    removedAt: row.removedAt,
+    removedBy: row.removedBy,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

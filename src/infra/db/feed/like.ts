@@ -7,19 +7,22 @@ import { onlyRow } from "../rows";
 
 export function createLikeRepository(db: Database): LikeRepository {
   return {
-    async toggleLike({ proofId, userId, now }) {
+    async toggleLike({ post, userId, now }) {
+      const target = post.kind === "proof" ? proofLikes.proofId : proofLikes.recognitionId;
+      const values = post.kind === "proof" ? { proofId: post.id } : { recognitionId: post.id };
+
       return db.transaction(async (tx) => {
         const [existing] = await tx
           .select({ id: proofLikes.id })
           .from(proofLikes)
-          .where(and(eq(proofLikes.proofId, proofId), eq(proofLikes.userId, userId)))
+          .where(and(eq(target, post.id), eq(proofLikes.userId, userId)))
           .limit(1);
 
         let liked: boolean;
         if (existing === undefined) {
           try {
             await tx.insert(proofLikes).values({
-              proofId,
+              ...values,
               userId,
               createdAt: now,
             });
@@ -36,10 +39,7 @@ export function createLikeRepository(db: Database): LikeRepository {
         }
 
         const { count: likeCount } = onlyRow(
-          await tx
-            .select({ count: count() })
-            .from(proofLikes)
-            .where(eq(proofLikes.proofId, proofId)),
+          await tx.select({ count: count() }).from(proofLikes).where(eq(target, post.id)),
         );
 
         return {

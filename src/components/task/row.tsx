@@ -16,6 +16,7 @@ interface Props {
   readonly photoRequired: boolean;
   readonly textRequired: boolean;
   readonly muted?: boolean;
+  readonly disabled?: boolean;
   readonly status?: ReactNode;
   readonly href?: string;
   readonly onClick?: () => void;
@@ -30,6 +31,7 @@ export const TaskRow: FC<Props> = ({
   photoRequired,
   textRequired,
   muted = false,
+  disabled = false,
   status,
   href,
   onClick,
@@ -72,7 +74,13 @@ export const TaskRow: FC<Props> = ({
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       {href === undefined ? (
-        <button type="button" onClick={onClick} aria-label={ariaLabel} className={rowClassName}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={ariaLabel}
+          className={rowClassName}
+          disabled={disabled}
+        >
           {content}
         </button>
       ) : (

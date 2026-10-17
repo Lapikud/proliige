@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import type { ProofRepository } from "~/core/ports/proof";
-import { notFound } from "~/domain/errors";
+import { conflict, notFound } from "~/domain/errors";
 import type { Database } from "../client";
 import { isUniqueViolation } from "../errors";
 import { pointsLedger } from "../points/model";
@@ -12,6 +12,18 @@ export function createProofReview(db: Database): Pick<ProofRepository, "approve"
   return {
     async approve({ proofId, reviewerId, points: override, now }) {
       return db.transaction(async (tx) => {
+        const [proof] = await tx.select().from(proofs).where(eq(proofs.id, proofId)).limit(1);
+        if (proof === undefined) throw notFound("That proof does not exist.");
+        const [taskRow] = await tx
+          .select({ removedAt: tasks.removedAt })
+          .from(tasks)
+          .where(eq(tasks.id, proof.taskId))
+          .for("update")
+          .limit(1);
+        if (taskRow?.removedAt !== null && taskRow !== undefined) {
+          throw conflict("This task has been removed; proof cannot be approved.");
+        }
+
         const [updated] = await tx
           .update(proofs)
           .set({
@@ -79,33 +91,42 @@ export function createProofReview(db: Database): Pick<ProofRepository, "approve"
     },
 
     async reject({ proofId, reviewerId, reason, now }) {
-      const [updated] = await db
-        .update(proofs)
-        .set({
-          status: "rejected",
-          reviewedAt: now,
-          reviewedBy: reviewerId,
-          rejectionReason: reason,
-        })
-        .where(and(eq(proofs.id, proofId), eq(proofs.status, "pending")))
-        .returning();
+      return db.transaction(async (tx) => {
+        const [proof] = await tx.select().from(proofs).where(eq(proofs.id, proofId)).limit(1);
+        if (proof === undefined) throw notFound("That proof does not exist.");
+        await tx
+          .select({ id: tasks.id })
+          .from(tasks)
+          .where(eq(tasks.id, proof.taskId))
+          .for("update")
+          .limit(1);
 
-      if (updated === undefined) {
-        const [existing] = await db.select().from(proofs).where(eq(proofs.id, proofId)).limit(1);
-        if (existing === undefined) {
-          throw notFound("That proof does not exist.");
+        const [updated] = await tx
+          .update(proofs)
+          .set({
+            status: "rejected",
+            reviewedAt: now,
+            reviewedBy: reviewerId,
+            rejectionReason: reason,
+          })
+          .where(and(eq(proofs.id, proofId), eq(proofs.status, "pending")))
+          .returning();
+
+        if (updated === undefined) {
+          const [existing] = await tx.select().from(proofs).where(eq(proofs.id, proofId)).limit(1);
+          if (existing === undefined) throw notFound("That proof does not exist.");
+
+          return {
+            proof: toProof(existing),
+            alreadyReviewed: true,
+          };
         }
 
         return {
-          proof: toProof(existing),
-          alreadyReviewed: true,
+          proof: toProof(updated),
+          alreadyReviewed: false,
         };
-      }
-
-      return {
-        proof: toProof(updated),
-        alreadyReviewed: false,
-      };
+      });
     },
   };
 }

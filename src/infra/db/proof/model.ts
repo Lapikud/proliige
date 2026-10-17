@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   pgEnum,
@@ -29,6 +30,7 @@ export const proofs = pgTable(
     policy: taskPolicyEnum("policy").notNull(),
     status: proofStatusEnum("status").notNull().default("pending"),
     textAnswer: text("text_answer"),
+    textMarkdown: boolean("text_markdown").notNull().default(false),
     rejectionReason: text("rejection_reason"),
     submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

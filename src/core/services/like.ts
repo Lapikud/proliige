@@ -3,21 +3,23 @@ import { guard } from "../guard";
 import type { ClockPort } from "../ports/clock";
 import type { LikeRepository } from "../ports/like";
 import type { ProofRepository } from "../ports/proof";
-import { requireApprovedProof } from "./proofGuards";
+import type { RecognitionRepository } from "../ports/recognition";
+import { requirePost } from "./proofGuards";
 
 interface Deps {
   readonly likes: LikeRepository;
   readonly proofs: ProofRepository;
+  readonly recognitions: RecognitionRepository;
   readonly clock: ClockPort;
 }
 
-export function createLikeService({ likes, proofs, clock }: Deps) {
+export function createLikeService({ likes, proofs, recognitions, clock }: Deps) {
   return {
     toggleLike: guard(userCanReactToProofs, async (user, proofId: string) => {
-      await requireApprovedProof(proofs, proofId);
+      const { post } = await requirePost(proofs, recognitions, proofId);
 
       return likes.toggleLike({
-        proofId,
+        post,
         userId: user.id,
         now: clock.now(),
       });

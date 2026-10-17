@@ -46,6 +46,7 @@ export const env = defineEnv({
     FREEIPA_SERVER: text(),
     FREEIPA_CLIENT_VERSION: optionalText(),
     FREEIPA_TIMEOUT_MS: integer(10_000),
+    AUTH_DRIVER: z.enum(["freeipa", "seed"]).default("freeipa"),
 
     STORAGE_DRIVER: z.enum(["garage", "memory"]).default("garage"),
     GARAGE_ENDPOINT: optionalUrl(),
@@ -80,6 +81,7 @@ export const env = defineEnv({
     FREEIPA_SERVER: process.env.FREEIPA_SERVER,
     FREEIPA_CLIENT_VERSION: process.env.FREEIPA_CLIENT_VERSION,
     FREEIPA_TIMEOUT_MS: process.env.FREEIPA_TIMEOUT_MS,
+    AUTH_DRIVER: process.env.AUTH_DRIVER,
     STORAGE_DRIVER: process.env.STORAGE_DRIVER,
     GARAGE_ENDPOINT: process.env.GARAGE_ENDPOINT,
     GARAGE_ACCESS_KEY: process.env.GARAGE_ACCESS_KEY,
@@ -114,6 +116,14 @@ export const env = defineEnv({
         }
       };
 
+      if (values.AUTH_DRIVER === "seed" && process.env.NODE_ENV === "production") {
+        context.issues.push({
+          code: "custom",
+          input: values.AUTH_DRIVER,
+          path: ["AUTH_DRIVER"],
+          message: "Seed sign-in is for local development only.",
+        });
+      }
       if (nextcloudSettings.some((name) => values[name] !== undefined)) {
         report(nextcloudSettings, "Set all Nextcloud settings or none.");
       }

@@ -39,6 +39,7 @@ const toPendingView = (
   userDisplayName,
   submittedAt: proof.submittedAt.toISOString(),
   textAnswer: proof.textAnswer,
+  textMarkdown: proof.textMarkdown,
   photoUrls: photos.map((item) => `/api/photos/${proof.id}/${item.id}`),
   requestedReviewers,
   requestedFromMe: requestedReviewers.some((reviewer) => reviewer.id === user.id),

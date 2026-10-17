@@ -8,11 +8,11 @@ import { onlyRow } from "../rows";
 
 export function createCommentRepository(db: Database): CommentRepository {
   return {
-    async listComments(proofId) {
+    async listComments(post) {
+      const target = post.kind === "proof" ? proofComments.proofId : proofComments.recognitionId;
       const rows = await db
         .select({
           id: proofComments.id,
-          proofId: proofComments.proofId,
           body: proofComments.body,
           createdAt: proofComments.createdAt,
           deletedAt: proofComments.deletedAt,
@@ -21,12 +21,12 @@ export function createCommentRepository(db: Database): CommentRepository {
         })
         .from(proofComments)
         .innerJoin(users, eq(users.id, proofComments.userId))
-        .where(eq(proofComments.proofId, proofId))
+        .where(eq(target, post.id))
         .orderBy(asc(proofComments.createdAt));
 
       return rows.map((row): FeedComment => ({
         id: row.id,
-        proofId: row.proofId,
+        proofId: post.id,
         author: {
           id: row.userId,
           displayName: row.displayName,
@@ -38,12 +38,12 @@ export function createCommentRepository(db: Database): CommentRepository {
       }));
     },
 
-    async addComment({ proofId, userId, body, now }) {
+    async addComment({ post, userId, body, now }) {
       const row = onlyRow(
         await db
           .insert(proofComments)
           .values({
-            proofId,
+            ...(post.kind === "proof" ? { proofId: post.id } : { recognitionId: post.id }),
             userId,
             body,
             createdAt: now,
@@ -64,7 +64,7 @@ export function createCommentRepository(db: Database): CommentRepository {
 
       return {
         id: row.id,
-        proofId: row.proofId,
+        proofId: post.id,
         author: {
           id: author.id,
           displayName: author.displayName,
@@ -89,6 +89,7 @@ export function createCommentRepository(db: Database): CommentRepository {
         .select({
           id: proofComments.id,
           proofId: proofComments.proofId,
+          recognitionId: proofComments.recognitionId,
           userId: proofComments.userId,
           body: proofComments.body,
           createdAt: proofComments.createdAt,
@@ -105,7 +106,7 @@ export function createCommentRepository(db: Database): CommentRepository {
       }
       const comment: FeedComment & { userId: string } = {
         id: row.id,
-        proofId: row.proofId,
+        proofId: row.proofId ?? row.recognitionId ?? "",
         userId: row.userId,
         author: {
           id: row.userId,

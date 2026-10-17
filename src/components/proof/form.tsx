@@ -9,7 +9,8 @@ import type { PublicUserView } from "~/domain/user";
 import { useActionForm } from "~/lib/form";
 import { UserAvatar } from "../ui/avatar";
 import { Button } from "../ui/button";
-import { Checkbox, Textarea } from "../ui/formControls";
+import { Checkbox, Switch, Textarea } from "../ui/formControls";
+import { MarkdownPreview } from "../ui/markdown";
 import { Field, Form, FormActions, FormError } from "../ui/form";
 import { PhotoPicker } from "./photoPicker";
 
@@ -37,14 +38,15 @@ export const ProofForm: FC<Props> = ({
     defaultValues: {
       taskId,
       textAnswer: "",
+      textMarkdown: false,
       objectKeys: [],
       reviewerIds: [],
     },
     onSuccess: onSubmitted,
   });
-  const [objectKeys, textAnswer] = useWatch({
+  const [objectKeys, textAnswer, textMarkdown] = useWatch({
     control: form.control,
-    name: ["objectKeys", "textAnswer"],
+    name: ["objectKeys", "textAnswer", "textMarkdown"],
   });
   const missingPhotos = photoRequired && objectKeys.length === 0;
   const missingText = textRequired && textAnswer.trim().length === 0;
@@ -71,6 +73,10 @@ export const ProofForm: FC<Props> = ({
       >
         {(control) => <Textarea required={textRequired} rows={4} maxLength={2000} {...control} />}
       </Field>
+      <Field name="textMarkdown" label="Use markdown" inline>
+        {(control) => <Switch {...control} />}
+      </Field>
+      {textMarkdown && textAnswer.trim() && <MarkdownPreview source={textAnswer} />}
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-bold">
           Photos
@@ -107,8 +113,7 @@ export const ReviewerPicker: FC<{ reviewers: ReadonlyArray<PublicUserView> }> = 
   return (
     <details className="group rounded-xl border border-border">
       <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-bold [&::-webkit-details-marker]:hidden">
-        Notify a reviewer{" "}
-        <span className="font-normal text-muted-foreground">· optional</span>
+        Notify a reviewer <span className="font-normal text-muted-foreground">· optional</span>
         <ChevronDown
           className="ml-auto size-4 transition-transform group-open:rotate-180"
           aria-hidden

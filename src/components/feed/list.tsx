@@ -4,6 +4,7 @@ import { type FC, useCallback, useEffect, useRef, useState, useTransition } from
 import { Button } from "../ui/button";
 import { EmptyState, ErrorState } from "../ui/feedback";
 import { FeedCard } from "./card";
+import { RecognitionCard } from "./recognitionCard";
 import type { FeedEntryView } from "./model";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   canReact: boolean;
   categoryId: string | null;
   categoryName: string | null;
+  leaderId: string | null;
 }
 
 interface FeedPage {
@@ -25,6 +27,7 @@ export const FeedList: FC<Props> = ({
   canReact,
   categoryId,
   categoryName,
+  leaderId,
 }) => {
   const [entries, setEntries] = useState(initialEntries);
   const [cursor, setCursor] = useState(initialCursor);
@@ -100,7 +103,23 @@ export const FeedList: FC<Props> = ({
       <ul className="flex list-none flex-col gap-4 p-0">
         {entries.map((entry) => (
           <li key={entry.proofId}>
-            <FeedCard entry={entry} canReact={canReact} />
+            {entry.kind === "recognition" ? (
+              <RecognitionCard
+                entry={{
+                  ...entry,
+                  crowned: entry.user.id === leaderId,
+                }}
+                canReact={canReact}
+              />
+            ) : (
+              <FeedCard
+                entry={{
+                  ...entry,
+                  crowned: entry.user.id === leaderId,
+                }}
+                canReact={canReact}
+              />
+            )}
           </li>
         ))}
       </ul>

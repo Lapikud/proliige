@@ -21,19 +21,33 @@ pnpm dev               # http://localhost:3000
 
 `.env.example` lists every setting; set `SITE_URL` to the public address so link previews and the sitemap point at it. The app refuses to start while one is missing or invalid, and says which. `.env` and `garage.toml` hold secrets, so both are ignored by git and never archived; their templates are `.env.example` and `garage.example.toml`.
 
+### Signing in locally
+
+To try the app without FreeIPA, set `AUTH_DRIVER=seed` in `.env` and run `pnpm db:seed`. Every seed account signs in with the password `seed`. Seed sign-in is refused in production, and `pnpm db:seed` refuses non-local databases unless `SEED_CONFIRM=1` is set.
+
+| Account                          | Role                                       |
+| -------------------------------- | ------------------------------------------ |
+| `seed-admin-1`, `seed-admin-2`   | Admin                                      |
+| `seed-pixel-1` to `seed-pixel-8` | Pixel                                      |
+| `seed-member-1`, `seed-member-2` | Member                                     |
+| `seed-excluded`                  | Pixel left out of the leaderboard and feed |
+| `seed-no-group`                  | No group                                   |
+
 ## Everyday commands
 
-| Command                          | What it does                                         |
-| -------------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                       | Run the app with hot reload                          |
-| `pnpm test`                      | Run all tests (uses its own `lapikud_test` database) |
-| `pnpm typecheck`                 | Check types                                          |
-| `pnpm lint`                      | Check code rules                                     |
-| `pnpm format`                    | Format everything with Prettier                      |
-| `pnpm build`                     | Production build                                     |
-| `pnpm db:generate`               | Write a migration after changing a `model.ts`        |
-| `pnpm db:migrate`                | Apply migrations                                     |
-| `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS    |
+| Command                          | What it does                                                    |
+| -------------------------------- | --------------------------------------------------------------- |
+| `pnpm dev`                       | Run the app with hot reload                                     |
+| `pnpm test`                      | Run all tests (uses its own `lapikud_test` database)            |
+| `pnpm typecheck`                 | Check types                                                     |
+| `pnpm lint`                      | Check code rules                                                |
+| `pnpm format`                    | Format everything with Prettier                                 |
+| `pnpm build`                     | Production build                                                |
+| `pnpm db:generate <name>`        | Write a named migration after changing a `model.ts`             |
+| `pnpm db:migrate`                | Apply migrations; stops if a `model.ts` change has no migration |
+| `pnpm db:check`                  | Check that every `model.ts` change has a migration              |
+| `pnpm db:seed`                   | Fill a local database with seed accounts, tasks and posts       |
+| `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS               |
 
 Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks, plus a build, on every pull request.
 
@@ -45,29 +59,32 @@ The same words are used in the code, the database and the screens.
 | --------------- | ------------------------------------------------------------------------------------------ |
 | **User**        | Anyone who signed in with a FreeIPA account                                                |
 | **Role**        | What a user may do, derived from their FreeIPA groups: `member`, `pixel` or `admin`        |
-| **Member**      | A user in a member group (`pixels`, `members`); does tasks                                 |
-| **Pixel**       | A member in the `pixels` group; may also add own tasks                                     |
+| **Member**      | A user in the `members` group; likes, comments and suggests tasks                          |
+| **Pixel**       | A user in the `pixels` group; does tasks, and can do everything a member can               |
 | **Admin**       | A user in an admin group (`team_juhatus`); reviews proofs and manages tasks, never submits |
 | **Task**        | Something to do for the club, worth points, in a **category**                              |
+| **Suggestion**  | A task a member or pixel proposes; it stays off the task list until an admin publishes it  |
 | **Own task**    | A task a pixel adds for work they already did, sent with its proof; a reviewer sets points |
 | **Policy**      | How often a task can be done: once per user, repeatable, first one wins                    |
-| **Proof**       | What a member submits to show they did a task, often with photos                           |
+| **Proof**       | What a pixel submits to show they did a task, often with photos                            |
 | **Reviewer**    | An admin asked to review a proof, like a reviewer on a pull request                        |
 | **Review**      | Approving or rejecting a proof; any admin may review any proof                             |
-| **Points**      | Awarded when a proof is approved, recorded in the points ledger                            |
-| **Feed**        | Approved proofs, newest first, with likes and comments                                     |
+| **Points**      | Awarded when a proof is approved or a contribution is recognized, in the points ledger     |
+| **Recognition** | Points an admin gives a pixel for a contribution with no task or proof, shown in the feed  |
+| **Badge**       | A reusable label, with an optional image, that an admin can attach to a recognition        |
+| **Feed**        | Approved proofs and recognitions, newest first; proofs have likes and comments             |
 | **Leaderboard** | Users ranked by points, all time or this month                                             |
 | **Rule**        | A yes/no check of what a user may do, such as `userCanSubmitProof`                         |
 
 Who can do what:
 
-| Who                 | Can                                                              |
-| ------------------- | ---------------------------------------------------------------- |
-| Visitor             | Read the feed, the leaderboard and user pages                    |
-| Signed in, no group | Also like, comment, and get notified of replies                  |
-| Member              | Also browse tasks, submit proofs, and request reviewers          |
-| Pixel               | Also add own tasks                                               |
-| Admin               | Review proofs, manage tasks and categories; never submits proofs |
+| Who                 | Can                                                                                |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| Visitor             | Read the feed, the leaderboard and user pages                                      |
+| Signed in, no group | Also like, comment, and get notified of replies                                    |
+| Member              | Also suggest tasks                                                                 |
+| Pixel               | Also browse tasks, submit proofs, request reviewers and add own tasks              |
+| Admin               | Review proofs, manage tasks and categories, recognize pixels; never submits proofs |
 
 A proof with requested reviewers notifies them; without any, nobody is notified and it simply waits in the review queue. Groups are set in `src/config/access.ts`. Every rule lives in `src/domain/rules.ts`.
 
