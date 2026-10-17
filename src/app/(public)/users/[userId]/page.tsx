@@ -101,7 +101,7 @@ const UserPage: FC<PageProps<"/users/[userId]">> = async ({ params }) => {
         </div>
       }
     >
-      <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
           {badges.length > 0 && (
             <Card>

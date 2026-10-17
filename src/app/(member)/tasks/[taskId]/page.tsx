@@ -7,7 +7,12 @@ import { ProofPanel } from "~/components/proof/panel";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
 import { proofService, taskService } from "~/infra";
-import { describeCooldown, describeTaskPolicy, describeUnavailability } from "~/lib/taskLabels";
+import {
+  describeCooldown,
+  describeTaskPolicy,
+  describeUnavailability,
+  taskAvailability,
+} from "~/lib/taskLabels";
 import { formatDateTime } from "~/lib/utils";
 import { userCanBrowseTasks } from "~/domain/rules";
 import { requireUser } from "~/lib/user";
@@ -34,6 +39,14 @@ const TaskPage: FC<PageProps<"/tasks/[taskId]">> = async ({ params }) => {
 
   const { task, categoryName } = item;
   const cooldown = describeCooldown(task.cooldownSeconds);
+  const done =
+    taskAvailability(
+      {
+        ...item,
+        policy: task.policy,
+      },
+      new Date(),
+    ) === "done";
 
   return (
     <div className="flex flex-col gap-4">
@@ -88,7 +101,7 @@ const TaskPage: FC<PageProps<"/tasks/[taskId]">> = async ({ params }) => {
         photoInstructions={task.photoInstructions}
         textRequired={task.textRequired}
         reviewers={reviewers}
-        status={item.userProofStatus}
+        status={item.userProofStatus === "approved" && !done ? null : item.userProofStatus}
         unavailable={describeUnavailability(
           {
             archived: task.archivedAt !== null,

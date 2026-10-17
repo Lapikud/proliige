@@ -38,7 +38,7 @@ export const pointsLedger = pgTable(
       .where(predicate(and(isNotNull(t.proofId), isNull(t.reversalOf)))),
     uniqueIndex("points_ledger_recognition_key")
       .on(t.recognitionId)
-      .where(predicate(isNotNull(t.recognitionId))),
+      .where(predicate(and(isNotNull(t.recognitionId), isNull(t.reversalOf)))),
     uniqueIndex("points_ledger_reversal_of_key")
       .on(t.reversalOf)
       .where(predicate(isNotNull(t.reversalOf))),
@@ -48,7 +48,7 @@ export const pointsLedger = pgTable(
       predicate(
         or(
           and(isNotNull(t.proofId), isNull(t.recognitionId)),
-          and(isNull(t.proofId), isNotNull(t.recognitionId), isNull(t.reversalOf)),
+          and(isNull(t.proofId), isNotNull(t.recognitionId)),
         ),
       ),
     ),

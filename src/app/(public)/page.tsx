@@ -7,8 +7,8 @@ import { LeaderboardPanel } from "~/components/leaderboard/panel";
 import { leaderboardPeriod } from "~/components/leaderboard/periodToggle";
 import { LeaderboardStories } from "~/components/leaderboard/stories";
 import { encodeFeedCursor, recognitionFilter } from "~/domain/feed";
-import { userCanReactToProofs } from "~/domain/rules";
-import { categoryService, feedService, leaderboardService } from "~/infra";
+import { userCanModeratePosts, userCanReactToProofs } from "~/domain/rules";
+import { categoryService, feedService, leaderboardService, recognitionService } from "~/infra";
 import { getUser } from "~/lib/user";
 import { startOfMonthInTallinn } from "~/lib/utils";
 
@@ -22,7 +22,8 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
   const keepPeriod = period === "month" ? { period } : undefined;
   const user = await getUser();
 
-  const [page, ranking, categories, [leader]] = await Promise.all([
+  const canModerate = userCanModeratePosts(user);
+  const [page, ranking, categories, [leader], badges] = await Promise.all([
     feedService.listFeed(user, {
       cursor: null,
       categoryId,
@@ -33,6 +34,7 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
     }),
     categoryService.listFeedCategories(user),
     leaderboardService.listLeaderboard(user, { limit: 1 }),
+    canModerate ? recognitionService.listBadges(user) : [],
   ]);
   const leaderId = leader && leader.totalPoints > 0 ? leader.user.id : null;
 
@@ -74,6 +76,9 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           initialEntries={page.entries.map(toFeedEntryView)}
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
           canReact={userCanReactToProofs(user)}
+          canModerate={canModerate}
+          badges={badges}
+          viewerId={user?.id ?? null}
           leaderId={leaderId}
           categoryId={categoryId}
           categoryName={

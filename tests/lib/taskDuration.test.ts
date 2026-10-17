@@ -11,6 +11,7 @@ describe("cooldown duration input", () => {
     ["1d 4h", 100_800],
     ["1y 2mo 3d 4h 5m 6s", 36_993_906],
     ["0s", 0],
+    ["0", 0],
   ])("parses %s", (input, expected) => {
     expect(parseCooldownInput(input)).toBe(expected);
   });
@@ -33,7 +34,8 @@ describe("cooldown duration input", () => {
     );
   });
 
-  it("describes zero as immediate resubmission", () => {
+  it("treats zero as no cooldown", () => {
+    expect(formatCooldownInput(0)).toBe("0");
     expect(describeCooldownDuration(0)).toBe("The task can be resubmitted immediately.");
   });
 });

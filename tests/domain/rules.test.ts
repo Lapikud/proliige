@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { isOnFeed } from "~/domain/proof";
 import {
   userCanAddOwnTask,
   userCanBrowseTasks,
@@ -73,20 +74,75 @@ describe("userCanDeleteComment", () => {
 });
 
 describe("userCanViewPhoto", () => {
-  const proof = (status: "pending" | "approved" | "rejected") => ({
-    status,
+  const proof = (onFeed: boolean) => ({
     userId: alice.id,
+    onFeed,
   });
 
-  it("makes approved photos public, visitors included", () => {
-    expect(userCanViewPhoto(visitor, proof("approved"))).toBe(true);
-    expect(userCanViewPhoto(bob, proof("approved"))).toBe(true);
+  it("makes photos on the feed public, visitors included", () => {
+    expect(userCanViewPhoto(visitor, proof(true))).toBe(true);
+    expect(userCanViewPhoto(bob, proof(true))).toBe(true);
   });
 
-  it.each(["pending", "rejected"] as const)("keeps %s photos to the owner and admins", (status) => {
-    expect(userCanViewPhoto(visitor, proof(status))).toBe(false);
-    expect(userCanViewPhoto(bob, proof(status))).toBe(false);
-    expect(userCanViewPhoto(alice, proof(status))).toBe(true);
-    expect(userCanViewPhoto(boss, proof(status))).toBe(true);
+  it("keeps photos off the feed to the owner and admins", () => {
+    expect(userCanViewPhoto(visitor, proof(false))).toBe(false);
+    expect(userCanViewPhoto(bob, proof(false))).toBe(false);
+    expect(userCanViewPhoto(alice, proof(false))).toBe(true);
+    expect(userCanViewPhoto(boss, proof(false))).toBe(true);
+  });
+});
+
+describe("isOnFeed", () => {
+  const shown = { showOnFeed: true };
+
+  it("shows approved proofs of tasks shown on the feed", () => {
+    expect(
+      isOnFeed(
+        {
+          status: "approved",
+          hiddenAt: null,
+        },
+        shown,
+      ),
+    ).toBe(true);
+  });
+
+  it("leaves out pending, rejected and removed posts and tasks kept off the feed", () => {
+    expect(
+      isOnFeed(
+        {
+          status: "pending",
+          hiddenAt: null,
+        },
+        shown,
+      ),
+    ).toBe(false);
+    expect(
+      isOnFeed(
+        {
+          status: "rejected",
+          hiddenAt: null,
+        },
+        shown,
+      ),
+    ).toBe(false);
+    expect(
+      isOnFeed(
+        {
+          status: "approved",
+          hiddenAt: new Date(),
+        },
+        shown,
+      ),
+    ).toBe(false);
+    expect(
+      isOnFeed(
+        {
+          status: "approved",
+          hiddenAt: null,
+        },
+        { showOnFeed: false },
+      ),
+    ).toBe(false);
   });
 });

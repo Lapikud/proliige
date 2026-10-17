@@ -1,4 +1,3 @@
-import type { ProofStatus } from "./proof";
 import { hasRole, type User } from "./user";
 
 export type Rule = (user: User | null) => user is User;
@@ -20,6 +19,7 @@ export const userCanFindProfilesByUsername: Rule = signedIn;
 
 export const userCanReadNotifications: Rule = signedIn;
 export const userCanReactToProofs: Rule = signedIn;
+export const userCanReportPosts: Rule = signedIn;
 
 export const userCanBrowseTasks: Rule = pixel;
 export const userCanSubmitProof: Rule = pixel;
@@ -30,6 +30,7 @@ export const userCanManageTasks: Rule = admin;
 export const userCanManageCategories: Rule = admin;
 export const userCanReviewProofs: Rule = admin;
 export const userCanExcludeOtherUsers: Rule = admin;
+export const userCanModeratePosts: Rule = admin;
 
 export function userCanDeleteComment(user: User | null, comment: { userId: string }): boolean {
   return isAdmin(user) || user?.id === comment.userId;
@@ -38,9 +39,9 @@ export function userCanDeleteComment(user: User | null, comment: { userId: strin
 export function userCanViewPhoto(
   user: User | null,
   proof: {
-    status: ProofStatus;
     userId: string;
+    onFeed: boolean;
   },
 ): boolean {
-  return proof.status === "approved" || isAdmin(user) || user?.id === proof.userId;
+  return proof.onFeed || isAdmin(user) || user?.id === proof.userId;
 }

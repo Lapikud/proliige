@@ -42,3 +42,17 @@ export const publishRecognitionSchema = z.object({
     .refine((ids) => new Set(ids).size === ids.length, "Choose each badge only once."),
   links: z.array(linkSchema).max(10, "Add at most 10 achievement links."),
 });
+
+export const updateRecognitionSchema = publishRecognitionSchema
+  .omit({
+    recipientId: true,
+    points: true,
+  })
+  .extend({ id: z.uuid() });
+
+export const setRecognitionHiddenSchema = z.object({
+  id: z.uuid(),
+  hidden: z.boolean(),
+});
+
+export const takeBackRecognitionSchema = z.object({ id: z.uuid() });

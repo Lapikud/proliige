@@ -18,9 +18,16 @@ export interface RecognitionInput {
   links: ReadonlyArray<AchievementLink>;
 }
 
+export type RecognitionEdit = Omit<RecognitionInput, "recipientId" | "points">;
+
 export interface RecognitionRepository {
   listEligibleRecipients(): Promise<Array<{ id: string; displayName: string }>>;
-  findById(id: string): Promise<{ id: string; recipientId: string } | null>;
+  findById(id: string): Promise<{
+    id: string;
+    recipientId: string;
+    hiddenAt: Date | null;
+    revokedAt: Date | null;
+  } | null>;
   listBadges(): Promise<Array<RecognitionBadge>>;
   listEarnedBadges(userId: string): Promise<Array<RecognitionBadge>>;
   createBadge(input: {
@@ -30,4 +37,7 @@ export interface RecognitionRepository {
     now: Date;
   }): Promise<RecognitionBadge>;
   publish(input: RecognitionInput & { reviewerId: string; now: Date }): Promise<void>;
+  update(input: RecognitionEdit & { id: string }): Promise<void>;
+  setHidden(input: { id: string; hidden: boolean; hiddenBy: string; now: Date }): Promise<void>;
+  revoke(input: { id: string; revokedBy: string; now: Date }): Promise<{ alreadyRevoked: boolean }>;
 }

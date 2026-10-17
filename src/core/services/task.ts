@@ -15,6 +15,7 @@ export interface TaskInput {
   readonly photoRequired: boolean;
   readonly photoInstructions: string;
   readonly textRequired: boolean;
+  readonly showOnFeed: boolean;
 }
 
 interface Deps {
@@ -98,6 +99,7 @@ function toNewTask(input: TaskInput): NewTaskInput {
     cooldownSeconds: usesCooldown ? input.cooldownSeconds : null,
     photoInstructions: hasInstructions ? input.photoInstructions : null,
     textRequired: input.textRequired,
+    showOnFeed: input.showOnFeed,
   };
 }
 

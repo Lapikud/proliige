@@ -39,6 +39,7 @@ async function setup() {
     photoRequired: false,
     photoInstructions: "",
     textRequired: false,
+    showOnFeed: true,
   };
 
   return {

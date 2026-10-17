@@ -16,7 +16,7 @@ interface Deps {
 export function createLikeService({ likes, proofs, recognitions, clock }: Deps) {
   return {
     toggleLike: guard(userCanReactToProofs, async (user, proofId: string) => {
-      const { post } = await requirePost(proofs, recognitions, proofId);
+      const { post } = await requirePost(proofs, recognitions, proofId, user);
 
       return likes.toggleLike({
         post,

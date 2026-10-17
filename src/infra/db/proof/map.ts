@@ -17,6 +17,7 @@ export function toProof(row: ProofRow): Proof {
     submittedAt: row.submittedAt,
     reviewedAt: row.reviewedAt,
     reviewedBy: row.reviewedBy,
+    hiddenAt: row.hiddenAt,
   };
 }
 

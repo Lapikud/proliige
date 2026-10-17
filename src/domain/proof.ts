@@ -1,5 +1,6 @@
 import { completionPolicy, type PolicyRefusal, type Standing } from "./completionPolicy";
 import type { TaskPolicy } from "./task";
+import type { PublicUserView } from "./user";
 
 export type ProofStatus = "pending" | "approved" | "rejected";
 
@@ -27,6 +28,20 @@ export interface Proof {
 
   readonly reviewedAt: Date | null;
   readonly reviewedBy: string | null;
+  readonly hiddenAt: Date | null;
+}
+
+export interface ProofReport {
+  readonly reporter: PublicUserView;
+  readonly reason: string;
+  readonly createdAt: Date;
+}
+
+export function isOnFeed(
+  proof: Pick<Proof, "status" | "hiddenAt">,
+  task: { readonly showOnFeed: boolean },
+): boolean {
+  return proof.status === "approved" && proof.hiddenAt === null && task.showOnFeed;
 }
 
 export function isTerminal(status: ProofStatus): boolean {

@@ -1,8 +1,12 @@
-import { userCanReviewProofs, userCanViewFeed } from "~/domain/rules";
+import { userCanModeratePosts, userCanReviewProofs, userCanViewFeed } from "~/domain/rules";
 import { conflict, validation } from "~/domain/errors";
 import { guard } from "../guard";
 import type { ClockPort } from "../ports/clock";
-import type { RecognitionInput, RecognitionRepository } from "../ports/recognition";
+import type {
+  RecognitionEdit,
+  RecognitionInput,
+  RecognitionRepository,
+} from "../ports/recognition";
 
 export function createRecognitionService({
   recognitions,
@@ -49,23 +53,7 @@ export function createRecognitionService({
       if (!Number.isSafeInteger(input.points) || input.points <= 0) {
         throw validation("Points must be a positive whole number.");
       }
-      if (!input.description.trim()) {
-        throw validation("Describe the contribution before publishing.");
-      }
-      if (new Set(input.badgeIds).size !== input.badgeIds.length) {
-        throw validation("Choose each badge only once.");
-      }
-      for (const link of input.links) {
-        let url: URL;
-        try {
-          url = new URL(link.url);
-        } catch {
-          throw validation("Achievement links must be valid http or https URLs.");
-        }
-        if ((url.protocol !== "http:" && url.protocol !== "https:") || !link.title.trim()) {
-          throw validation("Achievement links need a title and a safe http or https URL.");
-        }
-      }
+      validateContent(input);
       const recipients = await recognitions.listEligibleRecipients();
       if (!recipients.some(({ id }) => id === input.recipientId)) {
         throw conflict("That member is not eligible to receive recognition.");
@@ -76,5 +64,47 @@ export function createRecognitionService({
         now: clock.now(),
       });
     }),
+    update: guard(userCanReviewProofs, async (_reviewer, id: string, input: RecognitionEdit) => {
+      validateContent(input);
+      await recognitions.update({
+        ...input,
+        id,
+      });
+    }),
+    setHidden: guard(userCanModeratePosts, (moderator, id: string, hidden: boolean) =>
+      recognitions.setHidden({
+        id,
+        hidden,
+        hiddenBy: moderator.id,
+        now: clock.now(),
+      }),
+    ),
+    takeBack: guard(userCanModeratePosts, (moderator, id: string) =>
+      recognitions.revoke({
+        id,
+        revokedBy: moderator.id,
+        now: clock.now(),
+      }),
+    ),
   };
+}
+
+function validateContent(input: RecognitionEdit) {
+  if (!input.description.trim()) {
+    throw validation("Describe the contribution before publishing.");
+  }
+  if (new Set(input.badgeIds).size !== input.badgeIds.length) {
+    throw validation("Choose each badge only once.");
+  }
+  for (const link of input.links) {
+    let url: URL;
+    try {
+      url = new URL(link.url);
+    } catch {
+      throw validation("Achievement links must be valid http or https URLs.");
+    }
+    if ((url.protocol !== "http:" && url.protocol !== "https:") || !link.title.trim()) {
+      throw validation("Achievement links need a title and a safe http or https URL.");
+    }
+  }
 }

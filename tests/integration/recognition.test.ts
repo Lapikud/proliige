@@ -72,6 +72,7 @@ describe("contribution recognition", () => {
       cursor: null,
       limit: 10,
       includeExcludedAuthor: false,
+      includeHidden: false,
       viewerId: null,
     });
     expect(page.entries[0]).toMatchObject({
@@ -124,6 +125,7 @@ describe("contribution recognition", () => {
       cursor: null,
       limit: 10,
       includeExcludedAuthor: false,
+      includeHidden: false,
       viewerId: null,
     });
     expect(page.entries).toHaveLength(3);
@@ -144,6 +146,7 @@ describe("contribution recognition", () => {
         cursor: null,
         limit: 10,
         includeExcludedAuthor: false,
+        includeHidden: false,
         viewerId: null,
       })
     ).entries;
@@ -185,6 +188,7 @@ describe("contribution recognition", () => {
           cursor: null,
           limit: 10,
           includeExcludedAuthor: false,
+          includeHidden: false,
           viewerId: bob.id,
         })
       ).entries[0],
@@ -215,6 +219,7 @@ describe("contribution recognition", () => {
         limit: 10,
         categoryId,
         includeExcludedAuthor: false,
+        includeHidden: false,
         viewerId: null,
       });
 

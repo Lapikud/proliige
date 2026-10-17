@@ -22,6 +22,7 @@ export const taskSchema = z.object({
   photoRequired: z.boolean(),
   photoInstructions: z.string().trim().max(200, "Keep photo instructions under 200 characters."),
   textRequired: z.boolean(),
+  showOnFeed: z.boolean(),
 }) satisfies z.ZodType<TaskInput>;
 
 export const createTaskSchema = z.object({ task: taskSchema });

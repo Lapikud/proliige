@@ -1,6 +1,6 @@
-import { and, arrayOverlaps, eq, inArray } from "drizzle-orm";
+import { and, arrayOverlaps, eq, inArray, isNull } from "drizzle-orm";
 import type { RecognitionRepository } from "~/core/ports/recognition";
-import { conflict } from "~/domain/errors";
+import { conflict, notFound } from "~/domain/errors";
 import type { Database } from "../client";
 import { pointsLedger } from "../points/model";
 import { users } from "../user/model";
@@ -34,6 +34,8 @@ export function createRecognitionRepository(
         .select({
           id: recognitions.id,
           recipientId: recognitions.recipientId,
+          hiddenAt: recognitions.hiddenAt,
+          revokedAt: recognitions.revokedAt,
         })
         .from(recognitions)
         .where(eq(recognitions.id, id))
@@ -97,15 +99,7 @@ export function createRecognitionRepository(
           .limit(1);
         if (!recipient) throw conflict("That member is not eligible to receive recognition.");
 
-        const selectedBadges =
-          badgeIds.length === 0
-            ? []
-            : await tx
-                .select({ label: recognitionBadges.label })
-                .from(recognitionBadges)
-                .where(inArray(recognitionBadges.id, [...badgeIds]));
-        if (selectedBadges.length !== badgeIds.length)
-          throw conflict("One or more selected badges no longer exist.");
+        const selectedBadges = await badgeLabels(tx, badgeIds);
 
         const [recognition] = await tx
           .insert(recognitions)
@@ -115,7 +109,7 @@ export function createRecognitionRepository(
             description,
             descriptionMarkdown,
             points,
-            badges: selectedBadges.map(({ label }) => label),
+            badges: selectedBadges,
             links: [...links],
             createdAt: now,
           })
@@ -131,5 +125,100 @@ export function createRecognitionRepository(
         });
       });
     },
+
+    async update({ id, description, descriptionMarkdown = false, badgeIds, links }) {
+      await db.transaction(async (tx) => {
+        const badges = await badgeLabels(tx, badgeIds);
+        const [updated] = await tx
+          .update(recognitions)
+          .set({
+            description,
+            descriptionMarkdown,
+            badges,
+            links: [...links],
+          })
+          .where(and(eq(recognitions.id, id), isNull(recognitions.revokedAt)))
+          .returning({ id: recognitions.id });
+        if (!updated) throw notFound("That recognition does not exist or was taken back.");
+      });
+    },
+
+    async setHidden({ id, hidden, hiddenBy, now }) {
+      const [updated] = await db
+        .update(recognitions)
+        .set(
+          hidden
+            ? {
+                hiddenAt: now,
+                hiddenBy,
+              }
+            : {
+                hiddenAt: null,
+                hiddenBy: null,
+              },
+        )
+        .where(and(eq(recognitions.id, id), isNull(recognitions.revokedAt)))
+        .returning({ id: recognitions.id });
+      if (!updated) throw notFound("That recognition does not exist or was taken back.");
+    },
+
+    async revoke({ id, revokedBy, now }) {
+      return db.transaction(async (tx) => {
+        const [revoked] = await tx
+          .update(recognitions)
+          .set({
+            revokedAt: now,
+            revokedBy,
+          })
+          .where(and(eq(recognitions.id, id), isNull(recognitions.revokedAt)))
+          .returning({ id: recognitions.id });
+        if (!revoked) {
+          const [existing] = await tx
+            .select({ id: recognitions.id })
+            .from(recognitions)
+            .where(eq(recognitions.id, id))
+            .limit(1);
+          if (!existing) throw notFound("That recognition does not exist.");
+
+          return { alreadyRevoked: true };
+        }
+
+        const [credit] = await tx
+          .select()
+          .from(pointsLedger)
+          .where(and(eq(pointsLedger.recognitionId, id), isNull(pointsLedger.reversalOf)))
+          .limit(1);
+        if (credit) {
+          await tx
+            .insert(pointsLedger)
+            .values({
+              userId: credit.userId,
+              recognitionId: id,
+              points: -credit.points,
+              awardedAt: credit.awardedAt,
+              createdAt: now,
+              reversalOf: credit.id,
+            })
+            .onConflictDoNothing();
+        }
+
+        return { alreadyRevoked: false };
+      });
+    },
   };
+}
+
+async function badgeLabels(
+  tx: Pick<Database, "select">,
+  badgeIds: ReadonlyArray<string>,
+): Promise<Array<string>> {
+  if (badgeIds.length === 0) return [];
+  const rows = await tx
+    .select({ label: recognitionBadges.label })
+    .from(recognitionBadges)
+    .where(inArray(recognitionBadges.id, [...badgeIds]));
+  if (rows.length !== badgeIds.length)
+    throw conflict("One or more selected badges no longer exist.");
+
+  return rows.map(({ label }) => label);
 }

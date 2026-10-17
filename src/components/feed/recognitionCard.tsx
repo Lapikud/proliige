@@ -1,25 +1,37 @@
 "use client";
 
-import { Award, ExternalLink } from "lucide-react";
+import { Award, ExternalLink, EyeOff } from "lucide-react";
 import Image from "next/image";
-import type { FC } from "react";
-import { formatRelative } from "~/lib/utils";
+import { type FC, useState } from "react";
+import type { RecognitionBadge } from "~/core/ports/recognition";
+import { cn, formatRelative } from "~/lib/utils";
 import { UserText } from "../ui/markdown";
 import { Badge } from "../ui/badge";
-import { Card } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { ClampedText } from "./clampedText";
 import type { FeedEntryView } from "./model";
 import { PostActions } from "./postActions";
 import { PostDialog } from "./postDialog";
 import { PostHeader } from "./postHeader";
+import { RecognitionMenu } from "./recognitionMenu";
 import { usePost } from "./usePost";
 
 interface Props {
   entry: FeedEntryView;
   canReact: boolean;
+  canModerate: boolean;
+  badges: ReadonlyArray<RecognitionBadge>;
 }
 
-export const RecognitionCard: FC<Props> = ({ entry, canReact }) => {
+export const RecognitionCard: FC<Props> = ({
+  entry: initialEntry,
+  canReact,
+  canModerate,
+  badges,
+}) => {
+  const [entry, setEntry] = useState(initialEntry);
+  const [removed, setRemoved] = useState(initialEntry.offFeed === "removed");
+  const [takenBack, setTakenBack] = useState(false);
   const post = usePost(entry);
   const openPost = () => {
     post.openPost();
@@ -31,9 +43,54 @@ export const RecognitionCard: FC<Props> = ({ entry, canReact }) => {
     </>
   );
 
+  if (takenBack) {
+    return (
+      <Card>
+        <CardContent className="text-sm text-muted-foreground">
+          Took back {entry.points} points from {entry.user.displayName}&rsquo;s recognition.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className={post.comments.open ? "overflow-hidden" : "overflow-hidden pb-2"}>
-      <PostHeader entry={entry} subtitle={subtitle} />
+    <Card className={cn("overflow-hidden", !post.comments.open && "pb-2", removed && "dark")}>
+      {removed && (
+        <p className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs font-semibold text-muted-foreground">
+          <EyeOff className="size-3.5 shrink-0" aria-hidden />
+          Removed from the feed. Only admins see it.
+        </p>
+      )}
+      <PostHeader entry={entry} subtitle={subtitle}>
+        {canModerate && (
+          <RecognitionMenu
+            editing={{
+              id: entry.proofId,
+              recipientName: entry.user.displayName,
+              description: entry.recognitionDescription ?? "",
+              descriptionMarkdown: entry.textMarkdown,
+              points: entry.points,
+              badgeLabels: (entry.badges ?? []).map(({ label }) => label),
+              links: entry.achievementLinks ?? [],
+            }}
+            badges={badges}
+            hidden={removed}
+            onHiddenChange={setRemoved}
+            onSaved={(saved) => {
+              setEntry({
+                ...entry,
+                recognitionDescription: saved.description,
+                textMarkdown: saved.descriptionMarkdown,
+                achievementLinks: saved.links,
+                badges: saved.badges,
+              });
+            }}
+            onTakenBack={() => {
+              setTakenBack(true);
+            }}
+          />
+        )}
+      </PostHeader>
       <div className="px-4">
         <button
           type="button"

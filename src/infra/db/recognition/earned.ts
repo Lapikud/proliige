@@ -1,4 +1,4 @@
-import { asc, inArray } from "drizzle-orm";
+import { and, asc, inArray, isNull } from "drizzle-orm";
 import type { EarnedBadge } from "~/domain/feed";
 import type { Database } from "../client";
 import { recognitionBadges } from "./badgeModel";
@@ -17,7 +17,7 @@ export async function loadEarnedBadges(
       badges: recognitions.badges,
     })
     .from(recognitions)
-    .where(inArray(recognitions.recipientId, [...userIds]))
+    .where(and(inArray(recognitions.recipientId, [...userIds]), isNull(recognitions.revokedAt)))
     .orderBy(asc(recognitions.createdAt));
   const labels = [...new Set(rows.flatMap(({ badges }) => badges))];
   if (labels.length === 0) return byUser;

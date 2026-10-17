@@ -1,6 +1,7 @@
-import { and, asc, count, desc, eq, gte, sum } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, sql, sum } from "drizzle-orm";
 import type { LeaderboardRepository } from "~/core/ports/leaderboard";
 import type { Database } from "../client";
+import { proofs } from "../proof/model";
 import { users } from "../user/model";
 import { pointsLedger } from "./model";
 
@@ -13,11 +14,13 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
           id: users.id,
           displayName: users.displayName,
           totalPoints,
-          proofEntries: count(pointsLedger.proofId),
-          reversals: count(pointsLedger.reversalOf),
+          approvedProofs: count(
+            sql`case when ${pointsLedger.reversalOf} is null and ${proofs.status} = 'approved' then 1 end`,
+          ),
         })
         .from(pointsLedger)
         .innerJoin(users, eq(users.id, pointsLedger.userId))
+        .leftJoin(proofs, eq(proofs.id, pointsLedger.proofId))
         .where(
           since === null
             ? eq(users.excluded, false)
@@ -33,7 +36,7 @@ export function createLeaderboardRepository(db: Database): LeaderboardRepository
           displayName: row.displayName,
         },
         totalPoints: row.totalPoints,
-        approvedProofs: row.proofEntries - row.reversals,
+        approvedProofs: row.approvedProofs,
       }));
     },
   };

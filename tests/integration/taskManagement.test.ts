@@ -30,6 +30,7 @@ const taskInput = (categoryId: string, title: string) => ({
   photoRequired: false,
   photoInstructions: "",
   textRequired: false,
+  showOnFeed: true,
 });
 
 async function setup() {

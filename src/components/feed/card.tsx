@@ -1,24 +1,33 @@
 "use client";
 
-import type { FC } from "react";
+import { EyeOff } from "lucide-react";
+import { type FC, useState } from "react";
 import { cn } from "~/lib/utils";
 import { UserText } from "../ui/markdown";
-import { Card } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { ClampedText } from "./clampedText";
 import type { FeedEntryView } from "./model";
 import { PhotoCarousel } from "./photoCarousel";
 import { PostActions } from "./postActions";
 import { PostDialog } from "./postDialog";
 import { PostHeader } from "./postHeader";
+import { PostMenu } from "./postMenu";
 import { usePost } from "./usePost";
 
 interface Props {
   entry: FeedEntryView;
   canReact: boolean;
+  canModerate: boolean;
+  viewerId: string | null;
 }
 
-export const FeedCard: FC<Props> = ({ entry, canReact }) => {
+export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) => {
   const post = usePost(entry);
+  const [removed, setRemoved] = useState(entry.offFeed === "removed");
+  const taskOffFeed = entry.offFeed === "task";
+  const offFeed = removed || taskOffFeed;
+  const [unapproved, setUnapproved] = useState(false);
+  const showMenu = canModerate || (viewerId !== null && viewerId !== entry.user.id);
   const openPost = () => {
     post.openPost();
   };
@@ -37,14 +46,48 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
     </>
   );
 
+  if (unapproved) {
+    return (
+      <Card>
+        <CardContent className="text-sm text-muted-foreground">
+          Unapproved {entry.user.displayName}&rsquo;s {entry.taskTitle}. The points were taken back.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
       className={cn(
         "overflow-hidden",
         entry.photoUrls.length === 0 && !post.comments.open && "pb-4",
+        offFeed && "dark",
       )}
     >
-      <PostHeader entry={entry} />
+      {offFeed && (
+        <p className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs font-semibold text-muted-foreground">
+          <EyeOff className="size-3.5 shrink-0" aria-hidden />
+          {removed ? "Removed from the feed." : "Its task is kept off the feed."} Only admins see
+          it.
+        </p>
+      )}
+      <PostHeader entry={entry}>
+        {showMenu && (
+          <PostMenu
+            proofId={entry.proofId}
+            taskTitle={entry.taskTitle}
+            points={entry.points}
+            hidden={removed}
+            canHide={!taskOffFeed}
+            reported={entry.reportedByUser}
+            canModerate={canModerate}
+            onHiddenChange={setRemoved}
+            onUnapproved={() => {
+              setUnapproved(true);
+            }}
+          />
+        )}
+      </PostHeader>
 
       <PhotoCarousel
         urls={entry.photoUrls}

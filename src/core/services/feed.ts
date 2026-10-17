@@ -1,6 +1,6 @@
 import { feedConfig } from "~/config/feed";
 import type { FeedCursor, FeedPage } from "~/domain/feed";
-import { userCanViewFeed } from "~/domain/rules";
+import { userCanModeratePosts, userCanViewFeed } from "~/domain/rules";
 import { guard } from "../guard";
 import type { FeedRepository } from "../ports/feed";
 
@@ -25,6 +25,7 @@ export function createFeedService({ feed }: Deps) {
         categoryId: input.categoryId ?? null,
         authorId: input.authorId ?? null,
         includeExcludedAuthor: Boolean(input.includeExcludedAuthor && input.authorId),
+        includeHidden: userCanModeratePosts(user),
         viewerId: user?.id ?? null,
       });
 

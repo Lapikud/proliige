@@ -42,7 +42,7 @@ export const TaskRow: FC<Props> = ({
     <>
       <span
         className={cn(
-          "min-w-0 flex-1 font-semibold wrap-break-word",
+          "min-w-0 grow basis-40 font-semibold wrap-break-word",
           muted ? "text-muted-foreground" : "text-foreground",
         )}
       >

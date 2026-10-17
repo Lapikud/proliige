@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { FC } from "react";
 import { ReviewCard } from "~/components/review/card";
-import type { PendingProofView } from "~/components/review/model";
+import type { PendingProofView, ReportedProofView } from "~/components/review/model";
+import { ReportedCard } from "~/components/review/reportedCard";
 import { HistoryRow } from "~/components/review/historyRow";
 import { Accordion, GroupAccordionItem } from "~/components/ui/accordion";
 import { EmptyState } from "~/components/ui/feedback";
 import { Page } from "~/components/ui/page";
 import type { ProofWithContext } from "~/core/ports/proof";
-import { proofService } from "~/infra";
+import { categoryService, proofService } from "~/infra";
 import { userCanReviewProofs } from "~/domain/rules";
 import type { User } from "~/domain/user";
 import { requireUser } from "~/lib/user";
@@ -22,6 +23,7 @@ const toPendingView = (
     taskTitle,
     taskDescription,
     ownTask,
+    categoryId,
     taskPoints,
     categoryName,
     userDisplayName,
@@ -34,6 +36,7 @@ const toPendingView = (
   taskTitle,
   taskDescription,
   ownTask,
+  categoryId,
   categoryName,
   points: taskPoints,
   userDisplayName,
@@ -45,16 +48,46 @@ const toPendingView = (
   requestedFromMe: requestedReviewers.some((reviewer) => reviewer.id === user.id),
 });
 
+const toReportedView = ({
+  proof,
+  taskTitle,
+  taskPoints,
+  categoryName,
+  userDisplayName,
+  photos,
+  openReports,
+}: ProofWithContext): ReportedProofView => ({
+  proofId: proof.id,
+  taskTitle,
+  categoryName,
+  points: taskPoints,
+  userDisplayName,
+  textAnswer: proof.textAnswer,
+  textMarkdown: proof.textMarkdown,
+  photoUrls: photos.map((item) => `/api/photos/${proof.id}/${item.id}`),
+  hidden: proof.hiddenAt !== null,
+  reports: openReports.map((report) => ({
+    reporterId: report.reporter.id,
+    reporterName: report.reporter.displayName,
+    reason: report.reason,
+    createdAt: report.createdAt.toISOString(),
+  })),
+});
+
 const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
   const user = await requireUser(userCanReviewProofs);
-  const [pending, history] = await Promise.all([
+  const [pending, history, reported, categories] = await Promise.all([
     proofService.listPendingProofs(user),
     proofService.listReviewedProofs(user, 25),
+    proofService.listReportedProofs(user),
+    categoryService.listCategories(user),
   ]);
   const views = pending.map((entry) => toPendingView(entry, user));
   const requested = views.filter((view) => view.requestedFromMe);
   const { view } = await searchParams;
+  const showReported = view === "reported";
   const showAll = view === "all" || (view === undefined && requested.length === 0);
+  const reportedViews = reported.map(toReportedView);
   const shown = showAll ? views : requested;
   const historyGroups = (["approved", "rejected"] as const)
     .map((status) => ({
@@ -70,43 +103,71 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
       description="Points are awarded only once a proof is approved."
       className="lg:h-[calc(100dvh-var(--nav-h)-5rem)]"
     >
-      <div className="grid gap-6 lg:-mx-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:-mx-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[minmax(0,1fr)]">
         <section aria-labelledby="pending-heading" className="flex flex-col gap-3 lg:min-h-0">
           <h2 id="pending-heading" className="sr-only">
             Pending proofs
           </h2>
-          <nav aria-label="Review queue" className="flex gap-1 border-b border-border lg:mx-3">
+          <nav
+            aria-label="Review queue"
+            className="flex [scrollbar-width:none] gap-1 overflow-x-auto shadow-[inset_0_-1px_0_var(--color-border)] lg:mx-3"
+          >
             <QueueTab
               href="/admin/review?view=requested"
-              active={!showAll}
+              active={!showAll && !showReported}
               count={requested.length}
             >
-              Review requested
+              Requested
             </QueueTab>
             <QueueTab href="/admin/review?view=all" active={showAll} count={views.length}>
-              All pending
+              Pending
+            </QueueTab>
+            <QueueTab
+              href="/admin/review?view=reported"
+              active={showReported}
+              count={reportedViews.length}
+            >
+              Reported
             </QueueTab>
           </nav>
 
-          <div tabIndex={0} className={scrollArea}>
-            {shown.length === 0 && (
-              <EmptyState
-                title={showAll ? "Nothing to review" : "No review requests"}
-                description={
-                  showAll
-                    ? "New proofs will appear here as members submit them."
-                    : "When a member asks you to review a proof, it shows up here."
-                }
-              />
-            )}
-            <ul className="flex list-none flex-col gap-3 p-0">
-              {shown.map((item) => (
-                <li key={item.proofId}>
-                  <ReviewCard proof={item} />
-                </li>
-              ))}
-            </ul>
-          </div>
+          {showReported ? (
+            <div tabIndex={0} className={scrollArea}>
+              {reportedViews.length === 0 && (
+                <EmptyState
+                  title="No reported posts"
+                  description="When someone reports a post on the feed, it shows up here."
+                />
+              )}
+              <ul className="flex list-none flex-col gap-3 p-0">
+                {reportedViews.map((item) => (
+                  <li key={item.proofId}>
+                    <ReportedCard proof={item} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div tabIndex={0} className={scrollArea}>
+              {shown.length === 0 && (
+                <EmptyState
+                  title={showAll ? "Nothing to review" : "No review requests"}
+                  description={
+                    showAll
+                      ? "New proofs will appear here as members submit them."
+                      : "When a member asks you to review a proof, it shows up here."
+                  }
+                />
+              )}
+              <ul className="flex list-none flex-col gap-3 p-0">
+                {shown.map((item) => (
+                  <li key={item.proofId}>
+                    <ReviewCard proof={item} categories={categories} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section aria-labelledby="history-heading" className="flex flex-col gap-3 lg:min-h-0">
@@ -174,7 +235,7 @@ const QueueTab: FC<QueueTabProps> = ({ href, active, count, children }) => (
     href={href}
     aria-current={active ? "page" : undefined}
     className={cn(
-      "-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-3 text-sm",
+      "inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm whitespace-nowrap",
       active
         ? "border-primary font-black text-foreground"
         : "border-transparent font-bold text-muted-foreground hover:text-foreground",

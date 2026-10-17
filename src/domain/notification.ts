@@ -1,5 +1,10 @@
 export type NotificationType =
-  "proof_submitted" | "review_requested" | "proof_approved" | "proof_rejected" | "proof_commented";
+  | "proof_submitted"
+  | "review_requested"
+  | "proof_approved"
+  | "proof_rejected"
+  | "proof_commented"
+  | "proof_reported";
 
 export interface Notification {
   readonly id: string;
