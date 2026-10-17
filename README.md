@@ -21,6 +21,18 @@ pnpm dev               # http://localhost:3000
 
 `.env.example` lists every setting; set `SITE_URL` to the public address so link previews and the sitemap point at it. The app refuses to start while one is missing or invalid, and says which. `.env` and `garage.toml` hold secrets, so both are ignored by git and never archived; their templates are `.env.example` and `garage.example.toml`.
 
+### Signing in locally
+
+To try the app without FreeIPA, set `AUTH_DRIVER=seed` in `.env` and run `pnpm db:seed`. Every seed account signs in with the password `seed`. Seed sign-in is refused in production, and `pnpm db:seed` refuses non-local databases unless `SEED_CONFIRM=1` is set.
+
+| Account                          | Role                                       |
+| -------------------------------- | ------------------------------------------ |
+| `seed-admin-1`, `seed-admin-2`   | Admin                                      |
+| `seed-pixel-1` to `seed-pixel-8` | Pixel                                      |
+| `seed-member-1`, `seed-member-2` | Member                                     |
+| `seed-excluded`                  | Pixel left out of the leaderboard and feed |
+| `seed-no-group`                  | No group                                   |
+
 ## Everyday commands
 
 | Command                          | What it does                                                    |
@@ -34,6 +46,7 @@ pnpm dev               # http://localhost:3000
 | `pnpm db:generate <name>`        | Write a named migration after changing a `model.ts`             |
 | `pnpm db:migrate`                | Apply migrations; stops if a `model.ts` change has no migration |
 | `pnpm db:check`                  | Check that every `model.ts` change has a migration              |
+| `pnpm db:seed`                   | Fill a local database with seed accounts, tasks and posts       |
 | `pnpm garage:setup [app-origin]` | Prepare Garage: config, layout, bucket, key, CORS               |
 
 Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck && pnpm test`. CI runs the same checks, plus a build, on every pull request.
