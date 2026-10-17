@@ -4,7 +4,6 @@ import { EyeOff } from "lucide-react";
 import { type FC, useState } from "react";
 import { cn } from "~/lib/utils";
 import { UserText } from "../ui/markdown";
-import { Badge } from "../ui/badge";
 import { Card, CardContent } from "../ui/card";
 import { ClampedText } from "./clampedText";
 import type { FeedEntryView } from "./model";
@@ -26,7 +25,7 @@ export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) 
   const post = usePost(entry);
   const [removed, setRemoved] = useState(entry.offFeed === "removed");
   const taskOffFeed = entry.offFeed === "task";
-  const offFeedLabel = removed ? "Removed from feed" : "Its task is kept off the feed";
+  const offFeed = removed || taskOffFeed;
   const [unapproved, setUnapproved] = useState(false);
   const showMenu = canModerate || (viewerId !== null && viewerId !== entry.user.id);
   const openPost = () => {
@@ -62,15 +61,17 @@ export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) 
       className={cn(
         "overflow-hidden",
         entry.photoUrls.length === 0 && !post.comments.open && "pb-4",
+        offFeed && "dark",
       )}
     >
+      {offFeed && (
+        <p className="flex items-center gap-2 border-b border-border px-4 py-2 text-xs font-semibold text-muted-foreground">
+          <EyeOff className="size-3.5 shrink-0" aria-hidden />
+          {removed ? "Removed from the feed." : "Its task is kept off the feed."} Only admins see
+          it.
+        </p>
+      )}
       <PostHeader entry={entry}>
-        {(removed || taskOffFeed) && (
-          <Badge variant="neutral" title={offFeedLabel}>
-            <EyeOff className="size-3.5" aria-hidden />
-            <span className="sr-only">{offFeedLabel}</span>
-          </Badge>
-        )}
         {showMenu && (
           <PostMenu
             proofId={entry.proofId}

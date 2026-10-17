@@ -117,10 +117,10 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
               active={!showAll && !showReported}
               count={requested.length}
             >
-              Review requested
+              Requested
             </QueueTab>
             <QueueTab href="/admin/review?view=all" active={showAll} count={views.length}>
-              All pending
+              Pending
             </QueueTab>
             <QueueTab
               href="/admin/review?view=reported"

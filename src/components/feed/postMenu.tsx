@@ -1,11 +1,12 @@
 "use client";
 
 import { Ellipsis } from "lucide-react";
-import { useRef, useState, type FC } from "react";
+import { useState, type FC } from "react";
 import { toast } from "sonner";
 import { setProofHiddenAction } from "~/actions/review";
 import { useAction } from "~/lib/form";
-import { buttonVariants } from "../ui/button";
+import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { ReportDialog } from "./reportDialog";
 import { UnapproveDialog } from "./unapproveDialog";
 
@@ -35,11 +36,11 @@ export const PostMenu: FC<Props> = ({
   onHiddenChange,
   onUnapproved,
 }) => {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [dialog, setDialog] = useState<"report" | "unapprove" | null>(null);
   const [reported, setReported] = useState(initiallyReported);
   const close = () => {
-    detailsRef.current?.removeAttribute("open");
+    setMenuOpen(false);
   };
   const visibility = useAction(setProofHiddenAction, {
     onSuccess: (_data, input) => {
@@ -72,17 +73,13 @@ export const PostMenu: FC<Props> = ({
 
   return (
     <>
-      <details ref={detailsRef} className="relative">
-        <summary
-          aria-label="Post actions"
-          className={`${buttonVariants({
-            variant: "ghost",
-            size: "icon",
-          })} list-none [&::-webkit-details-marker]:hidden`}
-        >
-          <Ellipsis aria-hidden="true" />
-        </summary>
-        <div className="absolute top-full right-0 z-10 mt-1 min-w-48 rounded-xl border border-border bg-card p-2 shadow-card">
+      <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Post actions" title="Post actions">
+            <Ellipsis aria-hidden="true" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="min-w-48">
           {canModerate ? (
             <>
               {canHide && (
@@ -123,8 +120,8 @@ export const PostMenu: FC<Props> = ({
               {reported ? "Reported" : "Report post…"}
             </button>
           )}
-        </div>
-      </details>
+        </PopoverContent>
+      </Popover>
       {canModerate ? (
         <UnapproveDialog
           proofId={proofId}

@@ -91,9 +91,10 @@ export const ReportedCard: FC<Props> = ({ proof }) => {
 
         {error && <ErrorState description={error} />}
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="outline"
+            variant="subtle"
+            size="sm"
             disabled={dismiss.pending}
             onClick={() => {
               dismiss.run({ proofId: proof.proofId });
@@ -103,7 +104,8 @@ export const ReportedCard: FC<Props> = ({ proof }) => {
           </Button>
           {!proof.hidden && (
             <Button
-              variant="outline"
+              variant="subtle"
+              size="sm"
               disabled={hide.pending}
               onClick={() => {
                 hide.run({
@@ -116,7 +118,9 @@ export const ReportedCard: FC<Props> = ({ proof }) => {
             </Button>
           )}
           <Button
-            variant="danger"
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-destructive"
             onClick={() => {
               setUnapproving(true);
             }}
