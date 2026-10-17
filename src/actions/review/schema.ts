@@ -1,11 +1,16 @@
 import { z } from "zod";
+import { ownTaskSchema } from "../proof/schema";
 
 export const approveSchema = z.object({
   proofId: z.string().min(1),
-  points: z
-    .number("Enter a number.")
-    .int("Points must be a whole number.")
-    .min(0, "Points cannot be negative.")
+  edit: ownTaskSchema
+    .pick({
+      title: true,
+      description: true,
+      categoryId: true,
+      points: true,
+    })
+    .partial()
     .optional(),
 });
 

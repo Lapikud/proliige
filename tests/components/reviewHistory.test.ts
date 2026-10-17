@@ -22,6 +22,7 @@ const entry: ProofWithContext = {
   proofPolicy: "one_per_user",
   taskDescription: "",
   ownTask: false,
+  categoryId: "category-1",
   taskPoints: 10,
   taskRemoved: false,
   taskRemovedAt: null,

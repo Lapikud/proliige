@@ -82,10 +82,31 @@ describe("own tasks", () => {
     expect(pending?.ownTask).toBe(true);
     expect(pending?.taskPoints).toBe(8);
 
-    const result = await proofService.approveProof(admin, proof.id, 12);
+    const result = await proofService.approveProof(admin, proof.id, { points: 12 });
     expect(result.pointsAwarded).toBe(12);
     expect((await proofs.findWithContext(proof.id))?.taskPoints).toBe(12);
     expect((await leaderboard.leaderboard())[0]?.totalPoints).toBe(12);
+  });
+
+  it("lets the reviewer change the task while approving", async () => {
+    const { category, pixel, admin } = await seed();
+    const other = await categories.create({
+      name: "Kitchen",
+      slug: "kitchen",
+    });
+    const proof = await proofService.addOwnTask(pixel, ownTask(category.id));
+
+    await proofService.approveProof(admin, proof.id, {
+      title: "Oiled the door",
+      description: "",
+      categoryId: other.id,
+    });
+
+    const context = await proofs.findWithContext(proof.id);
+    expect(context?.taskTitle).toBe("Oiled the door");
+    expect(context?.taskDescription).toBe("");
+    expect(context?.categoryName).toBe("Kitchen");
+    expect(context?.taskPoints).toBe(8);
   });
 
   it("refuses a points override on a regular task", async () => {
@@ -106,7 +127,9 @@ describe("own tasks", () => {
       objectKeys: [],
     });
 
-    await expect(proofService.approveProof(admin, proof.id, 99)).rejects.toThrow(/own tasks/);
+    await expect(proofService.approveProof(admin, proof.id, { points: 99 })).rejects.toThrow(
+      /own tasks/,
+    );
   });
 
   it("closes a rejected own task", async () => {

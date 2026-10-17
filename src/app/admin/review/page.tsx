@@ -9,7 +9,7 @@ import { Accordion, GroupAccordionItem } from "~/components/ui/accordion";
 import { EmptyState } from "~/components/ui/feedback";
 import { Page } from "~/components/ui/page";
 import type { ProofWithContext } from "~/core/ports/proof";
-import { proofService } from "~/infra";
+import { categoryService, proofService } from "~/infra";
 import { userCanReviewProofs } from "~/domain/rules";
 import type { User } from "~/domain/user";
 import { requireUser } from "~/lib/user";
@@ -23,6 +23,7 @@ const toPendingView = (
     taskTitle,
     taskDescription,
     ownTask,
+    categoryId,
     taskPoints,
     categoryName,
     userDisplayName,
@@ -35,6 +36,7 @@ const toPendingView = (
   taskTitle,
   taskDescription,
   ownTask,
+  categoryId,
   categoryName,
   points: taskPoints,
   userDisplayName,
@@ -74,10 +76,11 @@ const toReportedView = ({
 
 const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
   const user = await requireUser(userCanReviewProofs);
-  const [pending, history, reported] = await Promise.all([
+  const [pending, history, reported, categories] = await Promise.all([
     proofService.listPendingProofs(user),
     proofService.listReviewedProofs(user, 25),
     proofService.listReportedProofs(user),
+    categoryService.listCategories(user),
   ]);
   const views = pending.map((entry) => toPendingView(entry, user));
   const requested = views.filter((view) => view.requestedFromMe);
@@ -159,7 +162,7 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
               <ul className="flex list-none flex-col gap-3 p-0">
                 {shown.map((item) => (
                   <li key={item.proofId}>
-                    <ReviewCard proof={item} />
+                    <ReviewCard proof={item} categories={categories} />
                   </li>
                 ))}
               </ul>

@@ -243,7 +243,11 @@ async function submit(
 async function approve(proof: Proof | null, reviewer: User, daysAgo: number, points?: number) {
   if (proof === null) return null;
   at(daysAgo, 30);
-  await proofService.approveProof(reviewer, proof.id, points);
+  await proofService.approveProof(
+    reviewer,
+    proof.id,
+    points === undefined ? undefined : { points },
+  );
 
   return proof;
 }

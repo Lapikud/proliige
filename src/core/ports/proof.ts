@@ -9,6 +9,7 @@ export interface ProofWithContext {
   readonly proofPolicy: TaskPolicy;
   readonly taskDescription: string;
   readonly ownTask: boolean;
+  readonly categoryId: string;
   readonly taskPoints: number;
   readonly taskRemoved: boolean;
   readonly taskRemovedAt: Date | null;
@@ -23,6 +24,13 @@ export interface ProofWithContext {
   readonly reviewedByName: string | null;
   readonly taskShowOnFeed: boolean;
   readonly openReports: ReadonlyArray<ProofReport>;
+}
+
+export interface OwnTaskEdit {
+  readonly title?: string | undefined;
+  readonly description?: string | undefined;
+  readonly categoryId?: string | undefined;
+  readonly points?: number | undefined;
 }
 
 export interface ProofRepository {
@@ -46,12 +54,7 @@ export interface ProofRepository {
   listForUser(userId: string): Promise<Array<ProofWithContext>>;
   listPhotos(proofId: string): Promise<Array<ProofPhoto>>;
 
-  approve(input: {
-    proofId: string;
-    reviewerId: string;
-    points?: number | undefined;
-    now: Date;
-  }): Promise<{
+  approve(input: { proofId: string; reviewerId: string; edit?: OwnTaskEdit; now: Date }): Promise<{
     proof: Proof;
     alreadyReviewed: boolean;
     pointsAwarded: number;

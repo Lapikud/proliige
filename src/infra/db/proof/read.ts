@@ -126,6 +126,7 @@ function selectWithContext(db: Database) {
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
       taskShowOnFeed: tasks.showOnFeed,
+      categoryId: tasks.categoryId,
       ledgerPoints: pointsLedger.points,
       taskPoints: tasks.points,
       taskRemoved: tasks.removedAt,
@@ -157,6 +158,7 @@ interface ContextRow {
   taskDescription: string;
   taskCreatedBy: string | null;
   taskShowOnFeed: boolean;
+  categoryId: string;
   ledgerPoints: number | null;
   taskPoints: number;
   taskRemoved: Date | null;
@@ -239,6 +241,7 @@ async function attachDetails(
     proofPolicy: row.proofPolicy,
     taskDescription: row.taskDescription,
     ownTask: row.taskCreatedBy !== null,
+    categoryId: row.categoryId,
     taskPoints: row.ledgerPoints ?? row.taskPoints,
     taskRemoved: row.taskRemoved !== null,
     taskRemovedAt: row.taskRemoved,

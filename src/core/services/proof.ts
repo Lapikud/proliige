@@ -10,7 +10,7 @@ import {
   userCanSubmitProof,
 } from "~/domain/rules";
 import { guard } from "../guard";
-import type { ProofRepository } from "../ports/proof";
+import type { OwnTaskEdit, ProofRepository } from "../ports/proof";
 import type { ClockPort } from "../ports/clock";
 import type { AdminDirectoryPort, NotificationPort } from "../ports/notification";
 import type { TaskRepository } from "../ports/task";
@@ -172,19 +172,19 @@ export function createProofService({
       proofs.listReviewed(limit ?? 100),
     ),
 
-    approveProof: guard(userCanReviewProofs, async (user, proofId: string, points?: number) => {
+    approveProof: guard(userCanReviewProofs, async (user, proofId: string, edit?: OwnTaskEdit) => {
       const context = await proofs.findWithContext(proofId);
       if (context === null) {
         throw notFound("That proof does not exist.");
       }
-      if (points !== undefined && !context.ownTask) {
-        throw validation("Points can only be changed on own tasks.");
+      if (edit !== undefined && !context.ownTask) {
+        throw validation("Only own tasks can be changed on review.");
       }
 
       const result = await proofs.approve({
         proofId,
         reviewerId: user.id,
-        points,
+        ...(edit && { edit }),
         now: clock.now(),
       });
       if (!result.alreadyReviewed) {
@@ -192,7 +192,7 @@ export function createProofService({
           recipientUserId: result.proof.userId,
           type: "proof_approved",
           title: "Proof approved",
-          message: `"${context.taskTitle}" was approved. You earned ${result.pointsAwarded} points.`,
+          message: `"${edit?.title ?? context.taskTitle}" was approved. You earned ${result.pointsAwarded} points.`,
           proofId: result.proof.id,
           taskId: result.proof.taskId,
         });

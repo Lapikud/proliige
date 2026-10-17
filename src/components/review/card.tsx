@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, GitPullRequest, X } from "lucide-react";
+import { Check, GitPullRequest, Pencil, X } from "lucide-react";
 import { type FC, useState } from "react";
 import { approveProofAction } from "~/actions/review";
 import type { ProofStatus } from "~/domain/proof";
+import type { Category } from "~/domain/task";
 import { useAction } from "~/lib/form";
 import { formatDateTime } from "~/lib/utils";
 import { ProofStatusBadge } from "../proof/statusBadge";
@@ -12,7 +13,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { ErrorState } from "../ui/feedback";
-import { Input, Label } from "../ui/formControls";
+import { Input, Label, Select, Textarea } from "../ui/formControls";
 import { UserText } from "../ui/markdown";
 import type { PendingProofView } from "./model";
 import { RejectForm } from "./rejectForm";
@@ -20,13 +21,21 @@ import { ReviewerList } from "./reviewers";
 
 interface Props {
   proof: PendingProofView;
+  categories: ReadonlyArray<Category>;
 }
 
 type Stage = "reviewing" | "rejecting" | Exclude<ProofStatus, "pending">;
 
-export const ReviewCard: FC<Props> = ({ proof }) => {
+export const ReviewCard: FC<Props> = ({ proof, categories }) => {
   const [stage, setStage] = useState<Stage>("reviewing");
-  const [points, setPoints] = useState(proof.points);
+  const [editing, setEditing] = useState(false);
+  const [edit, setEdit] = useState({
+    title: proof.taskTitle,
+    description: proof.taskDescription,
+    categoryId: proof.categoryId,
+    points: proof.points,
+  });
+  const { points } = edit;
   const approve = useAction(approveProofAction, {
     onSuccess: () => {
       setStage("approved");
@@ -103,6 +112,58 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
           />
         ) : (
           <div className="flex flex-col gap-3">
+            {proof.ownTask && editing && (
+              <div className="flex flex-col gap-3 rounded-xl bg-muted p-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={`title-${proof.proofId}`}>Title</Label>
+                  <Input
+                    id={`title-${proof.proofId}`}
+                    maxLength={120}
+                    value={edit.title}
+                    onChange={(event) => {
+                      setEdit({
+                        ...edit,
+                        title: event.target.value,
+                      });
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={`description-${proof.proofId}`}>Details</Label>
+                  <Textarea
+                    id={`description-${proof.proofId}`}
+                    rows={3}
+                    maxLength={2000}
+                    value={edit.description}
+                    onChange={(event) => {
+                      setEdit({
+                        ...edit,
+                        description: event.target.value,
+                      });
+                    }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={`category-${proof.proofId}`}>Category</Label>
+                  <Select
+                    id={`category-${proof.proofId}`}
+                    value={edit.categoryId}
+                    onChange={(event) => {
+                      setEdit({
+                        ...edit,
+                        categoryId: event.target.value,
+                      });
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+            )}
             {proof.ownTask && (
               <div className="flex items-center gap-3">
                 <Label htmlFor={`points-${proof.proofId}`}>Award points</Label>
@@ -114,9 +175,25 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
                   className="w-24"
                   value={Number.isNaN(points) ? "" : points}
                   onChange={(event) => {
-                    setPoints(event.target.valueAsNumber);
+                    setEdit({
+                      ...edit,
+                      points: event.target.valueAsNumber,
+                    });
                   }}
                 />
+                {!editing && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => {
+                      setEditing(true);
+                    }}
+                  >
+                    <Pencil aria-hidden="true" />
+                    Edit task
+                  </Button>
+                )}
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -128,7 +205,7 @@ export const ReviewCard: FC<Props> = ({ proof }) => {
                     proof.ownTask
                       ? {
                           proofId: proof.proofId,
-                          points,
+                          edit,
                         }
                       : { proofId: proof.proofId },
                   );

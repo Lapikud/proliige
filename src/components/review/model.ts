@@ -5,6 +5,7 @@ export interface PendingProofView {
   taskTitle: string;
   taskDescription: string;
   ownTask: boolean;
+  categoryId: string;
   categoryName: string;
   points: number;
   userDisplayName: string;

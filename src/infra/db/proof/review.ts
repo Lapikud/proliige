@@ -10,7 +10,7 @@ import { toProof } from "./map";
 
 export function createProofReview(db: Database): Pick<ProofRepository, "approve" | "reject"> {
   return {
-    async approve({ proofId, reviewerId, points: override, now }) {
+    async approve({ proofId, reviewerId, edit, now }) {
       return db.transaction(async (tx) => {
         const [proof] = await tx.select().from(proofs).where(eq(proofs.id, proofId)).limit(1);
         if (proof === undefined) throw notFound("That proof does not exist.");
@@ -48,7 +48,7 @@ export function createProofReview(db: Database): Pick<ProofRepository, "approve"
         }
 
         const [task] =
-          override === undefined
+          edit === undefined
             ? await tx
                 .select({ points: tasks.points })
                 .from(tasks)
@@ -57,7 +57,7 @@ export function createProofReview(db: Database): Pick<ProofRepository, "approve"
             : await tx
                 .update(tasks)
                 .set({
-                  points: override,
+                  ...edit,
                   updatedAt: now,
                 })
                 .where(eq(tasks.id, updated.taskId))

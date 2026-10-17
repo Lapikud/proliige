@@ -14,8 +14,8 @@ const revalidate = ["/", "/admin/review", "/proofs", "/tasks"];
 
 export const approveProofAction = action(
   approveSchema,
-  async (user, { proofId, points }) => {
-    await proofService.approveProof(user, proofId, points);
+  async (user, { proofId, edit }) => {
+    await proofService.approveProof(user, proofId, edit);
   },
   { revalidate },
 );
