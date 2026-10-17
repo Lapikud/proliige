@@ -36,6 +36,7 @@ const maxSeconds = 2_147_483_647;
 export function parseCooldownInput(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
+  if (/^0+$/.test(trimmed)) return 0;
 
   let cursor = 0;
   let seconds = 0;
@@ -63,7 +64,7 @@ export function parseCooldownInput(value: string): number | null {
 
 export function formatCooldownInput(seconds: number): string {
   if (!Number.isSafeInteger(seconds) || seconds < 0) return "";
-  if (seconds === 0) return "0s";
+  if (seconds === 0) return "0";
 
   let remaining = seconds;
   const parts: Array<string> = [];
