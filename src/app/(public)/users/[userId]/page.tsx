@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { FC, ReactNode } from "react";
 import { z } from "zod";
 import { SignOutButton } from "~/components/auth/signOutButton";
@@ -29,9 +29,11 @@ async function findProfile(userId: string) {
     const profile =
       viewer === null
         ? null
-        : await userService.findProfileByUid(viewer, userId, { includeExcluded: true });
+        : await userService.findProfileByUid(viewer, userId.toLowerCase(), {
+            includeExcluded: true,
+          });
     if (profile !== null) {
-      permanentRedirect(`/users/${profile.id}`);
+      redirect(`/users/${profile.id}`);
     }
 
     return null;
