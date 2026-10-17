@@ -24,7 +24,9 @@ interface Props {
 
 export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) => {
   const post = usePost(entry);
-  const [hidden, setHidden] = useState(entry.hidden);
+  const [removed, setRemoved] = useState(entry.offFeed === "removed");
+  const taskOffFeed = entry.offFeed === "task";
+  const offFeedLabel = removed ? "Removed from feed" : "Its task is kept off the feed";
   const [unapproved, setUnapproved] = useState(false);
   const showMenu = canModerate || (viewerId !== null && viewerId !== entry.user.id);
   const openPost = () => {
@@ -63,10 +65,10 @@ export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) 
       )}
     >
       <PostHeader entry={entry}>
-        {hidden && (
-          <Badge variant="neutral" title="Removed from feed">
+        {(removed || taskOffFeed) && (
+          <Badge variant="neutral" title={offFeedLabel}>
             <EyeOff className="size-3.5" aria-hidden />
-            <span className="sr-only">Removed from feed</span>
+            <span className="sr-only">{offFeedLabel}</span>
           </Badge>
         )}
         {showMenu && (
@@ -74,9 +76,11 @@ export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) 
             proofId={entry.proofId}
             taskTitle={entry.taskTitle}
             points={entry.points}
-            hidden={hidden}
+            hidden={removed}
+            canHide={!taskOffFeed}
+            reported={entry.reportedByUser}
             canModerate={canModerate}
-            onHiddenChange={setHidden}
+            onHiddenChange={setRemoved}
             onUnapproved={() => {
               setUnapproved(true);
             }}

@@ -1,11 +1,16 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { createCommentService } from "~/core/services/comment";
 import { createFeedService } from "~/core/services/feed";
+import { createLikeService } from "~/core/services/like";
 import { createPhotoService } from "~/core/services/photo";
 import { createProofService } from "~/core/services/proof";
 import { createCategoryRepository } from "~/infra/db/category/repo";
+import { createCommentRepository } from "~/infra/db/feed/comment";
+import { createLikeRepository } from "~/infra/db/feed/like";
 import { createFeedRepository } from "~/infra/db/feed/repo";
 import { createLeaderboardRepository } from "~/infra/db/points/repo";
 import { createProofRepository } from "~/infra/db/proof/repo";
+import { createRecognitionRepository } from "~/infra/db/recognition/repo";
 import { createTaskRepository } from "~/infra/db/task/repo";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { createMemoryObjectStorage } from "~/infra/storage/memory";
@@ -19,6 +24,21 @@ const proofs = createProofRepository(db);
 const leaderboard = createLeaderboardRepository(db);
 const feed = createFeedService({ feed: createFeedRepository(db) });
 const notifications = fakeNotificationPort();
+const recognitions = createRecognitionRepository(db, ["members", "pixels"]);
+const clock = { now: () => new Date() };
+const likes = createLikeService({
+  likes: createLikeRepository(db),
+  proofs,
+  recognitions,
+  clock,
+});
+const comments = createCommentService({
+  comments: createCommentRepository(db),
+  proofs,
+  recognitions,
+  notifications,
+  clock,
+});
 let people: Awaited<ReturnType<typeof seedUsers>>;
 const proofService = createProofService({
   proofs,
@@ -90,7 +110,7 @@ describe("removing a post from the feed", () => {
     const [shownToAdmin] = (await feed.listFeed(admin, { cursor: null })).entries;
     expect(shownToAdmin).toMatchObject({
       proofId: proof.id,
-      hidden: true,
+      offFeed: "removed",
     });
     expect(await points()).toBe(10);
 
@@ -103,13 +123,32 @@ describe("removing a post from the feed", () => {
 
     await expect(proofService.setProofHidden(alice, proof.id, true)).rejects.toThrow();
   });
+
+  it("stops likes and comments except from admins", async () => {
+    const { proof, admin, bob } = await seed();
+    await proofService.setProofHidden(admin, proof.id, true);
+
+    await expect(likes.toggleLike(bob, proof.id)).rejects.toThrow(/not on the feed/);
+    await expect(
+      comments.addComment(bob, {
+        proofId: proof.id,
+        body: "Nice",
+      }),
+    ).rejects.toThrow(/not on the feed/);
+    await expect(likes.toggleLike(admin, proof.id)).resolves.toBeDefined();
+  });
 });
 
 describe("tasks kept off the feed", () => {
   it("never show their proofs, while the points still count", async () => {
-    const { admin } = await seed({ showOnFeed: false });
+    const { proof, admin, bob } = await seed({ showOnFeed: false });
 
-    expect(await feedIds(admin)).toEqual([]);
+    expect(await feedIds(bob)).toEqual([]);
+    const [shownToAdmin] = (await feed.listFeed(admin, { cursor: null })).entries;
+    expect(shownToAdmin).toMatchObject({
+      proofId: proof.id,
+      offFeed: "task",
+    });
     expect(await points()).toBe(10);
   });
 });
@@ -194,6 +233,8 @@ describe("reporting a post", () => {
     });
 
     expect(notifications.publishMany).toHaveBeenCalledTimes(1);
+    const [seenByBob] = (await feed.listFeed(bob, { cursor: null })).entries;
+    expect(seenByBob?.reportedByUser).toBe(true);
     const [reported] = await proofService.listReportedProofs(admin);
     expect(reported?.openReports).toMatchObject([
       {

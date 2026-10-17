@@ -80,20 +80,21 @@ export function createPhotoService(deps: PhotoServiceDeps) {
           photoId: string;
         },
       ) => {
-        const context = await deps.proofs.findWithContext(input.proofId);
-        if (context === null) {
+        const found = await deps.proofs.findForFeed(input.proofId);
+        if (found === null) {
           throw notFound("That proof does not exist.");
         }
 
-        const match = context.photos.find((e) => e.id === input.photoId);
+        const photos = await deps.proofs.listPhotos(found.proof.id);
+        const match = photos.find((e) => e.id === input.photoId);
         if (match === undefined) {
           throw notFound("That photo is not part of this proof.");
         }
 
-        const onFeed = isOnFeed(context.proof, { showOnFeed: context.taskShowOnFeed });
+        const onFeed = isOnFeed(found.proof, { showOnFeed: found.taskShowOnFeed });
         if (
           !userCanViewPhoto(user, {
-            userId: context.proof.userId,
+            userId: found.proof.userId,
             onFeed,
           })
         ) {

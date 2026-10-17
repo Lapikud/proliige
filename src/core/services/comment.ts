@@ -32,8 +32,8 @@ export function createCommentService({
   clock,
 }: Deps) {
   return {
-    listComments: guard(userCanViewFeed, async (_user, proofId: string) => {
-      const { post } = await requirePost(proofs, recognitions, proofId);
+    listComments: guard(userCanViewFeed, async (user, proofId: string) => {
+      const { post } = await requirePost(proofs, recognitions, proofId, user);
 
       return comments.listComments(post);
     }),
@@ -47,7 +47,12 @@ export function createCommentService({
           body: string;
         },
       ) => {
-        const { post, ownerId, taskId } = await requirePost(proofs, recognitions, input.proofId);
+        const { post, ownerId, taskId } = await requirePost(
+          proofs,
+          recognitions,
+          input.proofId,
+          user,
+        );
         const proofId = post.kind === "proof" ? post.id : null;
 
         const failure = validateCommentBody(input.body);

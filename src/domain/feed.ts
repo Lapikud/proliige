@@ -23,7 +23,7 @@ export interface FeedEntry {
   readonly points: number;
   readonly taskRemoved: boolean;
   readonly pointsReversed: boolean;
-  readonly hidden: boolean;
+  readonly offFeed: "removed" | "task" | null;
   readonly user: PublicUserView;
   readonly approvedAt: Date;
   readonly photoUrls: ReadonlyArray<string>;
@@ -31,6 +31,7 @@ export interface FeedEntry {
   readonly commentCount: number;
 
   readonly likedByUser: boolean;
+  readonly reportedByUser: boolean;
   readonly recognitionDescription?: string;
   readonly reviewer?: PublicUserView;
   readonly badges?: ReadonlyArray<EarnedBadge>;

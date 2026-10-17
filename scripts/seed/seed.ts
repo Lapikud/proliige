@@ -400,6 +400,7 @@ async function seed() {
     photoRequired?: boolean;
     photoInstructions?: string;
     textRequired?: boolean;
+    showOnFeed?: boolean;
   }) =>
     taskService.createTask(admin1, {
       title: input.title,
@@ -411,7 +412,7 @@ async function seed() {
       photoRequired: input.photoRequired ?? false,
       photoInstructions: input.photoInstructions ?? "",
       textRequired: input.textRequired ?? false,
-      showOnFeed: true,
+      showOnFeed: input.showOnFeed ?? true,
     });
 
   at(120);
@@ -679,6 +680,40 @@ async function seed() {
     6,
     "Buying things is not an own task. Ask for a refund instead.",
   );
+
+  at(30);
+  const keysCheck = await task({
+    title: "Kontrolli võtmekappi",
+    description: "Vaata üle, et kõik võtmed on kapis.",
+    categoryId: cleaning.id,
+    points: 5,
+    policy: "repeatable",
+    cooldownDays: 7,
+    showOnFeed: false,
+  });
+  await approve(await submit(m2, keysCheck, 5), admin1, 5);
+
+  at(4);
+  if (anythingPhoto) await proofService.setProofHidden(admin2, anythingPhoto.id, true);
+  const unapproved = await approve(await submit(m5, anything, 9, { text: shortText }), admin1, 8);
+  at(3);
+  if (unapproved) {
+    await proofService.unapproveProof(admin1, {
+      proofId: unapproved.id,
+      reason: "Approved by mistake",
+    });
+  }
+  at(2);
+  for (const [reporter, reason] of [
+    [member1, "This looks copied from last week."],
+    [pixel1, "Same text as another post."],
+  ] as const) {
+    if (updateMarkdown)
+      await proofService.reportProof(reporter, {
+        proofId: updateMarkdown.id,
+        reason,
+      });
+  }
 
   at(90);
   const badge = (label: string, imageUrl: string | null) =>

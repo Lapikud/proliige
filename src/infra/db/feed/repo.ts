@@ -5,7 +5,7 @@ import { recognitionFilter } from "~/domain/feed";
 import { categories } from "../category/model";
 import type { Database } from "../client";
 import { pointsLedger } from "../points/model";
-import { proofPhotos, proofs } from "../proof/model";
+import { proofPhotos, proofReports, proofs } from "../proof/model";
 import { recognitionBadges } from "../recognition/badgeModel";
 import { loadEarnedBadges } from "../recognition/earned";
 import { recognitions } from "../recognition/model";
@@ -24,12 +24,10 @@ export function createFeedRepository(db: Database): FeedRepository {
       includeHidden,
       viewerId,
     }) {
-      const proofConditions = [
-        eq(proofs.status, "approved"),
-        isNotNull(proofs.reviewedAt),
-        eq(tasks.showOnFeed, true),
-      ];
-      if (!includeHidden) proofConditions.push(isNull(proofs.hiddenAt));
+      const proofConditions = [eq(proofs.status, "approved"), isNotNull(proofs.reviewedAt)];
+      if (!includeHidden) {
+        proofConditions.push(isNull(proofs.hiddenAt), eq(tasks.showOnFeed, true));
+      }
       const reversal = alias(pointsLedger, "reversal");
       if (!includeExcludedAuthor) proofConditions.push(eq(users.excluded, false));
       const onlyRecognitions = categoryId === recognitionFilter;
@@ -56,6 +54,7 @@ export function createFeedRepository(db: Database): FeedRepository {
               taskRemovedAt: tasks.removedAt,
               reversalId: reversal.id,
               hiddenAt: proofs.hiddenAt,
+              showOnFeed: tasks.showOnFeed,
               categoryName: categories.name,
               userId: users.id,
               displayName: users.displayName,
@@ -72,6 +71,17 @@ export function createFeedRepository(db: Database): FeedRepository {
                         .from(proofLikes)
                         .where(
                           and(eq(proofLikes.proofId, proofs.id), eq(proofLikes.userId, viewerId)),
+                        ),
+                    ),
+                    reportedByUser: exists(
+                      db
+                        .select({ id: proofReports.id })
+                        .from(proofReports)
+                        .where(
+                          and(
+                            eq(proofReports.proofId, proofs.id),
+                            eq(proofReports.reporterId, viewerId),
+                          ),
                         ),
                     ),
                   }
@@ -180,7 +190,7 @@ export function createFeedRepository(db: Database): FeedRepository {
                   points: row.points ?? 0,
                   taskRemoved: row.taskRemovedAt !== null,
                   pointsReversed: row.reversalId !== null && (row.points ?? 0) > 0,
-                  hidden: row.hiddenAt !== null,
+                  offFeed: offFeed(row),
                   user: {
                     id: row.userId,
                     displayName: row.displayName,
@@ -189,6 +199,7 @@ export function createFeedRepository(db: Database): FeedRepository {
                   likeCount: row.likeCount,
                   commentCount: row.commentCount,
                   likedByUser: Boolean(row.likedByUser),
+                  reportedByUser: "reportedByUser" in row && Boolean(row.reportedByUser),
                   photoIds: photosByProof.get(row.proofId) ?? [],
                 },
               ],
@@ -203,7 +214,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           points: row.points,
           taskRemoved: false,
           pointsReversed: false,
-          hidden: false,
+          offFeed: null,
           user: {
             id: row.recipientId,
             displayName: row.recipientName,
@@ -212,6 +223,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           likeCount: row.likeCount,
           commentCount: row.commentCount,
           likedByUser: "likedByUser" in row && Boolean(row.likedByUser),
+          reportedByUser: false,
           photoIds: [],
           recognitionDescription: row.description,
           reviewer: {
@@ -274,4 +286,10 @@ async function loadPhotoIds(
   }
 
   return byProof;
+}
+
+function offFeed(row: { hiddenAt: Date | null; showOnFeed: boolean }): "removed" | "task" | null {
+  if (row.hiddenAt !== null) return "removed";
+
+  return row.showOnFeed ? null : "task";
 }

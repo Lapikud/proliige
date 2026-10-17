@@ -47,6 +47,7 @@ export interface ProofRepository {
   getStanding(input: { taskId: string; userId: string }): Promise<UserStanding>;
 
   findById(id: string): Promise<Proof | null>;
+  findForFeed(id: string): Promise<{ proof: Proof; taskShowOnFeed: boolean } | null>;
   findWithContext(id: string): Promise<ProofWithContext | null>;
   listPending(): Promise<Array<ProofWithContext>>;
 

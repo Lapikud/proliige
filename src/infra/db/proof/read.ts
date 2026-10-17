@@ -19,6 +19,7 @@ export function createProofRead(
   ProofRepository,
   | "getStanding"
   | "findById"
+  | "findForFeed"
   | "findWithContext"
   | "listPending"
   | "listReviewed"
@@ -53,6 +54,25 @@ export function createProofRead(
       const [row] = await db.select().from(proofs).where(eq(proofs.id, id)).limit(1);
 
       return row === undefined ? null : toProof(row);
+    },
+
+    async findForFeed(id) {
+      const [row] = await db
+        .select({
+          proof: proofs,
+          taskShowOnFeed: tasks.showOnFeed,
+        })
+        .from(proofs)
+        .innerJoin(tasks, eq(tasks.id, proofs.taskId))
+        .where(eq(proofs.id, id))
+        .limit(1);
+
+      return row === undefined
+        ? null
+        : {
+            proof: toProof(row.proof),
+            taskShowOnFeed: row.taskShowOnFeed,
+          };
     },
 
     async findWithContext(id) {

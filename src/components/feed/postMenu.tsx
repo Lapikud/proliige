@@ -14,6 +14,8 @@ interface Props {
   taskTitle: string;
   points: number;
   hidden: boolean;
+  canHide: boolean;
+  reported: boolean;
   canModerate: boolean;
   onHiddenChange: (hidden: boolean) => void;
   onUnapproved: () => void;
@@ -27,12 +29,15 @@ export const PostMenu: FC<Props> = ({
   taskTitle,
   points,
   hidden,
+  canHide,
+  reported: initiallyReported,
   canModerate,
   onHiddenChange,
   onUnapproved,
 }) => {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [dialog, setDialog] = useState<"report" | "unapprove" | null>(null);
+  const [reported, setReported] = useState(initiallyReported);
   const close = () => {
     detailsRef.current?.removeAttribute("open");
   };
@@ -80,20 +85,22 @@ export const PostMenu: FC<Props> = ({
         <div className="absolute top-full right-0 z-10 mt-1 min-w-48 rounded-xl border border-border bg-card p-2 shadow-card">
           {canModerate ? (
             <>
-              <button
-                type="button"
-                disabled={visibility.pending}
-                className={itemClassName}
-                onClick={() => {
-                  close();
-                  visibility.run({
-                    proofId,
-                    hidden: !hidden,
-                  });
-                }}
-              >
-                {hidden ? "Show in feed" : "Remove from feed"}
-              </button>
+              {canHide && (
+                <button
+                  type="button"
+                  disabled={visibility.pending}
+                  className={itemClassName}
+                  onClick={() => {
+                    close();
+                    visibility.run({
+                      proofId,
+                      hidden: !hidden,
+                    });
+                  }}
+                >
+                  {hidden ? "Show in feed" : "Remove from feed"}
+                </button>
+              )}
               <button
                 type="button"
                 className={`${itemClassName} text-destructive`}
@@ -107,12 +114,13 @@ export const PostMenu: FC<Props> = ({
           ) : (
             <button
               type="button"
+              disabled={reported}
               className={itemClassName}
               onClick={() => {
                 openDialog("report");
               }}
             >
-              Report post…
+              {reported ? "Reported" : "Report post…"}
             </button>
           )}
         </div>
@@ -137,6 +145,7 @@ export const PostMenu: FC<Props> = ({
           onOpenChange={onOpenChange}
           onDone={() => {
             setDialog(null);
+            setReported(true);
             toast("Thanks. An admin will take a look.");
           }}
         />
