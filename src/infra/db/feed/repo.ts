@@ -102,7 +102,9 @@ export function createFeedRepository(db: Database): FeedRepository {
 
       const recipient = alias(users, "recognition_recipient");
       const reviewer = alias(users, "recognition_reviewer");
-      const recognitionConditions = includeExcludedAuthor ? [] : [eq(recipient.excluded, false)];
+      const recognitionConditions = [isNull(recognitions.revokedAt)];
+      if (!includeExcludedAuthor) recognitionConditions.push(eq(recipient.excluded, false));
+      if (!includeHidden) recognitionConditions.push(isNull(recognitions.hiddenAt));
       if (authorId) recognitionConditions.push(eq(recipient.id, authorId));
       if (cursor) {
         const cursorCondition = or(
@@ -118,6 +120,7 @@ export function createFeedRepository(db: Database): FeedRepository {
               .select({
                 id: recognitions.id,
                 createdAt: recognitions.createdAt,
+                hiddenAt: recognitions.hiddenAt,
                 description: recognitions.description,
                 descriptionMarkdown: recognitions.descriptionMarkdown,
                 points: recognitions.points,
@@ -214,7 +217,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           points: row.points,
           taskRemoved: false,
           pointsReversed: false,
-          offFeed: null,
+          offFeed: row.hiddenAt === null ? null : ("removed" as const),
           user: {
             id: row.recipientId,
             displayName: row.recipientName,

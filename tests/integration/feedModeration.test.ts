@@ -172,6 +172,7 @@ describe("unapproving a post", () => {
     expect(context?.proof.rejectionReason).toBe("Unapproved: Wrong task");
     expect(context?.pointsReversed).toBe(true);
     expect(await points()).toBe(0);
+    expect((await leaderboard.leaderboard())[0]?.approvedProofs).toBe(0);
   });
 
   it("does not take the points back twice after the task was removed", async () => {

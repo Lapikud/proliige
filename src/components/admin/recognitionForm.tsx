@@ -3,33 +3,74 @@
 import { useState, type SubmitEvent } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
-import { publishRecognitionAction } from "~/actions/recognition";
-import type { RecognitionBadge } from "~/core/ports/recognition";
+import { publishRecognitionAction, updateRecognitionAction } from "~/actions/recognition";
+import type { AchievementLink, RecognitionBadge } from "~/core/ports/recognition";
 import { useAction } from "~/lib/form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input, Label, Select, Switch, Textarea } from "~/components/ui/formControls";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { MarkdownPreview } from "~/components/ui/markdown";
+import { formatLinks, parseLinks } from "~/lib/achievementLinks";
 import { BadgeCreator } from "./badgeCreator";
+
+export interface RecognitionEditing {
+  id: string;
+  recipientName: string;
+  description: string;
+  descriptionMarkdown: boolean;
+  points: number;
+  badgeLabels: ReadonlyArray<string>;
+  links: ReadonlyArray<AchievementLink>;
+}
+
+export interface RecognitionSaved {
+  description: string;
+  descriptionMarkdown: boolean;
+  links: ReadonlyArray<AchievementLink>;
+  badges: ReadonlyArray<RecognitionBadge>;
+}
 
 interface Props {
   recipients: ReadonlyArray<{ id: string; displayName: string }>;
   badges: ReadonlyArray<RecognitionBadge>;
+  editing?: RecognitionEditing;
   onPublished?: () => void;
+  onSaved?: (saved: RecognitionSaved) => void;
   onBadgeCreated?: (badge: RecognitionBadge) => void;
 }
 
-export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreated }: Props) {
+export function RecognitionForm({
+  recipients,
+  badges,
+  editing,
+  onPublished,
+  onSaved,
+  onBadgeCreated,
+}: Props) {
   const [availableBadges, setAvailableBadges] = useState([...badges]);
   const [recipientId, setRecipientId] = useState("");
-  const [description, setDescription] = useState("");
-  const [descriptionMarkdown, setDescriptionMarkdown] = useState(false);
-  const [points, setPoints] = useState("5");
-  const [badgeIds, setBadgeIds] = useState<Array<string>>([]);
+  const [description, setDescription] = useState(editing?.description ?? "");
+  const [descriptionMarkdown, setDescriptionMarkdown] = useState(
+    editing?.descriptionMarkdown ?? false,
+  );
+  const [points, setPoints] = useState(String(editing?.points ?? 5));
+  const [badgeIds, setBadgeIds] = useState<Array<string>>(() =>
+    badges.filter(({ label }) => editing?.badgeLabels.includes(label)).map(({ id }) => id),
+  );
   const [badgePickerOpen, setBadgePickerOpen] = useState(false);
-  const [links, setLinks] = useState("");
-  const action = useAction(publishRecognitionAction, {
+  const [links, setLinks] = useState(editing ? formatLinks(editing.links) : "");
+  const update = useAction(updateRecognitionAction, {
+    onSuccess: (_data, input) => {
+      onSaved?.({
+        description: input.description,
+        descriptionMarkdown: input.descriptionMarkdown,
+        links: input.links,
+        badges: availableBadges.filter(({ id }) => input.badgeIds.includes(id)),
+      });
+    },
+  });
+  const publish = useAction(publishRecognitionAction, {
     onSuccess: () => {
       setRecipientId("");
       setDescription("");
@@ -41,10 +82,23 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
     },
   });
 
+  const action = editing ? update : publish;
+
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const parsedLinks = parseLinks(links);
-    action.run({
+    if (editing) {
+      update.run({
+        id: editing.id,
+        description,
+        descriptionMarkdown,
+        badgeIds,
+        links: parsedLinks,
+      });
+
+      return;
+    }
+    publish.run({
       recipientId,
       description,
       descriptionMarkdown,
@@ -66,24 +120,30 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
     <Card>
       <CardContent>
         <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="recognition-recipient">Recognize member</Label>
-            <Select
-              id="recognition-recipient"
-              required
-              value={recipientId}
-              onChange={(event) => {
-                setRecipientId(event.target.value);
-              }}
-            >
-              <option value="">Choose an eligible member</option>
-              {recipients.map((recipient) => (
-                <option value={recipient.id} key={recipient.id}>
-                  {recipient.displayName}
-                </option>
-              ))}
-            </Select>
-          </div>
+          {editing ? (
+            <p className="text-sm">
+              Recognizing <span className="font-bold">{editing.recipientName}</span>
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="recognition-recipient">Recognize member</Label>
+              <Select
+                id="recognition-recipient"
+                required
+                value={recipientId}
+                onChange={(event) => {
+                  setRecipientId(event.target.value);
+                }}
+              >
+                <option value="">Choose an eligible member</option>
+                {recipients.map((recipient) => (
+                  <option value={recipient.id} key={recipient.id}>
+                    {recipient.displayName}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="recognition-description">Contribution</Label>
             <Textarea
@@ -117,11 +177,18 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
               max="100000"
               step="1"
               required
+              disabled={editing !== undefined}
+              aria-describedby={editing ? "recognition-points-hint" : undefined}
               value={points}
               onChange={(event) => {
                 setPoints(event.target.value);
               }}
             />
+            {editing && (
+              <p id="recognition-points-hint" className="text-xs text-muted-foreground">
+                To change points, take this recognition back and publish a new one.
+              </p>
+            )}
           </div>
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 text-sm font-bold">Badges (optional)</legend>
@@ -206,39 +273,17 @@ export function RecognitionForm({ recipients, badges, onPublished, onBadgeCreate
               {action.error}
             </p>
           )}
-          <Button type="submit" disabled={action.pending || recipients.length === 0}>
-            {action.pending ? "Publishing…" : "Publish recognition"}
+          <Button type="submit" disabled={action.pending || (!editing && recipients.length === 0)}>
+            {editing
+              ? action.pending
+                ? "Saving…"
+                : "Save changes"
+              : action.pending
+                ? "Publishing…"
+                : "Publish recognition"}
           </Button>
         </form>
       </CardContent>
     </Card>
   );
-}
-
-const markdownLink = /^\[([^\]]+)\]\((\S+)\)$/;
-
-function parseLinks(value: string) {
-  return value
-    .split(/[\n,]/)
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-    .map((entry) => {
-      const markdown = markdownLink.exec(entry);
-      if (markdown)
-        return {
-          title: markdown[1]?.trim() ?? "",
-          url: markdown[2] ?? "",
-        };
-      const separator = entry.indexOf("|");
-
-      return separator < 0
-        ? {
-            title: entry.slice(0, 100),
-            url: entry,
-          }
-        : {
-            title: entry.slice(0, separator).trim(),
-            url: entry.slice(separator + 1).trim(),
-          };
-    });
 }

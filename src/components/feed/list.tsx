@@ -1,6 +1,7 @@
 "use client";
 
 import { type FC, useCallback, useEffect, useRef, useState, useTransition } from "react";
+import type { RecognitionBadge } from "~/core/ports/recognition";
 import { Button } from "../ui/button";
 import { EmptyState, ErrorState } from "../ui/feedback";
 import { FeedCard } from "./card";
@@ -13,6 +14,7 @@ interface Props {
   canReact: boolean;
   canModerate: boolean;
   viewerId: string | null;
+  badges: ReadonlyArray<RecognitionBadge>;
   categoryId: string | null;
   categoryName: string | null;
   leaderId: string | null;
@@ -29,6 +31,7 @@ export const FeedList: FC<Props> = ({
   canReact,
   canModerate,
   viewerId,
+  badges,
   categoryId,
   categoryName,
   leaderId,
@@ -114,6 +117,8 @@ export const FeedList: FC<Props> = ({
                   crowned: entry.user.id === leaderId,
                 }}
                 canReact={canReact}
+                canModerate={canModerate}
+                badges={badges}
               />
             ) : (
               <FeedCard

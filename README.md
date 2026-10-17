@@ -55,28 +55,28 @@ Before opening a pull request, run `pnpm format && pnpm lint && pnpm typecheck &
 
 The same words are used in the code, the database and the screens.
 
-| Word            | Meaning                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------ |
-| **User**        | Anyone who signed in with a FreeIPA account                                                |
-| **Role**        | What a user may do, derived from their FreeIPA groups: `member`, `pixel` or `admin`        |
-| **Member**      | A user in the `members` group; likes, comments and suggests tasks                          |
-| **Pixel**       | A user in the `pixels` group; does tasks, and can do everything a member can               |
-| **Admin**       | A user in an admin group (`team_juhatus`); reviews proofs and manages tasks, never submits |
-| **Task**        | Something to do for the club, worth points, in a **category**                              |
-| **Suggestion**  | A task a member or pixel proposes; it stays off the task list until an admin publishes it  |
-| **Own task**    | A task a pixel adds for work they already did, sent with its proof; a reviewer sets points |
-| **Policy**      | How often a task can be done: once per user, repeatable, first one wins                    |
-| **Proof**       | What a pixel submits to show they did a task, often with photos                            |
-| **Reviewer**    | An admin asked to review a proof, like a reviewer on a pull request                        |
-| **Review**      | Approving or rejecting a proof; any admin may review any proof                             |
-| **Points**      | Awarded when a proof is approved or a contribution is recognized, in the points ledger     |
-| **Recognition** | Points an admin gives a pixel for a contribution with no task or proof, shown in the feed  |
-| **Badge**       | A reusable label, with an optional image, that an admin can attach to a recognition        |
-| **Feed**        | Approved proofs and recognitions, newest first; proofs have likes and comments             |
-| **Report**      | A signed-in user flags a post on the feed with a reason; admins see it on the review page  |
-| **Unapprove**   | An admin takes back an approved proof: it leaves the feed and its points are reversed      |
-| **Leaderboard** | Users ranked by points, all time or this month                                             |
-| **Rule**        | A yes/no check of what a user may do, such as `userCanSubmitProof`                         |
+| Word            | Meaning                                                                                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**        | Anyone who signed in with a FreeIPA account                                                                                                                    |
+| **Role**        | What a user may do, derived from their FreeIPA groups: `member`, `pixel` or `admin`                                                                            |
+| **Member**      | A user in the `members` group; likes, comments and suggests tasks                                                                                              |
+| **Pixel**       | A user in the `pixels` group; does tasks, and can do everything a member can                                                                                   |
+| **Admin**       | A user in an admin group (`team_juhatus`); reviews proofs and manages tasks, never submits                                                                     |
+| **Task**        | Something to do for the club, worth points, in a **category**                                                                                                  |
+| **Suggestion**  | A task a member or pixel proposes; it stays off the task list until an admin publishes it                                                                      |
+| **Own task**    | A task a pixel adds for work they already did, sent with its proof; a reviewer sets points                                                                     |
+| **Policy**      | How often a task can be done: once per user, repeatable, first one wins                                                                                        |
+| **Proof**       | What a pixel submits to show they did a task, often with photos                                                                                                |
+| **Reviewer**    | An admin asked to review a proof, like a reviewer on a pull request                                                                                            |
+| **Review**      | Approving or rejecting a proof; any admin may review any proof                                                                                                 |
+| **Points**      | Awarded when a proof is approved or a contribution is recognized, in the points ledger                                                                         |
+| **Recognition** | Points an admin gives a pixel for a contribution with no task or proof, shown in the feed; admins can edit it, remove it from the feed or take the points back |
+| **Badge**       | A reusable label, with an optional image, that an admin can attach to a recognition                                                                            |
+| **Feed**        | Approved proofs and recognitions, newest first; proofs have likes and comments                                                                                 |
+| **Report**      | A signed-in user flags a post on the feed with a reason; admins see it on the review page                                                                      |
+| **Unapprove**   | An admin takes back an approved proof: it leaves the feed and its points are reversed                                                                          |
+| **Leaderboard** | Users ranked by points, all time or this month                                                                                                                 |
+| **Rule**        | A yes/no check of what a user may do, such as `userCanSubmitProof`                                                                                             |
 
 Who can do what:
 

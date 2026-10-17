@@ -34,6 +34,10 @@ export const recognitions = pgTable(
     badges: text("badges").array().notNull().default([]),
     links: jsonb("links").$type<Array<AchievementLink>>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+    hiddenBy: uuid("hidden_by").references(() => users.id, { onDelete: "set null" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokedBy: uuid("revoked_by").references(() => users.id, { onDelete: "set null" }),
   },
   (t) => [
     index("recognitions_recipient_created_idx").on(t.recipientId, t.createdAt.desc()),

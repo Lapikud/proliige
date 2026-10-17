@@ -29,6 +29,13 @@ export async function requirePost(
 ): Promise<{ post: PostRef; ownerId: string; taskId: string | null }> {
   const recognition = await recognitions.findById(id);
   if (recognition !== null) {
+    if (recognition.revokedAt !== null) {
+      throw notFound("That post is not on the feed.");
+    }
+    if (recognition.hiddenAt !== null && !userCanModeratePosts(user)) {
+      throw notFound("That post is not on the feed.");
+    }
+
     return {
       post: {
         kind: "recognition",

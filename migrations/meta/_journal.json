@@ -57,6 +57,13 @@
       "when": 1792233523119,
       "tag": "0007_feed_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792238351220,
+      "tag": "0008_recognition_management",
+      "breakpoints": true
     }
   ]
 }
