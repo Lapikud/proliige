@@ -1,15 +1,16 @@
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { ProofRepository, ProofWithContext } from "~/core/ports/proof";
 import { standingOf } from "~/domain/completionPolicy";
 import { notFound } from "~/domain/errors";
+import type { ProofReport } from "~/domain/proof";
 import type { PublicUserView } from "~/domain/user";
 import { categories } from "../category/model";
 import type { Database } from "../client";
 import { users } from "../user/model";
 import { pointsLedger } from "../points/model";
 import { tasks } from "../task/model";
-import { proofPhotos, proofReviewRequests, proofs } from "./model";
+import { proofPhotos, proofReports, proofReviewRequests, proofs } from "./model";
 import { toProof, toPhoto, type ProofRow } from "./map";
 
 export function createProofRead(
@@ -23,6 +24,7 @@ export function createProofRead(
   | "listReviewed"
   | "listForUser"
   | "listPhotos"
+  | "listReported"
 > {
   return {
     async getStanding({ taskId, userId }) {
@@ -88,6 +90,21 @@ export function createProofRead(
       return attachDetails(db, rows);
     },
 
+    async listReported() {
+      const rows = await selectWithContext(db)
+        .where(
+          exists(
+            db
+              .select({ id: proofReports.id })
+              .from(proofReports)
+              .where(and(eq(proofReports.proofId, proofs.id), isNull(proofReports.resolvedAt))),
+          ),
+        )
+        .orderBy(desc(proofs.reviewedAt));
+
+      return attachDetails(db, rows);
+    },
+
     async listPhotos(proofId) {
       const rows = await db.select().from(proofPhotos).where(eq(proofPhotos.proofId, proofId));
 
@@ -108,6 +125,7 @@ function selectWithContext(db: Database) {
       proofPolicy: proofs.policy,
       taskDescription: tasks.description,
       taskCreatedBy: tasks.createdBy,
+      taskShowOnFeed: tasks.showOnFeed,
       ledgerPoints: pointsLedger.points,
       taskPoints: tasks.points,
       taskRemoved: tasks.removedAt,
@@ -138,6 +156,7 @@ interface ContextRow {
   proofPolicy: ProofRow["policy"];
   taskDescription: string;
   taskCreatedBy: string | null;
+  taskShowOnFeed: boolean;
   ledgerPoints: number | null;
   taskPoints: number;
   taskRemoved: Date | null;
@@ -171,6 +190,19 @@ async function attachDetails(
     .where(inArray(proofReviewRequests.proofId, ids))
     .orderBy(asc(users.displayName));
 
+  const reportRows = await db
+    .select({
+      proofId: proofReports.proofId,
+      reason: proofReports.reason,
+      createdAt: proofReports.createdAt,
+      reporterId: users.id,
+      reporterName: users.displayName,
+    })
+    .from(proofReports)
+    .innerJoin(users, eq(users.id, proofReports.reporterId))
+    .where(and(inArray(proofReports.proofId, ids), isNull(proofReports.resolvedAt)))
+    .orderBy(asc(proofReports.createdAt));
+
   const byProof = groupBy(photoRows.map((row) => [row.proofId, toPhoto(row)] as const));
   const reviewersByProof = groupBy<PublicUserView>(
     requestRows.map(
@@ -180,6 +212,22 @@ async function attachDetails(
           {
             id,
             displayName,
+          },
+        ] as const,
+    ),
+  );
+  const reportsByProof = groupBy<ProofReport>(
+    reportRows.map(
+      ({ proofId, reason, createdAt, reporterId, reporterName }) =>
+        [
+          proofId,
+          {
+            reporter: {
+              id: reporterId,
+              displayName: reporterName,
+            },
+            reason,
+            createdAt,
           },
         ] as const,
     ),
@@ -203,6 +251,8 @@ async function attachDetails(
     photos: byProof.get(row.proof.id) ?? [],
     requestedReviewers: reviewersByProof.get(row.proof.id) ?? [],
     reviewedByName: row.reviewedByName,
+    taskShowOnFeed: row.taskShowOnFeed,
+    openReports: reportsByProof.get(row.proof.id) ?? [],
   }));
 }
 

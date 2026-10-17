@@ -29,6 +29,7 @@ const toTaskView = ({
   photoRequired: task.photoRequired,
   photoInstructions: task.photoInstructions,
   textRequired: task.textRequired,
+  showOnFeed: task.showOnFeed,
   archived: task.archivedAt !== null,
   removed: task.removedAt !== null,
   suggestedBy: suggestedByName,

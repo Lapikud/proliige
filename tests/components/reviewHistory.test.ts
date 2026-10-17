@@ -16,6 +16,7 @@ const entry: ProofWithContext = {
     submittedAt: new Date("2026-10-15T10:00:00Z"),
     reviewedAt: new Date("2026-10-15T12:00:00Z"),
     reviewedBy: "reviewer-1",
+    hiddenAt: null,
   },
   taskTitle: "Organize a meetup",
   proofPolicy: "one_per_user",
@@ -42,6 +43,8 @@ const entry: ProofWithContext = {
   ],
   requestedReviewers: [],
   reviewedByName: "Sam Reviewer",
+  taskShowOnFeed: true,
+  openReports: [],
 };
 
 describe("review history proof details", () => {

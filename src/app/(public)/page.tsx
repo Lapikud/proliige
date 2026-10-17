@@ -7,7 +7,7 @@ import { LeaderboardPanel } from "~/components/leaderboard/panel";
 import { leaderboardPeriod } from "~/components/leaderboard/periodToggle";
 import { LeaderboardStories } from "~/components/leaderboard/stories";
 import { encodeFeedCursor, recognitionFilter } from "~/domain/feed";
-import { userCanReactToProofs } from "~/domain/rules";
+import { userCanModeratePosts, userCanReactToProofs } from "~/domain/rules";
 import { categoryService, feedService, leaderboardService } from "~/infra";
 import { getUser } from "~/lib/user";
 import { startOfMonthInTallinn } from "~/lib/utils";
@@ -74,6 +74,8 @@ const HomePage: FC<PageProps<"/">> = async ({ searchParams }) => {
           initialEntries={page.entries.map(toFeedEntryView)}
           initialCursor={page.nextCursor && encodeFeedCursor(page.nextCursor)}
           canReact={userCanReactToProofs(user)}
+          canModerate={userCanModeratePosts(user)}
+          viewerId={user?.id ?? null}
           leaderId={leaderId}
           categoryId={categoryId}
           categoryName={

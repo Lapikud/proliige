@@ -1,5 +1,5 @@
 import type { UserStanding } from "~/domain/completionPolicy";
-import type { Proof, ProofPhoto, PhotoRef } from "~/domain/proof";
+import type { Proof, ProofPhoto, ProofReport, PhotoRef } from "~/domain/proof";
 import type { TaskPolicy } from "~/domain/task";
 import type { PublicUserView } from "~/domain/user";
 
@@ -21,6 +21,8 @@ export interface ProofWithContext {
   readonly photos: ReadonlyArray<ProofPhoto>;
   readonly requestedReviewers: ReadonlyArray<PublicUserView>;
   readonly reviewedByName: string | null;
+  readonly taskShowOnFeed: boolean;
+  readonly openReports: ReadonlyArray<ProofReport>;
 }
 
 export interface ProofRepository {
@@ -64,4 +66,24 @@ export interface ProofRepository {
     proof: Proof;
     alreadyReviewed: boolean;
   }>;
+
+  listReported(): Promise<Array<ProofWithContext>>;
+
+  setHidden(input: {
+    proofId: string;
+    hidden: boolean;
+    hiddenBy: string;
+    now: Date;
+  }): Promise<Proof>;
+
+  unapprove(input: { proofId: string; reviewerId: string; reason: string; now: Date }): Promise<{
+    proof: Proof;
+    alreadyReviewed: boolean;
+  }>;
+
+  report(input: { proofId: string; reporterId: string; reason: string; now: Date }): Promise<{
+    created: boolean;
+  }>;
+
+  dismissReports(input: { proofId: string; resolvedBy: string; now: Date }): Promise<void>;
 }

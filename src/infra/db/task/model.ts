@@ -35,6 +35,7 @@ export const tasks = pgTable(
     photoRequired: boolean("photo_required").notNull().default(false),
     photoInstructions: text("photo_instructions"),
     textRequired: boolean("text_required").notNull().default(false),
+    showOnFeed: boolean("show_on_feed").notNull().default(true),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "restrict" }),
     suggestedBy: uuid("suggested_by").references(() => users.id, { onDelete: "restrict" }),
     suggestionPending: boolean("suggestion_pending").notNull().default(false),

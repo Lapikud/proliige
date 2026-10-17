@@ -73,18 +73,20 @@ The same words are used in the code, the database and the screens.
 | **Recognition** | Points an admin gives a pixel for a contribution with no task or proof, shown in the feed  |
 | **Badge**       | A reusable label, with an optional image, that an admin can attach to a recognition        |
 | **Feed**        | Approved proofs and recognitions, newest first; proofs have likes and comments             |
+| **Report**      | A signed-in user flags a post on the feed with a reason; admins see it on the review page  |
+| **Unapprove**   | An admin takes back an approved proof: it leaves the feed and its points are reversed      |
 | **Leaderboard** | Users ranked by points, all time or this month                                             |
 | **Rule**        | A yes/no check of what a user may do, such as `userCanSubmitProof`                         |
 
 Who can do what:
 
-| Who                 | Can                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| Visitor             | Read the feed, the leaderboard and user pages                                      |
-| Signed in, no group | Also like, comment, and get notified of replies                                    |
-| Member              | Also suggest tasks                                                                 |
-| Pixel               | Also browse tasks, submit proofs, request reviewers and add own tasks              |
-| Admin               | Review proofs, manage tasks and categories, recognize pixels; never submits proofs |
+| Who                 | Can                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Visitor             | Read the feed, the leaderboard and user pages                                                                 |
+| Signed in, no group | Also like, comment, report posts, and get notified of replies                                                 |
+| Member              | Also suggest tasks                                                                                            |
+| Pixel               | Also browse tasks, submit proofs, request reviewers and add own tasks                                         |
+| Admin               | Review proofs, manage tasks and categories, recognize pixels, remove or unapprove posts; never submits proofs |
 
 A proof with requested reviewers notifies them; without any, nobody is notified and it simply waits in the review queue. Groups are set in `src/config/access.ts`. Every rule lives in `src/domain/rules.ts`.
 

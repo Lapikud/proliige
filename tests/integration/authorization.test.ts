@@ -55,6 +55,7 @@ const taskFields = (categoryId: string): TaskInput => ({
   photoRequired: false,
   photoInstructions: "",
   textRequired: false,
+  showOnFeed: true,
 });
 
 async function seed() {

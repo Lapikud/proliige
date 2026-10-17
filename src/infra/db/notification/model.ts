@@ -11,6 +11,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "proof_approved",
   "proof_rejected",
   "proof_commented",
+  "proof_reported",
 ]);
 
 export const notifications = pgTable(

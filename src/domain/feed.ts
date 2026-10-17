@@ -23,6 +23,7 @@ export interface FeedEntry {
   readonly points: number;
   readonly taskRemoved: boolean;
   readonly pointsReversed: boolean;
+  readonly hidden: boolean;
   readonly user: PublicUserView;
   readonly approvedAt: Date;
   readonly photoUrls: ReadonlyArray<string>;

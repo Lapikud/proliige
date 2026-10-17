@@ -50,6 +50,7 @@ export interface NewTaskInput {
   readonly photoRequired: boolean;
   readonly photoInstructions: string | null;
   readonly textRequired: boolean;
+  readonly showOnFeed?: boolean;
   readonly createdBy?: string | null;
   readonly suggestedBy?: string | null;
   readonly suggestionPending?: boolean;

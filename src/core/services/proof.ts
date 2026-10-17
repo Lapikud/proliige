@@ -1,8 +1,14 @@
 import { photoLimits } from "~/config/photo";
-import { findRefusal, describeRefusal, type PhotoRef } from "~/domain/proof";
+import { findRefusal, describeRefusal, isOnFeed, type PhotoRef } from "~/domain/proof";
 import { conflict, notFound, validation } from "~/domain/errors";
 import { objectKeyBelongsToUser } from "~/domain/photo";
-import { userCanAddOwnTask, userCanReviewProofs, userCanSubmitProof } from "~/domain/rules";
+import {
+  userCanAddOwnTask,
+  userCanModeratePosts,
+  userCanReportPosts,
+  userCanReviewProofs,
+  userCanSubmitProof,
+} from "~/domain/rules";
 import { guard } from "../guard";
 import type { ProofRepository } from "../ports/proof";
 import type { ClockPort } from "../ports/clock";
@@ -234,6 +240,105 @@ export function createProofService({
 
         return result;
       },
+    ),
+
+    listReportedProofs: guard(userCanModeratePosts, () => proofs.listReported()),
+
+    setProofHidden: guard(userCanModeratePosts, (user, proofId: string, hidden: boolean) =>
+      proofs.setHidden({
+        proofId,
+        hidden,
+        hiddenBy: user.id,
+        now: clock.now(),
+      }),
+    ),
+
+    unapproveProof: guard(
+      userCanModeratePosts,
+      async (
+        user,
+        input: {
+          proofId: string;
+          reason: string | null;
+        },
+      ) => {
+        const context = await proofs.findWithContext(input.proofId);
+        if (context === null) {
+          throw notFound("That proof does not exist.");
+        }
+
+        const reason = input.reason?.trim();
+        const result = await proofs.unapprove({
+          proofId: input.proofId,
+          reviewerId: user.id,
+          reason: reason ? `Unapproved: ${reason}` : "Unapproved",
+          now: clock.now(),
+        });
+        if (!result.alreadyReviewed) {
+          if (context.ownTask) {
+            await tasks.setArchived(result.proof.taskId, true);
+          }
+          await notifications.publish({
+            recipientUserId: result.proof.userId,
+            type: "proof_rejected",
+            title: "Proof unapproved",
+            message:
+              [`"${context.taskTitle}" was unapproved and its points were taken back`, reason]
+                .filter(Boolean)
+                .join(": ") + ".",
+            proofId: result.proof.id,
+            taskId: result.proof.taskId,
+          });
+        }
+
+        return result;
+      },
+    ),
+
+    reportProof: guard(
+      userCanReportPosts,
+      async (
+        user,
+        input: {
+          proofId: string;
+          reason: string;
+        },
+      ) => {
+        const context = await proofs.findWithContext(input.proofId);
+        if (context === null || !isOnFeed(context.proof, { showOnFeed: context.taskShowOnFeed })) {
+          throw notFound("That post is not on the feed.");
+        }
+
+        const result = await proofs.report({
+          proofId: input.proofId,
+          reporterId: user.id,
+          reason: input.reason.trim(),
+          now: clock.now(),
+        });
+        if (result.created) {
+          const recipients = (await admins.listAdmins()).filter(({ id }) => id !== user.id);
+          await notifications.publishMany(
+            recipients.map(({ id }) => ({
+              recipientUserId: id,
+              type: "proof_reported" as const,
+              title: "Post reported",
+              message: `${user.displayName} reported "${context.taskTitle}" by ${context.userDisplayName}.`,
+              proofId: context.proof.id,
+              taskId: context.proof.taskId,
+            })),
+          );
+        }
+
+        return result;
+      },
+    ),
+
+    dismissReports: guard(userCanModeratePosts, (user, proofId: string) =>
+      proofs.dismissReports({
+        proofId,
+        resolvedBy: user.id,
+        now: clock.now(),
+      }),
     ),
   };
 }

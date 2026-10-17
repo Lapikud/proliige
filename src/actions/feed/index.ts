@@ -1,9 +1,9 @@
 "use server";
 
 import { toCommentView } from "~/components/feed/model";
-import { commentService, likeService } from "~/infra";
+import { commentService, likeService, proofService } from "~/infra";
 import { action } from "~/lib/action";
-import { commentSchema, deleteCommentSchema, likeSchema } from "./schema";
+import { commentSchema, deleteCommentSchema, likeSchema, reportSchema } from "./schema";
 
 export const toggleLikeAction = action(likeSchema, (user, { proofId }) =>
   likeService.toggleLike(user, proofId),
@@ -21,4 +21,15 @@ export const deleteCommentAction = action(
     await commentService.deleteComment(user, commentId);
   },
   { revalidate: ["/"] },
+);
+
+export const reportPostAction = action(
+  reportSchema,
+  async (user, { proofId, reason }) => {
+    await proofService.reportProof(user, {
+      proofId,
+      reason,
+    });
+  },
+  { revalidate: ["/admin/review"] },
 );

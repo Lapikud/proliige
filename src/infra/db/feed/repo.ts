@@ -15,8 +15,21 @@ import { proofComments, proofLikes } from "./model";
 
 export function createFeedRepository(db: Database): FeedRepository {
   return {
-    async listFeed({ cursor, limit, categoryId, authorId, includeExcludedAuthor, viewerId }) {
-      const proofConditions = [eq(proofs.status, "approved"), isNotNull(proofs.reviewedAt)];
+    async listFeed({
+      cursor,
+      limit,
+      categoryId,
+      authorId,
+      includeExcludedAuthor,
+      includeHidden,
+      viewerId,
+    }) {
+      const proofConditions = [
+        eq(proofs.status, "approved"),
+        isNotNull(proofs.reviewedAt),
+        eq(tasks.showOnFeed, true),
+      ];
+      if (!includeHidden) proofConditions.push(isNull(proofs.hiddenAt));
       const reversal = alias(pointsLedger, "reversal");
       if (!includeExcludedAuthor) proofConditions.push(eq(users.excluded, false));
       const onlyRecognitions = categoryId === recognitionFilter;
@@ -42,6 +55,7 @@ export function createFeedRepository(db: Database): FeedRepository {
               points: pointsLedger.points,
               taskRemovedAt: tasks.removedAt,
               reversalId: reversal.id,
+              hiddenAt: proofs.hiddenAt,
               categoryName: categories.name,
               userId: users.id,
               displayName: users.displayName,
@@ -166,6 +180,7 @@ export function createFeedRepository(db: Database): FeedRepository {
                   points: row.points ?? 0,
                   taskRemoved: row.taskRemovedAt !== null,
                   pointsReversed: row.reversalId !== null && (row.points ?? 0) > 0,
+                  hidden: row.hiddenAt !== null,
                   user: {
                     id: row.userId,
                     displayName: row.displayName,
@@ -188,6 +203,7 @@ export function createFeedRepository(db: Database): FeedRepository {
           points: row.points,
           taskRemoved: false,
           pointsReversed: false,
+          hidden: false,
           user: {
             id: row.recipientId,
             displayName: row.recipientName,

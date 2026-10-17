@@ -407,6 +407,7 @@ async function seed() {
       photoRequired: input.photoRequired ?? false,
       photoInstructions: input.photoInstructions ?? "",
       textRequired: input.textRequired ?? false,
+      showOnFeed: true,
     });
 
   at(120);
@@ -645,6 +646,7 @@ async function seed() {
     photoRequired: true,
     photoInstructions: "Pilt mänguõhtult.",
     textRequired: false,
+    showOnFeed: true,
   });
   await taskService.suggestTask(member2, {
     title: "Kirjuta klubi ajaloost",
@@ -656,6 +658,7 @@ async function seed() {
     photoRequired: false,
     photoInstructions: "",
     textRequired: true,
+    showOnFeed: true,
   });
   at(7);
   const ownRejected = await proofService.addOwnTask(pixel2, {

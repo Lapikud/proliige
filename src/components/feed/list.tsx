@@ -11,6 +11,8 @@ interface Props {
   initialEntries: Array<FeedEntryView>;
   initialCursor: string | null;
   canReact: boolean;
+  canModerate: boolean;
+  viewerId: string | null;
   categoryId: string | null;
   categoryName: string | null;
   leaderId: string | null;
@@ -25,6 +27,8 @@ export const FeedList: FC<Props> = ({
   initialEntries,
   initialCursor,
   canReact,
+  canModerate,
+  viewerId,
   categoryId,
   categoryName,
   leaderId,
@@ -118,6 +122,8 @@ export const FeedList: FC<Props> = ({
                   crowned: entry.user.id === leaderId,
                 }}
                 canReact={canReact}
+                canModerate={canModerate}
+                viewerId={viewerId}
               />
             )}
           </li>

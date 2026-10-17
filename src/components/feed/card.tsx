@@ -1,24 +1,32 @@
 "use client";
 
-import type { FC } from "react";
+import { EyeOff } from "lucide-react";
+import { type FC, useState } from "react";
 import { cn } from "~/lib/utils";
 import { UserText } from "../ui/markdown";
-import { Card } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Card, CardContent } from "../ui/card";
 import { ClampedText } from "./clampedText";
 import type { FeedEntryView } from "./model";
 import { PhotoCarousel } from "./photoCarousel";
 import { PostActions } from "./postActions";
 import { PostDialog } from "./postDialog";
 import { PostHeader } from "./postHeader";
+import { PostMenu } from "./postMenu";
 import { usePost } from "./usePost";
 
 interface Props {
   entry: FeedEntryView;
   canReact: boolean;
+  canModerate: boolean;
+  viewerId: string | null;
 }
 
-export const FeedCard: FC<Props> = ({ entry, canReact }) => {
+export const FeedCard: FC<Props> = ({ entry, canReact, canModerate, viewerId }) => {
   const post = usePost(entry);
+  const [hidden, setHidden] = useState(entry.hidden);
+  const [unapproved, setUnapproved] = useState(false);
+  const showMenu = canModerate || (viewerId !== null && viewerId !== entry.user.id);
   const openPost = () => {
     post.openPost();
   };
@@ -37,6 +45,16 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
     </>
   );
 
+  if (unapproved) {
+    return (
+      <Card>
+        <CardContent className="text-sm text-muted-foreground">
+          Unapproved {entry.user.displayName}&rsquo;s {entry.taskTitle}. The points were taken back.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
       className={cn(
@@ -44,7 +62,27 @@ export const FeedCard: FC<Props> = ({ entry, canReact }) => {
         entry.photoUrls.length === 0 && !post.comments.open && "pb-4",
       )}
     >
-      <PostHeader entry={entry} />
+      <PostHeader entry={entry}>
+        {hidden && (
+          <Badge variant="neutral" title="Removed from feed">
+            <EyeOff className="size-3.5" aria-hidden />
+            <span className="sr-only">Removed from feed</span>
+          </Badge>
+        )}
+        {showMenu && (
+          <PostMenu
+            proofId={entry.proofId}
+            taskTitle={entry.taskTitle}
+            points={entry.points}
+            hidden={hidden}
+            canModerate={canModerate}
+            onHiddenChange={setHidden}
+            onUnapproved={() => {
+              setUnapproved(true);
+            }}
+          />
+        )}
+      </PostHeader>
 
       <PhotoCarousel
         urls={entry.photoUrls}

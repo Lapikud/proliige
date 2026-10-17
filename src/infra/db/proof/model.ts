@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -35,6 +35,8 @@ export const proofs = pgTable(
     submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+    hiddenBy: uuid("hidden_by").references(() => users.id, { onDelete: "set null" }),
   },
   (t) => [
     uniqueIndex("proofs_one_pending_per_user")
@@ -95,5 +97,28 @@ export const proofReviewRequests = pgTable(
   (t) => [
     primaryKey({ columns: [t.proofId, t.reviewerId] }),
     index("proof_review_requests_reviewer_idx").on(t.reviewerId),
+  ],
+);
+
+export const proofReports = pgTable(
+  "proof_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    proofId: uuid("proof_id")
+      .notNull()
+      .references(() => proofs.id, { onDelete: "cascade" }),
+    reporterId: uuid("reporter_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolvedBy: uuid("resolved_by").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("proof_reports_one_per_reporter").on(t.proofId, t.reporterId),
+    index("proof_reports_open_idx")
+      .on(t.createdAt)
+      .where(predicate(isNull(t.resolvedAt))),
   ],
 );

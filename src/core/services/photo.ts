@@ -1,4 +1,4 @@
-import type { PhotoRef } from "~/domain/proof";
+import { isOnFeed, type PhotoRef } from "~/domain/proof";
 import { forbidden, notFound, validation } from "~/domain/errors";
 import {
   buildPhotoObjectKey,
@@ -80,18 +80,23 @@ export function createPhotoService(deps: PhotoServiceDeps) {
           photoId: string;
         },
       ) => {
-        const proof = await deps.proofs.findById(input.proofId);
-        if (proof === null) {
+        const context = await deps.proofs.findWithContext(input.proofId);
+        if (context === null) {
           throw notFound("That proof does not exist.");
         }
 
-        const photos = await deps.proofs.listPhotos(proof.id);
-        const match = photos.find((e) => e.id === input.photoId);
+        const match = context.photos.find((e) => e.id === input.photoId);
         if (match === undefined) {
           throw notFound("That photo is not part of this proof.");
         }
 
-        if (!userCanViewPhoto(user, proof)) {
+        const onFeed = isOnFeed(context.proof, { showOnFeed: context.taskShowOnFeed });
+        if (
+          !userCanViewPhoto(user, {
+            userId: context.proof.userId,
+            onFeed,
+          })
+        ) {
           throw forbidden("You are not allowed to view this photo.");
         }
 

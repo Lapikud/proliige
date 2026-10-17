@@ -12,6 +12,7 @@ export interface TaskView {
   photoRequired: boolean;
   photoInstructions: string | null;
   textRequired: boolean;
+  showOnFeed: boolean;
   archived: boolean;
   removed: boolean;
   suggestedBy: string | null;

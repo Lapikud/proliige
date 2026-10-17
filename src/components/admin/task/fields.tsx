@@ -101,6 +101,9 @@ export const TaskFields: FC<Props> = ({ categories }) => {
         <Field name="task.textRequired" label="Require a written answer" inline>
           {(control) => <Checkbox {...control} />}
         </Field>
+        <Field name="task.showOnFeed" label="Show proofs on the feed" inline>
+          {(control) => <Checkbox {...control} />}
+        </Field>
       </div>
       {photoRequired && (
         <Field name="task.photoInstructions" label="Instructions shown to the user">
@@ -127,6 +130,7 @@ export function taskValues(
       photoRequired: task.photoRequired,
       photoInstructions: task.photoInstructions ?? "",
       textRequired: task.textRequired,
+      showOnFeed: task.showOnFeed,
     };
   }
 
@@ -140,5 +144,6 @@ export function taskValues(
     photoRequired: false,
     photoInstructions: "",
     textRequired: false,
+    showOnFeed: true,
   };
 }
