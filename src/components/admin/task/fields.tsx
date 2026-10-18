@@ -63,20 +63,13 @@ export const TaskFields: FC<Props> = ({ categories }) => {
           )}
         </Field>
         {completionPolicy(policy).usesCooldown && (
-          <Field
-            name="task.cooldownSeconds"
-            label="Cooldown"
-            options={{
-              setValueAs: (value: unknown) =>
-                typeof value === "number"
-                  ? value
-                  : (parseCooldownInput(String(value)) ?? Number.NaN),
-            }}
-          >
+          <Field name="task.cooldownSeconds" label="Cooldown">
             {(field) => (
               <>
                 <Input
-                  {...field}
+                  id={field.id}
+                  aria-invalid={field["aria-invalid"]}
+                  aria-describedby={field["aria-describedby"]}
                   type="text"
                   inputMode="text"
                   autoComplete="off"
