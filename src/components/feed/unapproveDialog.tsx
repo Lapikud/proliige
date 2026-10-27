@@ -1,11 +1,18 @@
 "use client";
 
-import type { FC } from "react";
+import type { FC, ReactElement } from "react";
 import { unapproveProofAction } from "~/actions/review";
 import { unapproveSchema } from "~/actions/review/schema";
 import { useActionForm } from "~/lib/form";
 import { Button } from "../ui/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Field, Form, FormActions, FormError } from "../ui/form";
 import { Textarea } from "../ui/formControls";
 
@@ -16,6 +23,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
   points: number;
+  trigger?: ReactElement;
 }
 
 export const UnapproveDialog: FC<Props> = ({
@@ -25,6 +33,7 @@ export const UnapproveDialog: FC<Props> = ({
   open,
   onOpenChange,
   onDone,
+  trigger,
 }) => {
   const { form, submit, pending } = useActionForm(unapproveSchema, unapproveProofAction, {
     defaultValues: {
@@ -36,6 +45,7 @@ export const UnapproveDialog: FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogTitle className="text-lg font-bold">Unapprove post?</DialogTitle>
         <DialogDescription className="mt-2 text-sm text-muted-foreground">
@@ -53,7 +63,7 @@ export const UnapproveDialog: FC<Props> = ({
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" variant="danger" disabled={pending}>
+            <Button type="submit" variant="danger" className="cursor-pointer" disabled={pending}>
               {pending ? "Unapproving…" : "Unapprove"}
             </Button>
           </FormActions>
