@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import type { FC } from "react";
+import { useState } from "react";
 import type { ProofWithContext } from "~/core/ports/proof";
 import { formatDateTime, formatRelative } from "~/lib/utils";
-import { UserAvatar } from "../ui/avatar";
+import { UnapproveDialog } from "../feed/unapproveDialog";
 import { PhotoGallery } from "../proof/photoGallery";
+import { UserAvatar } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { UserText } from "../ui/markdown";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
+import { UserText } from "../ui/markdown";
 
 interface Props {
   entry: ProofWithContext;
@@ -18,6 +19,7 @@ interface Props {
 
 export const HistoryRow: FC<Props> = ({ entry }) => {
   const [open, setOpen] = useState(false);
+  const [unapproving, setUnapproving] = useState(false);
   const {
     proof,
     taskTitle,
@@ -98,18 +100,37 @@ export const HistoryRow: FC<Props> = ({ entry }) => {
             </p>
           )}
         </div>
-        {proof.status === "approved" &&
-          (pointsReversed ? (
-            <Badge variant="neutral" className="shrink-0">
-              Points reversed
-            </Badge>
-          ) : (
-            taskPoints > 0 && (
-              <Badge variant="points" className="shrink-0 tabular-nums">
+        {proof.status === "approved" && (
+          <div className="flex shrink-0 flex-col items-end gap-2 self-stretch">
+            {pointsReversed && <Badge variant="neutral">Points reversed</Badge>}
+            {!pointsReversed && taskPoints > 0 && (
+              <Badge variant="points" className="tabular-nums">
                 +{taskPoints}
               </Badge>
-            )
-          ))}
+            )}
+            <UnapproveDialog
+              proofId={proof.id}
+              taskTitle={taskTitle}
+              points={pointsReversed ? 0 : taskPoints}
+              open={unapproving}
+              onOpenChange={setUnapproving}
+              onDone={() => {
+                setUnapproving(false);
+              }}
+              trigger={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="relative z-10 mt-auto cursor-pointer text-destructive hover:bg-destructive-soft"
+                  aria-label={`Unapprove proof by ${userDisplayName}: ${taskTitle}`}
+                >
+                  Unapprove…
+                </Button>
+              }
+            />
+          </div>
+        )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
