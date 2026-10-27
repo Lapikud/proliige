@@ -1,8 +1,13 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { ProofWithContext } from "~/core/ports/proof";
 import { HistoryRow } from "~/components/review/historyRow";
+
+// Next.js provides a server reference here; Vitest must not import the server implementation.
+vi.mock("~/actions/review", () => ({
+  unapproveProofAction: vi.fn(),
+}));
 
 const entry: ProofWithContext = {
   proof: {
@@ -57,8 +62,29 @@ describe("review history proof details", () => {
     expect(html).toContain("reviewed by Sam Reviewer");
     expect(html).toContain("Organize a meetup");
     expect(html).toContain("+10");
+    expect(html).toContain('aria-label="Unapprove proof by Alex Member: Organize a meetup"');
     expect(html).not.toContain("I organized the community meetup.");
     expect(html).not.toContain("/api/photos/proof-1/photo-1");
+  });
+
+  it("does not offer unapproval for rejected proofs", () => {
+    const html = renderToStaticMarkup(
+      createElement(HistoryRow, {
+        entry: {
+          ...entry,
+          proof: {
+            ...entry.proof,
+            status: "rejected",
+            rejectionReason: "Unapproved: insufficient proof",
+          },
+          pointsReversed: true,
+        },
+      }),
+    );
+
+    expect(html).toContain("Unapproved: insufficient proof");
+    expect(html).not.toContain('aria-label="Unapprove proof by');
+    expect(html).not.toContain("Unapprove…");
   });
 
   it("renders safely when the proof has no text or photos", () => {
