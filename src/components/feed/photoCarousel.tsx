@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { type FC, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
-import { CarouselButton } from "./photoViewer";
+import { CarouselButton } from "../proof/photoViewer";
 
 interface Props {
   urls: ReadonlyArray<string>;
