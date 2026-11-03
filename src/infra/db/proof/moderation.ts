@@ -3,6 +3,7 @@ import type { ProofRepository } from "~/core/ports/proof";
 import { conflict, notFound } from "~/domain/errors";
 import type { Database } from "../client";
 import { pointsLedger } from "../points/model";
+import { tasks } from "../task/model";
 import { proofReports, proofs } from "./model";
 import { toProof } from "./map";
 
@@ -48,6 +49,19 @@ export function createProofModeration(db: Database): Moderation {
 
     async unapprove({ proofId, reviewerId, reason, now }) {
       return db.transaction(async (tx) => {
+        const [proof] = await tx
+          .select({ taskId: proofs.taskId })
+          .from(proofs)
+          .where(eq(proofs.id, proofId))
+          .limit(1);
+        if (proof === undefined) throw notFound("That proof does not exist.");
+        await tx
+          .select({ id: tasks.id })
+          .from(tasks)
+          .where(eq(tasks.id, proof.taskId))
+          .for("update")
+          .limit(1);
+
         const [updated] = await tx
           .update(proofs)
           .set({

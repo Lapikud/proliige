@@ -64,6 +64,13 @@
       "when": 1792238351220,
       "tag": "0008_recognition_management",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793712154166,
+      "tag": "0009_recalculate_task_points",
+      "breakpoints": true
     }
   ]
 }
