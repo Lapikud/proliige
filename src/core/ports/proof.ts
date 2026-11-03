@@ -1,5 +1,5 @@
 import type { UserStanding } from "~/domain/completionPolicy";
-import type { Proof, ProofPhoto, ProofReport, PhotoRef } from "~/domain/proof";
+import type { Proof, ProofFilters, ProofPhoto, ProofReport, PhotoRef } from "~/domain/proof";
 import type { TaskPolicy } from "~/domain/task";
 import type { PublicUserView } from "~/domain/user";
 
@@ -49,9 +49,9 @@ export interface ProofRepository {
   findById(id: string): Promise<Proof | null>;
   findForFeed(id: string): Promise<{ proof: Proof; taskShowOnFeed: boolean } | null>;
   findWithContext(id: string): Promise<ProofWithContext | null>;
-  listPending(): Promise<Array<ProofWithContext>>;
+  listPending(filters?: ProofFilters): Promise<Array<ProofWithContext>>;
 
-  listReviewed(limit?: number): Promise<Array<ProofWithContext>>;
+  listReviewed(limit?: number, filters?: ProofFilters): Promise<Array<ProofWithContext>>;
   listForUser(userId: string): Promise<Array<ProofWithContext>>;
   listPhotos(proofId: string): Promise<Array<ProofPhoto>>;
 
@@ -71,7 +71,7 @@ export interface ProofRepository {
     alreadyReviewed: boolean;
   }>;
 
-  listReported(): Promise<Array<ProofWithContext>>;
+  listReported(filters?: ProofFilters): Promise<Array<ProofWithContext>>;
 
   setHidden(input: {
     proofId: string;

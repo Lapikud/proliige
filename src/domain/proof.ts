@@ -4,6 +4,12 @@ import type { PublicUserView } from "./user";
 
 export type ProofStatus = "pending" | "approved" | "rejected";
 
+export interface ProofFilters {
+  readonly categoryId?: string | undefined;
+  readonly policy?: TaskPolicy | undefined;
+  readonly ownTask?: boolean | undefined;
+}
+
 export interface PhotoRef {
   readonly objectKey: string;
   readonly contentType: string;

@@ -1,9 +1,9 @@
-import { and, asc, desc, eq, exists, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, exists, inArray, isNotNull, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { ProofRepository, ProofWithContext } from "~/core/ports/proof";
 import { standingOf } from "~/domain/completionPolicy";
 import { notFound } from "~/domain/errors";
-import type { ProofReport } from "~/domain/proof";
+import type { ProofFilters, ProofReport } from "~/domain/proof";
 import type { PublicUserView } from "~/domain/user";
 import { categories } from "../category/model";
 import type { Database } from "../client";
@@ -85,17 +85,19 @@ export function createProofRead(
       return withPhotos ?? null;
     },
 
-    async listPending() {
+    async listPending(filters = {}) {
       const rows = await selectWithContext(db)
-        .where(eq(proofs.status, "pending"))
+        .where(and(eq(proofs.status, "pending"), proofFilterConditions(filters)))
         .orderBy(desc(proofs.submittedAt));
 
       return attachDetails(db, rows);
     },
 
-    async listReviewed(limit = 100) {
+    async listReviewed(limit = 100, filters = {}) {
       const rows = await selectWithContext(db)
-        .where(inArray(proofs.status, ["approved", "rejected"]))
+        .where(
+          and(inArray(proofs.status, ["approved", "rejected"]), proofFilterConditions(filters)),
+        )
         .orderBy(desc(proofs.reviewedAt))
         .limit(limit);
 
@@ -110,14 +112,17 @@ export function createProofRead(
       return attachDetails(db, rows);
     },
 
-    async listReported() {
+    async listReported(filters = {}) {
       const rows = await selectWithContext(db)
         .where(
-          exists(
-            db
-              .select({ id: proofReports.id })
-              .from(proofReports)
-              .where(and(eq(proofReports.proofId, proofs.id), isNull(proofReports.resolvedAt))),
+          and(
+            exists(
+              db
+                .select({ id: proofReports.id })
+                .from(proofReports)
+                .where(and(eq(proofReports.proofId, proofs.id), isNull(proofReports.resolvedAt))),
+            ),
+            proofFilterConditions(filters),
           ),
         )
         .orderBy(desc(proofs.reviewedAt));
@@ -136,6 +141,16 @@ export function createProofRead(
 const reviewer = alias(users, "reviewer");
 const remover = alias(users, "task_remover");
 const reversal = alias(pointsLedger, "reversal");
+
+function proofFilterConditions({ categoryId, policy, ownTask }: ProofFilters) {
+  const origin = ownTask ? isNotNull(tasks.createdBy) : isNull(tasks.createdBy);
+
+  return and(
+    categoryId === undefined ? undefined : eq(tasks.categoryId, categoryId),
+    policy === undefined ? undefined : eq(proofs.policy, policy),
+    ownTask === undefined ? undefined : origin,
+  );
+}
 
 function selectWithContext(db: Database) {
   return db

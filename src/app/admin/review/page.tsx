@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { FC } from "react";
 import { ReviewCard } from "~/components/review/card";
+import { ReviewFilters } from "~/components/review/filters";
+import { ReviewFilterPopover } from "~/components/review/filterPopover";
 import type { PendingProofView, ReportedProofView } from "~/components/review/model";
 import { ReportedCard } from "~/components/review/reportedCard";
 import { HistoryRow } from "~/components/review/historyRow";
@@ -13,6 +15,7 @@ import { categoryService, proofService } from "~/infra";
 import { userCanReviewProofs } from "~/domain/rules";
 import type { User } from "~/domain/user";
 import { requireUser } from "~/lib/user";
+import { readReviewQuery, reviewHref } from "~/lib/reviewFilters";
 import { cn } from "~/lib/utils";
 
 export const metadata: Metadata = { title: "Reviews" };
@@ -76,17 +79,25 @@ const toReportedView = ({
 
 const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
   const user = await requireUser(userCanReviewProofs);
+  const { filters, view } = readReviewQuery(await searchParams);
   const [pending, history, reported, categories] = await Promise.all([
-    proofService.listPendingProofs(user),
-    proofService.listReviewedProofs(user, 25),
-    proofService.listReportedProofs(user),
+    proofService.listPendingProofs(user, filters),
+    proofService.listReviewedProofs(user, 25, filters),
+    proofService.listReportedProofs(user, filters),
     categoryService.listCategories(user),
   ]);
   const views = pending.map((entry) => toPendingView(entry, user));
   const requested = views.filter((view) => view.requestedFromMe);
-  const { view } = await searchParams;
-  const showReported = view === "reported";
-  const showAll = view === "all" || (view === undefined && requested.length === 0);
+  const activeView = view ?? (requested.length > 0 ? "requested" : "all");
+  const showReported = activeView === "reported";
+  const showAll = activeView === "all";
+  const filterCount = Object.values(filters).filter((value) => value !== undefined).length;
+  const hasFilters = filterCount > 0;
+  const emptyQueueTitle = showAll ? "Nothing to review" : "No review requests";
+  const emptyQueueDescription = showAll
+    ? "New proofs will appear here as members submit them."
+    : "When a member asks you to review a proof, it shows up here.";
+  const filteredDescription = "Try changing the filters or use Reset to show all results.";
   const reportedViews = reported.map(toReportedView);
   const shown = showAll ? views : requested;
   const historyGroups = (["approved", "rejected"] as const)
@@ -102,6 +113,11 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
       title="Reviews"
       description="Points are awarded only once a proof is approved."
       className="lg:h-[calc(100dvh-var(--nav-h)-5rem)]"
+      actions={
+        <ReviewFilterPopover activeCount={filterCount}>
+          <ReviewFilters categories={categories} filters={filters} view={activeView} />
+        </ReviewFilterPopover>
+      }
     >
       <div className="grid grid-cols-1 gap-6 lg:-mx-3 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[minmax(0,1fr)]">
         <section aria-labelledby="pending-heading" className="flex flex-col gap-3 lg:min-h-0">
@@ -113,17 +129,17 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
             className="flex [scrollbar-width:none] gap-1 overflow-x-auto shadow-[inset_0_-1px_0_var(--color-border)] lg:mx-3"
           >
             <QueueTab
-              href="/admin/review?view=requested"
+              href={reviewHref(filters, "requested")}
               active={!showAll && !showReported}
               count={requested.length}
             >
               Requested
             </QueueTab>
-            <QueueTab href="/admin/review?view=all" active={showAll} count={views.length}>
+            <QueueTab href={reviewHref(filters, "all")} active={showAll} count={views.length}>
               Pending
             </QueueTab>
             <QueueTab
-              href="/admin/review?view=reported"
+              href={reviewHref(filters, "reported")}
               active={showReported}
               count={reportedViews.length}
             >
@@ -135,8 +151,12 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
             <div tabIndex={0} className={scrollArea}>
               {reportedViews.length === 0 && (
                 <EmptyState
-                  title="No reported posts"
-                  description="When someone reports a post on the feed, it shows up here."
+                  title={hasFilters ? "No matching reported posts" : "No reported posts"}
+                  description={
+                    hasFilters
+                      ? filteredDescription
+                      : "When someone reports a post on the feed, it shows up here."
+                  }
                 />
               )}
               <ul className="flex list-none flex-col gap-3 p-0">
@@ -151,12 +171,8 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
             <div tabIndex={0} className={scrollArea}>
               {shown.length === 0 && (
                 <EmptyState
-                  title={showAll ? "Nothing to review" : "No review requests"}
-                  description={
-                    showAll
-                      ? "New proofs will appear here as members submit them."
-                      : "When a member asks you to review a proof, it shows up here."
-                  }
+                  title={hasFilters ? "No matching proofs" : emptyQueueTitle}
+                  description={hasFilters ? filteredDescription : emptyQueueDescription}
                 />
               )}
               <ul className="flex list-none flex-col gap-3 p-0">
@@ -179,9 +195,13 @@ const ReviewPage: FC<PageProps<"/admin/review">> = async ({ searchParams }) => {
           </h2>
           <div tabIndex={0} className={scrollArea}>
             {history.length === 0 && (
-              <p className="text-sm text-muted-foreground">No proofs have been reviewed yet.</p>
+              <EmptyState
+                title={hasFilters ? "No matching reviewed proofs" : "No reviewed proofs"}
+                description={hasFilters ? filteredDescription : "No proofs have been reviewed yet."}
+              />
             )}
             <Accordion
+              key={reviewHref(filters)}
               type="multiple"
               className="flex flex-col gap-4"
               defaultValue={historyGroups.map((group) => group.status)}
@@ -233,6 +253,7 @@ interface QueueTabProps {
 const QueueTab: FC<QueueTabProps> = ({ href, active, count, children }) => (
   <Link
     href={href}
+    scroll={false}
     aria-current={active ? "page" : undefined}
     className={cn(
       "inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm whitespace-nowrap",

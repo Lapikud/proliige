@@ -1,5 +1,11 @@
 import { photoLimits } from "~/config/photo";
-import { findRefusal, describeRefusal, isOnFeed, type PhotoRef } from "~/domain/proof";
+import {
+  findRefusal,
+  describeRefusal,
+  isOnFeed,
+  type PhotoRef,
+  type ProofFilters,
+} from "~/domain/proof";
 import { conflict, notFound, validation } from "~/domain/errors";
 import { objectKeyBelongsToUser } from "~/domain/photo";
 import {
@@ -166,10 +172,13 @@ export function createProofService({
 
     listMyProofs: guard(userCanSubmitProof, (user) => proofs.listForUser(user.id)),
 
-    listPendingProofs: guard(userCanReviewProofs, () => proofs.listPending()),
+    listPendingProofs: guard(userCanReviewProofs, (_user, filters?: ProofFilters) =>
+      proofs.listPending(filters),
+    ),
 
-    listReviewedProofs: guard(userCanReviewProofs, (_user, limit?: number) =>
-      proofs.listReviewed(limit ?? 100),
+    listReviewedProofs: guard(
+      userCanReviewProofs,
+      (_user, limit?: number, filters?: ProofFilters) => proofs.listReviewed(limit ?? 100, filters),
     ),
 
     approveProof: guard(userCanReviewProofs, async (user, proofId: string, edit?: OwnTaskEdit) => {
@@ -242,7 +251,9 @@ export function createProofService({
       },
     ),
 
-    listReportedProofs: guard(userCanModeratePosts, () => proofs.listReported()),
+    listReportedProofs: guard(userCanModeratePosts, (_user, filters?: ProofFilters) =>
+      proofs.listReported(filters),
+    ),
 
     setProofHidden: guard(userCanModeratePosts, (user, proofId: string, hidden: boolean) =>
       proofs.setHidden({
