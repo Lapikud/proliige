@@ -44,6 +44,24 @@ export function createTaskRepository(db: Database): TaskRepository {
             .returning(),
         );
 
+        if (existing.points !== input.points) {
+          await tx
+            .update(pointsLedger)
+            .set({ points: input.points })
+            .where(
+              and(
+                isNull(pointsLedger.reversalOf),
+                inArray(
+                  pointsLedger.proofId,
+                  tx
+                    .select({ id: proofs.id })
+                    .from(proofs)
+                    .where(and(eq(proofs.taskId, id), eq(proofs.status, "approved"))),
+                ),
+              ),
+            );
+        }
+
         if (existing.policy !== input.policy) {
           try {
             await tx.update(proofs).set({ policy: input.policy }).where(eq(proofs.taskId, id));

@@ -1,11 +1,14 @@
+import { readFile } from "node:fs/promises";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { moveTasksSchema, setTasksArchivedSchema } from "~/actions/task/schema";
 import { createTaskService } from "~/core/services/task";
 import { createCategoryRepository } from "~/infra/db/category/repo";
 import { pointsLedger } from "~/infra/db/points/model";
+import { createLeaderboardRepository } from "~/infra/db/points/repo";
 import { proofs } from "~/infra/db/proof/model";
 import { createTaskRepository } from "~/infra/db/task/repo";
+import { tasks as taskTable } from "~/infra/db/task/model";
 import { createUserRepository } from "~/infra/db/user/repo";
 import { connect, seedUsers, truncateAll } from "./helpers";
 import { first as firstRow } from "../support";
@@ -191,6 +194,188 @@ describe("task removal", () => {
     await expect(taskService.archiveTask(admin, first.id, false)).rejects.toMatchObject({
       code: "CONFLICT",
     });
+  });
+});
+
+describe("task points", () => {
+  it("blocks old review writes while the backfill transaction is open", async () => {
+    const { alice, first } = await setup();
+    const [proof] = await db
+      .insert(proofs)
+      .values({
+        taskId: first.id,
+        userId: alice.id,
+        policy: first.policy,
+        status: "pending",
+      })
+      .returning();
+    if (!proof) throw new Error("Expected a proof");
+
+    const migration = await readFile("migrations/0009_recalculate_task_points.sql", "utf8");
+    const ready = Promise.withResolvers<undefined>();
+    const release = Promise.withResolvers<undefined>();
+    const backfill = client.begin(async (tx) => {
+      await tx.unsafe(migration);
+      ready.resolve(undefined);
+      await release.promise;
+    });
+    await ready.promise;
+    try {
+      await expect(
+        client.begin(async (tx) => {
+          await tx`SET LOCAL lock_timeout = '200ms'`;
+          await tx`UPDATE proofs SET status = 'rejected' WHERE id = ${proof.id}`;
+        }),
+      ).rejects.toMatchObject({ code: "55P03" });
+    } finally {
+      release.resolve(undefined);
+      await backfill;
+    }
+  });
+
+  it("backfills existing approved credits once without restoring taken-back points", async () => {
+    const { alice, bob, first } = await setup();
+    const awardedAt = new Date("2026-10-01T09:00:00Z");
+    const [approved, reversed] = await db
+      .insert(proofs)
+      .values([
+        {
+          taskId: first.id,
+          userId: alice.id,
+          policy: first.policy,
+          status: "approved",
+        },
+        {
+          taskId: first.id,
+          userId: bob.id,
+          policy: first.policy,
+          status: "rejected",
+        },
+      ])
+      .returning();
+    if (!approved || !reversed) throw new Error("Expected two proofs");
+    await db.insert(pointsLedger).values({
+      userId: alice.id,
+      proofId: approved.id,
+      points: 5,
+      awardedAt,
+    });
+    const [oldCredit] = await db
+      .insert(pointsLedger)
+      .values({
+        userId: bob.id,
+        proofId: reversed.id,
+        points: 5,
+        awardedAt,
+      })
+      .returning();
+    if (!oldCredit) throw new Error("Expected a credit");
+    await db.insert(pointsLedger).values({
+      userId: bob.id,
+      proofId: reversed.id,
+      points: -5,
+      awardedAt,
+      reversalOf: oldCredit.id,
+    });
+    await db.update(taskTable).set({ points: 8 }).where(eq(taskTable.id, first.id));
+
+    const migration = await readFile("migrations/0009_recalculate_task_points.sql", "utf8");
+    await client.unsafe(migration);
+    await client.unsafe(migration);
+
+    const credits = await db
+      .select()
+      .from(pointsLedger)
+      .where(eq(pointsLedger.proofId, approved.id));
+    expect(credits).toMatchObject([
+      {
+        points: 8,
+        awardedAt,
+      },
+    ]);
+    const reversedEntries = await db
+      .select()
+      .from(pointsLedger)
+      .where(eq(pointsLedger.proofId, reversed.id));
+    expect(reversedEntries.map((entry) => entry.points).sort((a, b) => a - b)).toEqual([-5, 5]);
+    const october = await createLeaderboardRepository(db).leaderboard({
+      since: new Date("2026-10-01T00:00:00Z"),
+    });
+    expect(october.find((row) => row.user.id === alice.id)?.totalPoints).toBe(8);
+  });
+
+  it("updates earlier approved points in their original month without restoring reversed points", async () => {
+    const { admin, alice, bob, source, first } = await setup();
+    const awardedAt = new Date("2026-10-01T09:00:00Z");
+    const [approved, reversed] = await db
+      .insert(proofs)
+      .values([
+        {
+          taskId: first.id,
+          userId: alice.id,
+          policy: first.policy,
+          status: "approved",
+        },
+        {
+          taskId: first.id,
+          userId: bob.id,
+          policy: first.policy,
+          status: "rejected",
+        },
+      ])
+      .returning();
+    if (!approved || !reversed) throw new Error("Expected two proofs");
+    await db.insert(pointsLedger).values({
+      userId: alice.id,
+      proofId: approved.id,
+      points: 5,
+      awardedAt,
+    });
+    const [oldCredit] = await db
+      .insert(pointsLedger)
+      .values({
+        userId: bob.id,
+        proofId: reversed.id,
+        points: 5,
+        awardedAt,
+      })
+      .returning();
+    if (!oldCredit) throw new Error("Expected a credit");
+    await db.insert(pointsLedger).values({
+      userId: bob.id,
+      proofId: reversed.id,
+      points: -5,
+      awardedAt,
+      reversalOf: oldCredit.id,
+    });
+
+    const leaderboard = createLeaderboardRepository(db);
+    for (const points of [8, 3]) {
+      await taskService.updateTask(admin, first.id, {
+        ...taskInput(source.id, "First"),
+        points,
+      });
+      const credits = await db
+        .select()
+        .from(pointsLedger)
+        .where(eq(pointsLedger.proofId, approved.id));
+      expect(credits).toMatchObject([
+        {
+          points,
+          awardedAt,
+        },
+      ]);
+      const reversedEntries = await db
+        .select()
+        .from(pointsLedger)
+        .where(eq(pointsLedger.proofId, reversed.id));
+      expect(reversedEntries.map((entry) => entry.points).sort((a, b) => a - b)).toEqual([-5, 5]);
+      const october = await leaderboard.leaderboard({ since: new Date("2026-10-01T00:00:00Z") });
+      expect(october.find((row) => row.user.id === alice.id)?.totalPoints).toBe(points);
+      expect(await leaderboard.leaderboard({ since: new Date("2026-11-01T00:00:00Z") })).toEqual(
+        [],
+      );
+    }
   });
 });
 
