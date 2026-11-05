@@ -13,27 +13,24 @@ interface Toast {
 }
 
 interface Props {
-  initialUnread: number;
+  unread: number;
 }
 
 const TOAST_MS = 6000;
 
-export const LiveBell: FC<Props> = ({ initialUnread }) => {
-  const [unread, setUnread] = useState(initialUnread);
+export const LiveBell: FC<Props> = ({ unread }) => {
   const [toasts, setToasts] = useState<Array<Toast>>([]);
   const router = useRouter();
 
   useEffect(() => {
     const source = new EventSource("/api/notifications/stream");
 
-    source.addEventListener("ready", (event) => {
-      const { unreadCount } = frameData(event) as { unreadCount: number };
-      setUnread(unreadCount);
+    source.addEventListener("ready", () => {
+      router.refresh();
     });
 
     source.addEventListener("notification", (event) => {
       const toast = frameData(event) as Toast;
-      setUnread((count) => count + 1);
       setToasts((current) => [...current, toast]);
       showDesktopNotification(toast, () => {
         router.push("/notifications");

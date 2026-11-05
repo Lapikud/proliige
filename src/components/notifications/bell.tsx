@@ -8,5 +8,5 @@ interface Props {
 }
 
 export const NotificationBell: FC<Props> = async ({ user }) => (
-  <LiveBell initialUnread={await notificationService.countUnreadNotifications(user)} />
+  <LiveBell unread={await notificationService.countUnreadNotifications(user)} />
 );
